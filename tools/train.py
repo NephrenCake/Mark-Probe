@@ -133,7 +133,6 @@ def save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch, cfg
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.remove(__dir__)
 if __name__ == '__main__':
     sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
     main()
