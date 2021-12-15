@@ -17,4 +17,4 @@ from DiffJPEG import DiffJPEG
 jpeg = DiffJPEG(hieght=224, width=224, differentiable=True, quality=80)
 ```
 
-![image](./diffjpeg.png)
+![image](diffjpeg.png)

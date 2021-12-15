@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 # Local
-from DiffJPEG import utils
+from steganography.utils.DiffJPEG import utils
 
 
 class y_dequantize(nn.Module):

@@ -1,5 +1,6 @@
 # -- coding: utf-8 --
 import os
+import sys
 
 from tensorboardX import SummaryWriter
 from torch.optim import lr_scheduler
@@ -132,4 +133,7 @@ def save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch, cfg
 
 
 if __name__ == '__main__':
+    __dir__ = os.path.dirname(os.path.abspath(__file__))
+    sys.path.remove(__dir__)
+    sys.path.append(os.path.abspath(os.path.join(__dir__, '..')))
     main()

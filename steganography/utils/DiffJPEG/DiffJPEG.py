@@ -2,8 +2,8 @@
 import torch
 import torch.nn as nn
 # Local
-from DiffJPEG.modules import compress_jpeg, decompress_jpeg
-from DiffJPEG.utils import diff_round, quality_to_factor
+from steganography.utils.DiffJPEG.modules import compress_jpeg, decompress_jpeg
+from steganography.utils.DiffJPEG.utils import diff_round, quality_to_factor
 
 
 class DiffJPEG(nn.Module):

@@ -1,20 +1,19 @@
 # -- coding: utf-8 --
 import os
+import sys
 
 import torch
 import torchvision
 from PIL import Image
 from torchvision.transforms import transforms
-import bchlib
 
+from steganography.config.config import TrainConfig
 from steganography.models import stega_net
 import numpy as np
 
-from steganography.utils import TrainConfig
-from steganography.utils import make_trans, get_msg_acc
-
-BCH_POLYNOMIAL = 137
-BCH_BITS = 5
+from tools.utils.bch_utils import get_byte_msg
+from steganography.utils.distortion import make_trans
+from steganography.utils.train_utils import get_msg_acc
 
 
 def main():
@@ -78,22 +77,8 @@ def main():
         print(f"bit_acc: {bit_acc}, str_acc: {str_acc}")
 
 
-def get_byte_msg(msg):
-    bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
-    if len(msg) > 7:
-        print('Error: Can only encode 56bits (7 characters) with ECC')
-        return
-    # 补齐到7个字符，utf8编码
-    data = bytearray(msg + ' ' * (7 - len(msg)), 'utf-8')
-    ecc = bch.encode(data)  # bytearray(b'\x88\xa9\xfbN@')
-    packet = data + ecc  # bytearray(b'Stega!!\x88\xa9\xfbN@')  12 = 7 + 5 字节
-    # 校验码，两者加起来最多96bits
-    packet_binary = ''.join(format(x, '08b') for x in packet)  # 转二进制
-    # '010100110111010001100101011001110110000100100001001000011000100010101001111110110100111001000000'
-    byte_msg = [int(x) for x in packet_binary]  # 转数组，len=96
-    byte_msg.extend([0, 0, 0, 0])  # 补到len=100
-    return byte_msg
-
-
 if __name__ == '__main__':
+    __dir__ = os.path.dirname(os.path.abspath(__file__))
+    sys.path.remove(__dir__)
+    sys.path.append(os.path.abspath(os.path.join(__dir__, '..')))
     main()

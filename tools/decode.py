@@ -1,16 +1,16 @@
 # -- coding: utf-8 --
+import os
+import sys
 
-import bchlib
 import torch
 from PIL import Image
 from torchvision import transforms
 
-from encoder import get_byte_msg
+from encode import get_byte_msg
 from steganography.models import stega_net
 import numpy as np
 
-BCH_POLYNOMIAL = 137
-BCH_BITS = 5
+from tools.utils.bch_utils import get_row_msg
 
 
 def main():
@@ -50,24 +50,8 @@ def main():
     get_row_msg(msg_pred)
 
 
-def get_row_msg(msg_pred):
-    packet_binary = "".join([str(int(bit)) for bit in msg_pred[:96]])
-    packet = bytes(int(packet_binary[i: i + 8], 2) for i in range(0, len(packet_binary), 8))
-    packet = bytearray(packet)
-
-    bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
-    data, ecc = packet[:-bch.ecc_bytes], packet[-bch.ecc_bytes:]
-
-    bitflips = bch.decode_inplace(data, ecc)
-    if bitflips != -1:
-        try:
-            code = data.decode("utf-8")
-            print(code)
-            return
-        except:
-            return
-    print('Failed to decode')
-
-
 if __name__ == '__main__':
+    __dir__ = os.path.dirname(os.path.abspath(__file__))
+    sys.path.remove(__dir__)
+    sys.path.append(os.path.abspath(os.path.join(__dir__, '..')))
     main()

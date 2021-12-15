@@ -6,7 +6,7 @@ import torch
 import torchvision.transforms.functional as transforms_F
 from torchvision import transforms
 
-from DiffJPEG.DiffJPEG import DiffJPEG
+from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 
 
 def rand_blur(img, p):
