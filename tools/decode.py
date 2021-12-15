@@ -50,8 +50,11 @@ def main():
     get_row_msg(msg_pred)
 
 
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.remove(__dir__)
 if __name__ == '__main__':
-    __dir__ = os.path.dirname(os.path.abspath(__file__))
-    sys.path.remove(__dir__)
     sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
+    main()
+else:
+    sys.path.insert(0, os.path.abspath(os.path.join(__dir__)))
     main()

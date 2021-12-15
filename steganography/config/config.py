@@ -38,7 +38,7 @@ class TrainConfig(BaseConfig):
         super().__init__()
 
         self.exp_name = "test_CustomPer"  # 实验名
-        self.save_dir = "./train_log"
+        self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
         self.resume = ""  # 继续中断的训练
@@ -134,7 +134,7 @@ class TrainConfig(BaseConfig):
         for name, value in vars(self).items():
             if name.endswith("grow") and value is not None and value[1] > self.start_save_best:
                 self.start_save_best = value[1]
-        _check_dir(os.path.join(self.save_dir, self.exp_name))
+        _check_dir(os.path.join(sys.path[0], self.save_dir, self.exp_name))
 
     def get_cur_scale(self, scale_name: str, cur_iter: int, cur_epoch: int):
         scale_max = eval("self." + scale_name + "_max")

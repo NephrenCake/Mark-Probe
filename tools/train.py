@@ -20,7 +20,7 @@ def main():
     cfg.check_cfg()
 
     # 实例化SummaryWriter对象
-    tb_writer = SummaryWriter(log_dir=f"./{cfg.tensorboard_dir}/{cfg.exp_name}")
+    tb_writer = SummaryWriter(log_dir=os.path.join(sys.path[0], cfg.tensorboard_dir, cfg.exp_name))
     logger = get_logger(cfg.save_dir, cfg.exp_name)
     # 打印配置参数
     for name, value in vars(cfg).items():
@@ -132,8 +132,11 @@ def save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch, cfg
                 "epoch": epoch, }, os.path.join(cfg.save_dir, cfg.exp_name, file_name))
 
 
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.remove(__dir__)
 if __name__ == '__main__':
-    __dir__ = os.path.dirname(os.path.abspath(__file__))
-    sys.path.remove(__dir__)
     sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
+    main()
+else:
+    sys.path.insert(0, os.path.abspath(os.path.join(__dir__)))
     main()
