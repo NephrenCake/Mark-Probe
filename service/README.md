@@ -144,7 +144,7 @@ V 1.0.20220125
    - 在 `frontend` 下运行：
 
      ```bash
-  npm install
+     npm install
      ```
 
 4. 运行步骤：
