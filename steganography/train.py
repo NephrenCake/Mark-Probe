@@ -132,10 +132,5 @@ def save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch, cfg
                 "epoch": epoch, }, os.path.join(cfg.save_dir, cfg.exp_name, file_name))
 
 
-__dir__ = os.path.dirname(os.path.abspath(__file__))
 if __name__ == '__main__':
-    sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
-    main()
-else:
-    sys.path.insert(0, os.path.abspath(os.path.join(__dir__)))
     main()
