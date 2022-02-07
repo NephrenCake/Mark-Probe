@@ -9,23 +9,17 @@ import logging
 
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
-from steganography.utils.distortion import make_trans
-
-
-# from pytorch_wavelets import DTCWTForward
-# xfm = DTCWTForward(J=2, biort='near_sym_b', qshift='qshift_b').cuda()
+from steganography.utils.distortion import make_trans, make_trans_2
 
 
 def process_forward(Encoder,
                     Decoder,
-                    Discriminator,
                     lpips,
                     data,
                     scales,
                     cfg):
     img = data["img"].to(cfg.device)
     msg = data["msg"].to(cfg.device)
-    b, c, w, h = img.shape
 
     # ------------------forward
     # Encoder
@@ -34,45 +28,35 @@ def process_forward(Encoder,
     encoded_img = torch.clamp(encoded_img, 0., 1.)
 
     # transform
-    transformed_img, no_stretched_img, startpoints = make_trans(encoded_img, scales)
+    # todo 一个分支实现整体的识别，一个分支实现局部的识别
+    # transformed_img, no_stretched_img, startpoints = make_trans(encoded_img, scales)
+    transformed_img = make_trans_2(encoded_img, scales)
 
     # Decoder
     msg_pred, stn_img = Decoder(transformed_img, use_stn=scales['stn_loss'] == 1)  # stega
-    # msg_pred, stn_img, startpoints_predict = Decoder(transformed_img)  # per
-    # msg_pred, stn_img, startpoints_predict = Decoder(transformed_img).sigmoid(), no_stretched_img, startpoints  # swin
-
-    # Discriminator
-    dis_label = torch.cat((torch.zeros(b), torch.ones(b)), dim=0).to(cfg.device)  # raw-0 encoded-1
-    dis_pred = Discriminator(torch.cat((img, encoded_img), dim=0))
 
     # ------------------loss
+    # todo 可以尝试使用其他实现方式，高斯模糊并不是最佳选择，期望标定的高频区域范围更多一些
     weight_mask = torch.abs(img - transforms_F.gaussian_blur(img, [7, 7], [10, 10]))
     weight_mask = torch.max(weight_mask) - weight_mask  # low weight in high frequency
 
     img_loss = torch.zeros(1).to(cfg.device)
     if scales["rgb_loss"] != 0:
         rgb_loss = mse_loss(encoded_img, img, mask=weight_mask)
-        img_loss = img_loss + rgb_loss
+        img_loss = img_loss + rgb_loss * scales["rgb_loss"]
     if scales["hsv_loss"] != 0:
         hsv_loss = mse_loss(rgb_to_hsv(encoded_img), rgb_to_hsv(img), mask=weight_mask)
-        img_loss = img_loss + hsv_loss
+        img_loss = img_loss + hsv_loss * scales["hsv_loss"]
     if scales["yuv_loss"] != 0:
         yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=weight_mask)
-        img_loss = img_loss + yuv_loss
-    # if scales["dtcwt_loss"] != 0:
-    #     dtcwt_loss = nn_F.mse_loss(xfm(encoded_img)[0], xfm(img)[0])
-    #     img_loss = img_loss + dtcwt_loss
+        img_loss = img_loss + yuv_loss * scales["yuv_loss"]
     if scales["lpips_loss"] != 0:
         lpips_loss = lpips(img, encoded_img).mean()
-        img_loss = img_loss + lpips_loss
+        img_loss = img_loss + lpips_loss * scales["lpips_loss"]
 
-    # position_loss = nn_F.l1_loss(startpoints_predict, startpoints)
     msg_loss = nn_F.binary_cross_entropy(msg_pred, msg)  # size(B, 100)的msg，二分类0和1
-    dis_loss = nn_F.binary_cross_entropy(dis_pred, dis_label)  # 包含原图和编码图，cat成size(2B, )预测是否为编码图
 
     loss = img_loss + msg_loss
-    if torch.ge(dis_loss, 0.001):  # 当鉴别器在一定损失之内时，不对其进行优化
-        loss = loss + dis_loss
 
     # test
     # print(msg_loss)
@@ -85,25 +69,22 @@ def process_forward(Encoder,
     bit_acc, str_acc = get_msg_acc(msg, msg_pred)
 
     vis_img = {"res_img": res_img.data, "encoded_img": encoded_img.data,
-               "transformed_img": transformed_img.data, "no_stretched_img": no_stretched_img,
+               "transformed_img": transformed_img.data, "no_stretched_img": encoded_img.data,
                "stn_img": stn_img, }
+    # todo 需要加入一个带纠正的准确率计算
     metric_result = {"loss": loss,
-                     # "position_loss": position_loss,
-                     "img_loss": img_loss, "msg_loss": msg_loss, "dis_loss": dis_loss,
+                     "img_loss": img_loss, "msg_loss": msg_loss,
                      "bit_acc": bit_acc, "str_acc": str_acc, }
     return metric_result, vis_img
 
 
 def make_null_metric_dict():
-    METRIC_LIST = ["loss",
-                   # "position_loss",
-                   "img_loss", "msg_loss", "dis_loss", "bit_acc", "str_acc"]
+    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc"]
     return 0, {i: 0 for i in METRIC_LIST}
 
 
 def train_one_epoch(Encoder,
                     Decoder,
-                    Discriminator,
                     lpips,
                     optimizer,
                     scheduler,
@@ -113,7 +94,6 @@ def train_one_epoch(Encoder,
                     cfg):
     Encoder.train()
     Decoder.train()
-    Discriminator.train()
 
     count, results = make_null_metric_dict()
     optimizer.zero_grad()
@@ -123,14 +103,12 @@ def train_one_epoch(Encoder,
         # ------------------forward & loss
         metric_result, _ = process_forward(Encoder,
                                            Decoder,
-                                           Discriminator,
                                            lpips,
                                            data,
                                            scales,
                                            cfg)
 
         # ------------------backward
-        # metric_result["position_loss"].backward(retain_graph=True)
         metric_result["loss"].backward()
         optimizer.step()
 
@@ -151,7 +129,6 @@ def train_one_epoch(Encoder,
                          f"loss:{round(results['loss'], 4)} "
                          f"img_loss:{round(results['img_loss'], 4)} "
                          f"msg_loss:{round(results['msg_loss'], 4)} "
-                         # f"position_loss:{round(results['position_loss'], 4)} "
                          f"bit_acc:{round(results['bit_acc'], 4)} "
                          f"str_acc:{round(results['str_acc'], 2)} ")
 
@@ -172,9 +149,6 @@ def train_one_epoch(Encoder,
         # ------------------更新lr
         optimizer.zero_grad()
         scheduler.step()
-        # ------------------限制dis模型的参数大小，否则loss会反向升高
-        for i in Discriminator.parameters():
-            i.data = torch.clamp(i, -0.25, 0.25)
 
     return
 
@@ -182,7 +156,6 @@ def train_one_epoch(Encoder,
 @torch.no_grad()
 def evaluate_one_epoch(Encoder,
                        Decoder,
-                       Discriminator,
                        lpips,
                        data_loader,
                        epoch,
@@ -190,7 +163,6 @@ def evaluate_one_epoch(Encoder,
                        cfg):
     Encoder.eval()
     Decoder.eval()
-    Discriminator.eval()
 
     count, result = make_null_metric_dict()
     vis_img = {}
@@ -200,7 +172,6 @@ def evaluate_one_epoch(Encoder,
         # ------------------forward & loss
         metric_result, vis_img = process_forward(Encoder,
                                                  Decoder,
-                                                 Discriminator,
                                                  lpips,
                                                  data,
                                                  scales,

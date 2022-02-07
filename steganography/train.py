@@ -6,7 +6,7 @@ from tensorboardX import SummaryWriter
 from torch.optim import lr_scheduler
 import torch
 
-from steganography.models import stega_net
+from steganography.models.CINet import CIDecoder, CIEncoder
 from steganography.utils.dataset import get_dataloader
 from steganography.utils.log_utils import get_logger
 from steganography.utils.train_utils import train_one_epoch, evaluate_one_epoch
@@ -39,20 +39,17 @@ def main():
     logger.info(f'{cfg.iter_per_epoch} iterations per epoch.')
 
     # 实例化模型
-    Encoder = stega_net.StegaStampEncoder(cfg.msg_size).to(cfg.device)  # stega
-    Decoder = stega_net.StegaStampDecoder(cfg.msg_size).to(cfg.device)  # stega
-    # Encoder = stega_net.MyEncoder(cfg.msg_size).to(cfg.device)  # custom
-    # Decoder = stega_net.MyDecoder(cfg.msg_size).to(cfg.device)  # per
-    # Decoder = swin_net.swin_tiny_patch4_window7_224(num_classes=cfg.msg_size).to(cfg.device)  # swin
-
-    Discriminator = stega_net.Discriminator().to(cfg.device)
+    Encoder = CIEncoder(msg_size=cfg.msg_size,
+                        img_size=cfg.img_size[0]).to(cfg.device)
+    Decoder = CIDecoder(msg_size=cfg.msg_size,
+                        img_size=cfg.img_size[0],
+                        decoder_type="conv").to(cfg.device)
     lpips_metric = LPIPS(net="alex").to(cfg.device)
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
         {'params': Encoder.parameters()},
         {'params': Decoder.parameters()},
-        {'params': Discriminator.parameters()}
     ], lr=cfg.lr_base, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
     if cfg.use_warmup:
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=cfg.get_warmup_cos_lambda())
@@ -88,7 +85,6 @@ def main():
         # train
         train_one_epoch(Encoder=Encoder,
                         Decoder=Decoder,
-                        Discriminator=Discriminator,
                         optimizer=optimizer,
                         scheduler=scheduler,
                         lpips=lpips_metric,
@@ -99,7 +95,6 @@ def main():
         # validate
         val_result = evaluate_one_epoch(Encoder=Encoder,
                                         Decoder=Decoder,
-                                        Discriminator=Discriminator,
                                         lpips=lpips_metric,
                                         data_loader=val_loader,
                                         epoch=epoch,
@@ -113,20 +108,17 @@ def main():
                     f"loss:{round(val_result['loss'], 4)} "
                     f"img_loss:{round(val_result['img_loss'], 4)} "
                     f"msg_loss:{round(val_result['msg_loss'], 4)} "
-                    # f"position_loss:{round(val_result['position_loss'], 4)} "
                     f"bit_acc:{round(val_result['bit_acc'], 4)} "
                     f"str_acc:{round(val_result['str_acc'], 2)} ")
-
         # save weights
         if val_result["loss"] < best_loss and epoch >= cfg.start_save_best:  # todo 不合理
-            save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch + 1, cfg, "best.pth")
-        save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch + 1, cfg, f"latest-{epoch}.pth")
+            save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, "best.pth")
+        save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, f"latest-{epoch}.pth")
 
 
-def save_state(Encoder, Decoder, Discriminator, optimizer, scheduler, epoch, cfg, file_name):
+def save_state(Encoder, Decoder, optimizer, scheduler, epoch, cfg, file_name):
     torch.save({"Encoder": Encoder.state_dict(),
                 "Decoder": Decoder.state_dict(),
-                "Discriminator": Discriminator.state_dict(),
                 "optimizer": optimizer.state_dict(),
                 "scheduler": scheduler.state_dict(),
                 "epoch": epoch, }, os.path.join(cfg.save_dir, cfg.exp_name, file_name))

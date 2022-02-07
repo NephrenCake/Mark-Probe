@@ -37,21 +37,21 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "test_CustomPer"  # 实验名
+        self.exp_name = "CI-test"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
         self.resume = ""  # 继续中断的训练
-        self.load_models = ['Encoder', 'Decoder', 'Discriminator']
+        self.load_models = ['Encoder', 'Decoder']
         path = "D:\ProjectFiles\Image_Steganography\StegDev/"
         self.img_set_list = {
             path + "data/train2014": 0.001, path + "data/val2014": 0.002,  # for test
-            # "data/train2014": 1, "data/val2014": 1,
+            # path + "data/train2014": 1, path + "data/val2014": 1,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 15  # 15  # 训练的总轮数
+        self.max_epoch = 7  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
         self.batch_size = 8  # 一个批次的图片数量
@@ -62,36 +62,32 @@ class TrainConfig(BaseConfig):
         self.lr_min = 0.1  # 最低学习率倍率
 
         # ============== module
-        self.img_size = (400, 400)  # 输入网络的图片大小  注意，只能正方形
-        self.msg_size = 100  # 输入网络的二进制字符串大小
+        self.img_size = (448, 448)  # 输入网络的图片大小  注意，只能正方形
+        self.msg_size = 96  # 输入网络的二进制字符串大小
 
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
             "perspective_trans", "angle_trans", "cut_trans",
-            # "erasing_trans", "jpeg_trans", "noise_trans",
-            # "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
-            "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", "dtcwt_loss",
-            'stn_loss',
+            # "erasing_trans",
+            "jpeg_trans", "noise_trans",
+            "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
+            "rgb_loss", "hsv_loss",  "yuv_loss", "lpips_loss", 'stn_loss',
         ]
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
         self.perspective_trans_max = 0  # 0.1  # 透视变换
-        self.perspective_trans_grow = (0.3, 0.7)
+        self.perspective_trans_grow = (0.5, 5)
         self.perspective_no_edge = False
-        self.angle_trans_max = 0  # 30  # 观察图片的视角，指与法线的夹角，入射角
+        self.angle_trans_max = 30  # 30  # 观察图片的视角，指与法线的夹角，入射角
         self.angle_trans_grow = (0.3, 0.7)
-        self.cut_trans_max = 0  # 0.4  # 0.5 舍弃的图片区域
+        self.cut_trans_max = 0.5  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
-
-        # 最小有效面积 = (1 - cut) * (1 - per) ^ 2
-        #            = 0.5 * 0.64 = 0.32
-        #            = 0.6 * 0.81 = 0.486
 
         # self.erasing_trans_max = 0  # 0.5 擦除遮挡
         # self.erasing_trans_grow = (0.3, 0.7)
         self.jpeg_trans_max = 50  # todo 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
-        self.jpeg_trans_grow = (0.2, 0.3)
+        self.jpeg_trans_grow = (0.3, 0.4)
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
 
@@ -106,19 +102,17 @@ class TrainConfig(BaseConfig):
         self.blur_trans_max = 0.4
         self.blur_trans_grow = (0.1, 0.2)
         # loss scale
-        self.rgb_loss_max = 1  # 0.5
+        self.rgb_loss_max = 0  # 0.5
         self.rgb_loss_grow = (1.7, 2)
-        self.hsv_loss_max = 1
+        self.hsv_loss_max = 0
         self.hsv_loss_grow = (1.7, 2)
         self.yuv_loss_max = 1
-        self.yuv_loss_grow = None
-        self.lpips_loss_max = 0
-        self.lpips_loss_grow = (1.7, 2)
-        self.dtcwt_loss_max = 0
-        self.dtcwt_loss_grow = None
+        self.yuv_loss_grow = (0, 2)
+        self.lpips_loss_max = 1
+        self.lpips_loss_grow = (2, 3)
         # other
-        self.stn_loss_max = 0  # 换成1时可以开启，0则不对stn进行训练
-        self.stn_loss_grow = (0.2, 0.2)  # todo 不能施加太大的loss
+        self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
+        self.stn_loss_grow = (0.3, 0.3)  # todo 不能施加太大的loss
 
         # ============== runtime
         self.iter_per_epoch = None
