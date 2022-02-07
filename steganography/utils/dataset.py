@@ -3,6 +3,7 @@ import logging
 import os
 import random
 
+import cv2
 import numpy as np
 import torch
 
@@ -94,7 +95,7 @@ class StegaDataset(Dataset):
             img = Image.open(self.img_list[idx]).convert("RGB")
         except:
             logging.warning(f"read {self.img_list[idx]} failed.")
-            img = np.zeros((480, 480, 3), dtype=np.float32)
+            img = generate_random_circle_picture()
         if self.transform is not None:
             img = self.transform(img)
 
@@ -105,3 +106,14 @@ class StegaDataset(Dataset):
             "img": img,
             "msg": msg
         }
+
+
+def generate_random_circle_picture(d=500):
+    img = np.zeros((d, d, 3), dtype=np.float32)
+    for i in range(0, 50):
+        center_x = np.random.randint(0, d)
+        center_y = np.random.randint(0, d)
+        radius = np.random.randint(5, d / 5)
+        color = np.random.randint(0, 256, size=(3,)).tolist()
+        cv2.circle(img, (center_x, center_y), radius, color, -1)
+    return Image.fromarray(img, mode='RGB')
