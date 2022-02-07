@@ -110,9 +110,11 @@ class CIDecoder(nn.Module):
     已修改，加入了 "swin" or "conv" 可选 decoder
     """
 
-    def __init__(self, msg_size=96, img_size=448, decoder_type="swin"):
+    def __init__(self, msg_size=96, img_size=448, decoder_type="swin", has_stn=True):
         super(CIDecoder, self).__init__()
-        self.stn = STN(img_size=img_size)
+        self.has_stn = has_stn
+        if has_stn:
+            self.stn = STN(img_size=img_size)
 
         if decoder_type == "conv":
             self.decoder = ConvDecoder(msg_size=msg_size, img_size=img_size)
@@ -120,11 +122,13 @@ class CIDecoder(nn.Module):
             self.decoder = nn.Sequential(swin_tiny_patch4_window7_224(num_classes=msg_size),
                                          nn.Sigmoid())
 
-    def forward(self, x, use_stn=True):
+    def forward(self, x, use_stn=True, return_stn_img=True):
         # 需要待 decoder 部分稳定才可以开启 STN
-        if use_stn:
+        if use_stn and self.has_stn:
             x = self.stn(x)
 
+        if not return_stn_img:
+            return self.decoder(x)
         return self.decoder(x), x
 
 
