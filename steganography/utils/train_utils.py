@@ -56,8 +56,10 @@ def process_forward(Encoder,
 
     msg_loss = nn_F.binary_cross_entropy(msg_pred, msg)  # size(B, 100)的msg，二分类0和1
 
-    loss = img_loss + msg_loss
-
+    if torch.ge(msg_loss, 0.6) and torch.le(img_loss, 0.01):
+        loss = msg_loss  # 前期如果decoder能力提不上来，则encoder等待
+    else:
+        loss = img_loss + msg_loss
     # test
     # print(msg_loss)
     # msg_loss = scales["msg_loss"] * msg_loss

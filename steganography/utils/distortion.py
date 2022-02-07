@@ -3,7 +3,7 @@ import math
 import random
 
 import torch
-import torchvision.transforms.functional as transforms_F
+import torchvision.transforms.functional as F
 from torchvision import transforms
 
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
@@ -26,7 +26,7 @@ def rand_noise(img, rnd_noise):
     return torch.clamp(img + noise, 0., 1.)
 
 
-def rand_crop(img, scale):
+def rand_crop(img, scale, change_pos=False):
     """
     相较于调用
         img = transforms.RandomResizedCrop((w, h), scale=(1 - scale["cut_trans"], 1), ratio=(ratio, 1 / ratio))(img)
@@ -37,7 +37,10 @@ def rand_crop(img, scale):
     i, j, h, w = transforms.RandomResizedCrop.get_params(img, scale=[1. - scale["cut_trans"], 1.],
                                                          ratio=[ratio, 1 / ratio])
     crop_img = torch.zeros(img.shape).to(img.device)
-    crop_img[..., i:i + h, j:j + w] = transforms_F.crop(img, i, j, h, w)
+
+    new_i = torch.randint(0, img.shape[-2] - h + 1, size=(1,)).item()
+    new_j = torch.randint(0, img.shape[-1] - w + 1, size=(1,)).item()
+    crop_img[..., new_i:i + h, new_j:j + w] = F.crop(img, i, j, h, w)
 
     return crop_img
 
@@ -72,7 +75,7 @@ def make_trans(img, scale):
     # ----------------------选择目标区域进行第一次空间变换
     use_cut = scale["perspective_trans"] + scale["angle_trans"] + scale["cut_trans"] != 0
     if use_cut:
-        img = transforms_F.perspective(img, startpoints, boxpoints, fill=[0.])
+        img = F.perspective(img, startpoints, boxpoints, fill=[0.])
 
     # ----------------------非空间变换
     img = common_trans(img, scale)
@@ -80,9 +83,9 @@ def make_trans(img, scale):
     # ----------------------缩放回解码器大小的空间变换
     if use_cut:
         # 实际解码图
-        img = transforms_F.perspective(img, boxpoints, endpoints, fill=[0.])
+        img = F.perspective(img, boxpoints, endpoints, fill=[0.])
         # 原图裁剪区域
-        no_stretched_img = transforms_F.perspective(img, endpoints, startpoints, fill=[0.])
+        no_stretched_img = F.perspective(img, endpoints, startpoints, fill=[0.])
 
     return img, no_stretched_img, (torch.tensor([startpoints]) / (w - 1)).to(img.device, torch.float32).expand(b, -1,
                                                                                                                -1)
@@ -109,7 +112,7 @@ def make_trans_2(img, scale):
     img = common_trans(img, scale)
 
     # 随机裁剪
-    img = rand_crop(img, scale)
+    img = rand_crop(img, scale, change_pos=True)
 
     return img
 

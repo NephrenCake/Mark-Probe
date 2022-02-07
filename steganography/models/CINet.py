@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from steganography.models.swin import swin_tiny_patch4_window7_224
+from steganography.models.swin import swin_tiny_patch4_window7_224, SwinTransformer
 
 
 def initialize_weights(net):
@@ -119,8 +119,7 @@ class CIDecoder(nn.Module):
         if decoder_type == "conv":
             self.decoder = ConvDecoder(msg_size=msg_size, img_size=img_size)
         elif decoder_type == "swin":
-            self.decoder = nn.Sequential(swin_tiny_patch4_window7_224(num_classes=msg_size),
-                                         nn.Sigmoid())
+            self.decoder = SwinDecoder(msg_size=msg_size)
 
     def forward(self, x, use_stn=True, return_stn_img=True):
         # 需要待 decoder 部分稳定才可以开启 STN
@@ -132,10 +131,37 @@ class CIDecoder(nn.Module):
         return self.decoder(x), x
 
 
+class SwinDecoder(nn.Module):
+    """
+    已修改，可以自适应不同尺寸图
+    """
+
+    def __init__(self, msg_size=96, **kwargs):
+        super(SwinDecoder, self).__init__()
+
+        self.decoder = nn.Sequential(
+            SwinTransformer(in_chans=3,
+                            patch_size=4,
+                            window_size=7,
+                            embed_dim=96,
+                            depths=(2, 2, 6, 2),
+                            num_heads=(3, 6, 12, 24),
+                            num_classes=msg_size,
+                            **kwargs),
+            nn.Sigmoid()
+        )
+
+        initialize_weights(self)
+
+    def forward(self, x):
+        return self.decoder(x)
+
+
 class ConvDecoder(nn.Module):
     """
     已修改，可以自适应不同尺寸图
     """
+
     def __init__(self, msg_size=96, img_size=448):
         super(ConvDecoder, self).__init__()
         img_conv_size = int((img_size - 1) / 32) + 1
