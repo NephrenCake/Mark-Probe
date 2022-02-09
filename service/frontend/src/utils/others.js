@@ -22,7 +22,7 @@ class Func {
     }
   }
 
-  // 文件转Base64：此为异步函数，必须异步调用
+  // 文件转 Base64 ：此为异步函数，必须异步调用
   file2Base64(file) {
     return new Promise((resolve, reject) => {
         ///FileReader类就是专门用来读文件的

@@ -83,7 +83,7 @@ def stopStream():
     except:
         return reponseJson(code=CodeEnum.HTTP_SERVER_ERROR, msg=MsgEnum.STOP_STREAM_FAIL)
 
-# 上传图片
+# decoder 上传图片
 @app.route('/upload', methods=['POST'])
 def upload():
     data = request.get_json()
@@ -103,11 +103,33 @@ def upload():
     # cv2.destroyAllWindows()
         
     fake_info = {"ts_min": 27384770, "uid": "123"}
-    resList = selectLog(properties.SQLITE_LOCATION, fake_info["ts_min"], fake_info["uid"], 5)
+    resList = selectLog(properties.SQLITE_LOCATION, fake_info["ts_min"], fake_info["uid"], 1)
     outDict = {"data": resList}
+    
+    # 返回变换后图像 base64
+    outDict = {"editedImg": cv2ImgToBase64(img)}
 
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
+# encoder 上传图片
+@app.route('/uploaden', methods=['POST'])
+def uploadEn():
+    data = request.get_json()
+    fileBase64 = data["fileBase64"]
+    
+    img = base64ToCv2Img(fileBase64)
+    
+    # 编码后图片
+    # img = encoder(img)
+    
+    # cv2.imshow('', img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+    
+    # 返回变换后图像 base64
+    outDict = {"encodedImg": cv2ImgToBase64(img)}
+
+    return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
 if __name__ == "__main__":
     app.run(host = "127.0.0.1", port = 5000, threaded = True)

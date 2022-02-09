@@ -36,8 +36,7 @@ class MsgEnum(Enum):
     STOP_STREAM_FAIL = "停止推拉流失败!"
     
     UPLOAD_OK = "上传成功!"
-    
-    
+
 # 格式化消息
 def reponseJson(code, msg, out_dict = None, specify_msg = None):
     res_dict = {"code": code.value, "msg": msg.value}
@@ -67,7 +66,7 @@ def insertLog(db:str, timeStamp:int, uid:str, ip:str):
     conn.close()
     
 # sqlite 原生操作数据库：查询数据。delta 为时间误差允许范围，单位为分钟
-def selectLog(db:str, timeStamp:int, uid:str, delta:int) -> dict:
+def selectLog(db:str, timeStamp:int, uid:str, delta:int) -> list:
     conn = sqlite3.connect(db)
     c = conn.cursor()
     
@@ -99,7 +98,13 @@ def base64ToCv2Img(baseStr:str):
     # 返回的是一个 cv2 图片对象
     return image
 
-# CV2 透视变换（坐标顺序：↖，↙，↘，↗（顺时针顺序））
+# cv2 转 base64
+def cv2ImgToBase64(image) -> str:
+    base64_str = cv2.imencode('.jpg', image)[1].tostring()
+    base64_str = base64.b64encode(base64_str).decode()
+    return base64_str
+
+# CV2 透视变换（坐标顺序：↖，↙，↘，↗（逆时针顺序））
 def perspectiveTrans(img, ratioPos:list):
     width = img.shape[1]
     height = img.shape[0]

@@ -14,7 +14,7 @@
           :accept="'image/*'">
           <i class="el-icon-upload" style="color:#409EFF"></i>
           <div class="el-upload__text text">
-            将图片拖到此处，或
+            将图片拖到此处, 或
             <em>点击上传</em>
           </div>
         </el-upload>
@@ -74,11 +74,31 @@
           </el-table>
         </div>
         <div slot="footer">
+          <el-button type="primary" @click="showEditedImg">显示处理后图片</el-button>
           <el-button type="primary" @click="dialogVisibleT = false">确定</el-button>
         </div>
       </el-dialog>
-      
     </div>
+
+    <el-dialog
+      class="dialog-class"
+      style="text-align: center;"
+      title="处理后图片"
+      :visible.sync="dialogVisibleE"
+      width="45%"
+      top="7vh">
+      <div>
+        <el-image
+          style="height: 400px;"
+          :src="editedImg"
+          :preview-src-list="[editedImg]"
+          fit="scale-down">
+        </el-image>
+      </div>
+      <div slot="footer">
+        <el-button type="primary" @click="closeEditedImg">返回</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -96,6 +116,7 @@ export default {
 
       dialogVisible: false,
       dialogVisibleT: false,
+      dialogVisibleE: false,
 
       // 变换坐标
       positionList: [],
@@ -110,7 +131,10 @@ export default {
       },
 
       // 查库结果显示
-      infoList: []
+      infoList: [],
+
+      // 处理后图片
+      editedImg: null
     }
   },
   methods: {
@@ -138,8 +162,8 @@ export default {
         console.log(err);
       })
       
-      this.isShowImgUpload = true;//呈现本地预览组件
-      this.isShowUpload = false;//隐藏上传组件
+      this.isShowImgUpload = true;  // 呈现本地预览组件
+      this.isShowUpload = false;    // 隐藏上传组件
     },
     // 重新上传
     uploadButtonClick() {
@@ -147,6 +171,7 @@ export default {
       this.positionList = [];
       this.isShowImgUpload = false;
       this.isShowUpload = true;
+      this.editedImg = null;
     },
     // 上传图片与比例坐标信息
     processButtonClick() {
@@ -168,6 +193,7 @@ export default {
             this.delAllMarks();
 
             this.infoList = data.data;
+            this.editedImg = "data:image/jpeg;base64," + data.editedImg;
 
             this.dialogVisibleT = true;
           }
@@ -301,7 +327,7 @@ export default {
     },
     // 标定框关闭前询问
     handleClose(done) {
-      this.$confirm('确认关闭？')
+      this.$confirm('确认关闭?')
         .then(_ => {
           this.delAllMarks();
           done();
@@ -315,12 +341,20 @@ export default {
     },
     // 结果框关闭前询问
     handleCloseT() {
-      this.$confirm('确认关闭？')
+      this.$confirm('确认关闭?')
         .then(_ => {
           this.dialogVisibleT = false;
           done();
         })
         .catch(_ => {});
+    },
+    // 显示处理后图片
+    showEditedImg() {
+      this.dialogVisibleE = true;
+    },
+    // 关闭处理后图片预览
+    closeEditedImg() {
+      this.dialogVisibleE = false;
     }
   }
 }

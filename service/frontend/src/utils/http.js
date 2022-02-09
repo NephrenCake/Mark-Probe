@@ -30,7 +30,13 @@ class Http {
 
   // 上传图片以及校正参数
   uploadPic(params) {
-    const url = "/upload"
+    const url = "/upload";
+    return this.http.post(url, params)
+  }
+
+  // 上传图片以及校正参数
+  uploadPicEn(params) {
+    const url = "/uploaden";
     return this.http.post(url, params)
   }
 } 
