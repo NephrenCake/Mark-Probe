@@ -43,7 +43,7 @@ def rand_crop(img, scale, change_pos=False):
         new_j = torch.randint(0, img.shape[-1] - w + 1, size=(1,)).item()
         crop_img[..., new_i:new_i + h, new_j:new_j + w] = F.crop(img, i, j, h, w)
     else:
-        crop_img[..., i:j + h, i:j + w] = F.crop(img, i, j, h, w)
+        crop_img[..., i:i + h, j:j + w] = F.crop(img, i, j, h, w)
 
     return crop_img
 
