@@ -29,9 +29,10 @@ torchvision.utils.save_image(img, "test_source/test.jpg")
 
 def test_crop():
     global img
+    img_ = img.clone().detach()
 
-    img = rand_crop(img, scale, change_pos=False)
-    torchvision.utils.save_image(img, "test_source/test_crop.jpg")
+    img_ = rand_crop(img_, scale, change_pos=False)
+    torchvision.utils.save_image(img_, "test_source/test_crop.jpg")
 
 
 def test_perspective():
@@ -60,10 +61,11 @@ def test_perspective():
         return startpoints, endpoints
 
     global img
+    img_ = img.clone().detach()
 
     startpoints, endpoints = get_params(img_size[0], img_size[0], scale["perspective_trans"])
-    img = F.perspective(img, startpoints, endpoints)
-    torchvision.utils.save_image(img, "test_source/test_perspective.jpg")
+    img_ = F.perspective(img_, startpoints, endpoints)
+    torchvision.utils.save_image(img_, "test_source/test_perspective.jpg")
 
 
 if __name__ == '__main__':
