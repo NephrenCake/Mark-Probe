@@ -24,14 +24,14 @@ img = transforms.Compose([
     torchvision.transforms.Resize(img_size),
     torchvision.transforms.ToTensor()
 ])(Image.open(img_path).convert("RGB")).unsqueeze(0)
-torchvision.utils.save_image(img, "test_crop0.jpg")
+torchvision.utils.save_image(img, "test_source/test.jpg")
 
 
 def test_crop():
     global img
 
     img = rand_crop(img, scale, change_pos=False)
-    torchvision.utils.save_image(img, "test_crop_.jpg")
+    torchvision.utils.save_image(img, "test_source/test_crop.jpg")
 
 
 def test_perspective():
@@ -61,10 +61,9 @@ def test_perspective():
 
     global img
 
-    img = transforms.RandomPerspective(0.1, 1)(img)
     startpoints, endpoints = get_params(img_size[0], img_size[0], scale["perspective_trans"])
     img = F.perspective(img, startpoints, endpoints)
-    torchvision.utils.save_image(img, "test_perspective_.jpg")
+    torchvision.utils.save_image(img, "test_source/test_perspective.jpg")
 
 
 if __name__ == '__main__':
