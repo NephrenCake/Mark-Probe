@@ -109,9 +109,6 @@ def perspectiveTrans(img, ratioPos:list):
     width = img.shape[1]
     height = img.shape[0]
     
-    # 强制指定图片变换到 400 × 400
-    # width = height = 400
-    
     for ele in ratioPos:
         ele["x"] = (ele["x"] * width)
         ele["y"] = (ele["y"] * height)

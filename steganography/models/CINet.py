@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from steganography.models.swin import swin_tiny_patch4_window7_224, SwinTransformer
 
 
+
 def initialize_weights(net):
     for m in net.modules():
         if isinstance(m, nn.Conv2d):

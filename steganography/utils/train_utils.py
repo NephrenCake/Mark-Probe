@@ -6,10 +6,11 @@ import torchvision
 import torch.nn.functional as nn_F
 import torchvision.transforms.functional as transforms_F
 import logging
+import copy
 
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
-from steganography.utils.distortion import make_trans, make_trans_2
+from steganography.utils.distortion import make_trans, make_trans_2, make_trans_3, make_trans_4
 
 
 def process_forward(Encoder,
@@ -30,7 +31,9 @@ def process_forward(Encoder,
     # transform
     # todo 一个分支实现整体的识别，一个分支实现局部的识别
     # transformed_img, no_stretched_img, startpoints = make_trans(encoded_img, scales)
-    transformed_img = make_trans_2(encoded_img, scales)
+    # transformed_img = make_trans_2(encoded_img, scales)
+    # transformed_img = make_trans_3(encoded_img, scales) # 使用自己的方法训练
+    transformed_img = make_trans_4(encoded_img, scales) # 使用添加了随机遮挡和透视变换
 
     # Decoder
     msg_pred, stn_img = Decoder(transformed_img, use_stn=scales['stn_loss'] == 1)  # stega
@@ -68,7 +71,7 @@ def process_forward(Encoder,
     # input("wait")
 
     # ------------------compute acc
-    bit_acc, str_acc = get_msg_acc(msg, msg_pred)
+    bit_acc, str_acc, right_str_acc = get_msg_acc(msg, msg_pred)
 
     vis_img = {"res_img": res_img.data, "encoded_img": encoded_img.data,
                "transformed_img": transformed_img.data, "no_stretched_img": encoded_img.data,
@@ -76,12 +79,12 @@ def process_forward(Encoder,
     # todo 需要加入一个带纠正的准确率计算
     metric_result = {"loss": loss,
                      "img_loss": img_loss, "msg_loss": msg_loss,
-                     "bit_acc": bit_acc, "str_acc": str_acc, }
+                     "bit_acc": bit_acc, "str_acc": str_acc,"right_str_acc":right_str_acc }
     return metric_result, vis_img
 
 
 def make_null_metric_dict():
-    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc"]
+    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc","right_str_acc"]
     return 0, {i: 0 for i in METRIC_LIST}
 
 
@@ -132,7 +135,8 @@ def train_one_epoch(Encoder,
                          f"img_loss:{round(results['img_loss'], 4)} "
                          f"msg_loss:{round(results['msg_loss'], 4)} "
                          f"bit_acc:{round(results['bit_acc'], 4)} "
-                         f"str_acc:{round(results['str_acc'], 2)} ")
+                         f"str_acc:{round(results['str_acc'], 2)} "
+                         f"right_str_acc:{round(results['str_acc'], 2)}")
 
             # 随时观察
             torchvision.utils.save_image(_["encoded_img"], 'encoded_img.jpg')
@@ -202,12 +206,46 @@ def compute_time(start, cur_iter, iterations):
 
 
 def get_msg_acc(msg_true, msg_pred):
+    # 需要理解以下这里的acc是怎么出来的。
+    '''
+    str_acc 当一个batch中的msg_pred 与 msg_true 完全相等的时候 这一个msg才会被判定为正确
+    torch.count_nonzero(correct_pred - (msg_pred.size()[1])) 才会小于msg_pred.size()[1]
+    right_str_acc 应为msg存在校验位 也就是本身信息有着校验的能力 所以存在容忍能力 当msg_pred 的预测在msg校验能力之内就可以判定该msg_pred 就是正确的。
+    '''
+
+    correct_bit = msg_pred.size()[1]-5 # 只要有少于五个bit错误就可以认为正确 95位correct 定义容忍位
+    full_bits = (msg_pred.size()[1])
+
+    # right_str_acc:
     msg_pred = torch.round(msg_pred)
     # batch中二进制级预测正确的列表
-    correct_pred = (msg_pred.size()[1]) - torch.count_nonzero(msg_pred - msg_true, dim=1)
+    # msg_pred 出来的是一个行矩阵 所以 msg_pred.size()[1] 表示的是其列数 也就是行宽
+    correct_pred = (msg_pred.size()[1]) - torch.count_nonzero(msg_pred - msg_true, dim=1)  # 正确了多少个位
+    # torch.count_nonzero(input,dim) dim表示统计的方向 dim=1 表示按照行统计 即统计每一行上面的非0元素个数
+
+    # ==================================================
+    # 测试
+    # torch.set_printoptions(profile="full")
+    # print("msg_pred.size()[1]",msg_pred.size()[1])
+    # print("torch.count_nonzero(msg_pred - msg_true, dim=1):",torch.count_nonzero(msg_pred - msg_true, dim=1))
+    # print("torch.count_nonzero(correct_pred - (msg_pred.size()[1]))",torch.count_nonzero(correct_pred - (msg_pred.size()[1])))
+    # print("correct_pred",correct_pred)
+    # ===================================================
+
+    # 创建一个correct_pred 的深拷贝
+    correct_pred_copy = copy.deepcopy(correct_pred)
+    for idx in range(len(correct_pred_copy)):
+        if correct_pred_copy[idx]>correct_bit:
+            correct_pred_copy[idx] = full_bits
+
+
+    # msg_pre-msg_true
     str_acc = 1.0 - torch.count_nonzero(correct_pred - (msg_pred.size()[1])) / correct_pred.size()[0]
     bit_acc = torch.sum(correct_pred) / (msg_pred.size()[0] * msg_pred.size()[1])
-    return bit_acc, str_acc
+    # 添加一个right_str_acc
+    right_str_acc = 1.0-torch.count_nonzero(correct_pred_copy - (msg_pred.size()[1])) /correct_pred.size()[0]
+    return bit_acc, str_acc, right_str_acc
+
 
 
 def mse_loss(pre, tar, mask):

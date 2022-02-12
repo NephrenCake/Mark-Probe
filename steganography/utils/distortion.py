@@ -7,6 +7,7 @@ import torchvision.transforms.functional as F
 from torchvision import transforms
 
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
+from steganography.utils.MyAugmentation.transPolicy import myPolicy
 
 
 def rand_blur(img, p):
@@ -43,7 +44,7 @@ def rand_crop(img, scale, change_pos=False):
         new_j = torch.randint(0, img.shape[-1] - w + 1, size=(1,)).item()
         crop_img[..., new_i:new_i + h, new_j:new_j + w] = F.crop(img, i, j, h, w)
     else:
-        crop_img[..., i:j + h, i:j + w] = F.crop(img, i, j, h, w)
+        crop_img[..., i:i + h, j:j + w] = F.crop(img, i, j, h, w)
 
     return crop_img
 
@@ -107,19 +108,6 @@ def make_trans(img, scale):
     #                                    ratio=(0.3, 3.3), value="random")(img)
 
 
-def make_trans_2(img, scale):
-    """
-    该部分专门训练局部识别
-    """
-    # ----------------------非空间变换
-    img = common_trans(img, scale)
-
-    # 随机裁剪
-    img = rand_crop(img, scale, change_pos=True)
-
-    return img
-
-
 def common_trans(img, scale):
     """
     此处主要实现大多数情况下共同包含的变换，多为非空间变换
@@ -146,3 +134,104 @@ def common_trans(img, scale):
         # print("noise_trans")
 
     return img
+
+
+def rand_cover(img, _cover_rate, block_size=20):
+    # img 是一个bchw的图片
+    '''
+    img: torch.Tensor
+    cover_rate: [0.~ 1.0)
+    block_size: 遮挡块的大小 建议 0~20 pixel 规定遮挡块 是正方形
+    首先将图片切分为 block_size 大小的单元格 随机填充单元格
+    '''
+    cover_rate = random.uniform(0,_cover_rate)
+    b, c, h, w = img.shape
+    block_num = [int(h * w * cover_rate) // (block_size * block_size)]
+
+    vis_w = [True] * w
+    vis_h = [True] * h
+    fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size, vis_w, vis_h)
+    # 将下面两行注释掉就实现无重叠 block覆盖 但是无法实现 指定的覆盖率
+    while block_num[0]:
+        fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size, vis_w, vis_h)
+    return img
+
+
+def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, block_size, vis_w, vis_h):
+    # (block_num[0] <= 0)
+    if (block_num[0] <= 0) or (end_idx_w - start_idx_w <= block_size) or (end_idx_h - start_idx_h <= block_size):
+        return
+    # 初始start_idx = 0 end_idx = w
+    w_x = random.randint(start_idx_w, end_idx_w - block_size)
+    h_y = random.randint(start_idx_h, end_idx_h - block_size)
+    # 填充图片
+    img_[..., h_y:h_y + block_size, w_x:w_x + block_size] = 0.0
+    block_num[0] -= 1
+    # 这里涉及到 传入的img参数能否像c语言那样指定为&形式
+    # torch.Tensor 是一个可变参数
+    fill_block(img_, start_idx_w, start_idx_h, w_x + block_size, h_y, block_num, block_size, vis_w, vis_h)  # part 1
+    fill_block(img_, w_x + block_size, start_idx_h, end_idx_w, h_y + block_size, block_num, block_size, vis_w,
+               vis_h)  # part 2
+    fill_block(img_, w_x, h_y + block_size, end_idx_w, end_idx_h, block_num, block_size, vis_w, vis_h)  # part 3
+    fill_block(img_, start_idx_w, h_y + block_size, w_x, end_idx_h, block_num, block_size, vis_w, vis_h)  # part 4
+
+def get_params(width: int, height: int, distortion_scale: float):
+    distort_width = int(distortion_scale * (width // 2)) + 1
+    distort_height = int(distortion_scale * (height // 2)) + 1
+
+    topleft = [
+        int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
+        int(torch.randint(-distort_height, distort_height, size=(1, )).item())
+    ]
+    topright = [
+        int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
+        int(torch.randint(-distort_height, distort_height, size=(1, )).item())
+    ]
+    botright = [
+        int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
+        int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
+    ]
+    botleft = [
+        int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
+        int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
+    ]
+    startpoints = [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]]
+    endpoints = [topleft, topright, botright, botleft]
+    return startpoints, endpoints
+
+
+def make_trans_2(img, scale):
+    """
+    该部分专门训练局部识别
+    """
+    # ----------------------非空间变换
+    img = common_trans(img, scale)
+    # 随机裁剪
+    img = rand_crop(img, scale, change_pos=True)
+    return img
+
+
+def make_trans_3(img, scale):
+    # 测试autoAugmentation
+    if scale["myPolicy"]!=0:
+        img = myPolicy()(img)
+    return img
+
+def make_trans_4(img, scale):
+    """
+    该部分专门训练局部识别
+    """
+    # ----------------------非空间变换
+    img = common_trans(img, scale)
+    # 随机裁剪
+    img = rand_crop(img, scale, change_pos=True)
+    # 随机块遮挡：
+    if scale['rand_cover']!=0:
+        img = rand_cover(img,scale['rand_cover'],block_size=random.randint(10, 30))
+    # 透视变换
+    if scale['perspective_trans']!=0:
+        startpoints, endpoints = get_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])
+        img = F.perspective(img, startpoints, endpoints)
+    return img
+
+
