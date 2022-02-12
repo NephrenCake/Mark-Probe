@@ -103,11 +103,11 @@ def upload():
     # cv2.destroyAllWindows()
         
     fake_info = {"ts_min": 27384770, "uid": "123"}
-    resList = selectLog(properties.SQLITE_LOCATION, fake_info["ts_min"], fake_info["uid"], 1)
+    resList = selectLog(properties.SQLITE_LOCATION, fake_info["ts_min"], fake_info["uid"], 3)
     outDict = {"data": resList}
     
     # 返回变换后图像 base64
-    outDict = {"editedImg": cv2ImgToBase64(img)}
+    outDict["editedImg"] = cv2ImgToBase64(img)
 
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
