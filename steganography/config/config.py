@@ -8,8 +8,6 @@ import numpy as np
 
 import torch
 
-from steganography.utils.distortion import get_custom_perspective_params
-
 
 class BaseConfig:
     def __init__(self):
@@ -45,17 +43,17 @@ class TrainConfig(BaseConfig):
         self.load_models = ['Encoder', 'Decoder']
         path = "D:\ProjectFiles\Image_Steganography\StegDev/"
         self.img_set_list = {
-            path + "data/train2014": 0.001, path + "data/val2014": 0.002,  # for test
-            # path + "data/train2014": 1, path + "data/val2014": 1,
+            path + "data/train2014": 0.01, path + "data/val2014": 0.01
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 7  # 15  # 训练的总轮数
+        self.max_epoch = 8  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 8  # 一个批次的图片数量
-        self.num_workers = 4  # 进程数
+        self.batch_size = 16  # 一个批次的图片数量
+        self.num_workers = 16  # 进程数
+        self.single = False  # 是否多卡训练
 
         self.lr_base = 0.001  # 基础学习率
         self.lr_max = 0.5  # 最高学习率倍率
@@ -68,25 +66,26 @@ class TrainConfig(BaseConfig):
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
-            "perspective_trans", "angle_trans", "cut_trans",
-            # "erasing_trans",
-            "jpeg_trans", "noise_trans",
+            "myPolicy",
+            "perspective_trans", "angle_trans", "cut_trans", "erasing_trans","jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
             "rgb_loss", "hsv_loss",  "yuv_loss", "lpips_loss", 'stn_loss',
         ]
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
-        self.perspective_trans_max = 0  # 0.1  # 透视变换
-        self.perspective_trans_grow = (0.5, 5)
-        self.perspective_no_edge = False
+        self.perspective_trans_max = 0.1  # 透视变换
+        self.perspective_trans_grow = (1, 5)
         self.angle_trans_max = 30  # 30  # 观察图片的视角，指与法线的夹角，入射角
         self.angle_trans_grow = (0.3, 0.7)
         self.cut_trans_max = 0.5  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
 
-        # self.erasing_trans_max = 0  # 0.5 擦除遮挡
-        # self.erasing_trans_grow = (0.3, 0.7)
-        self.jpeg_trans_max = 50  # todo 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
+        self.myPolicy_max = 1  # myPolicy 的开关
+        self.myPolicy_grow = (2, 2)
+
+        self.erasing_trans_max = 0.5  # 随机遮挡
+        self.erasing_trans_grow = (0.5, 1)
+        self.jpeg_trans_max = 50  # 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
         self.jpeg_trans_grow = (0.3, 0.4)
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
@@ -99,17 +98,17 @@ class TrainConfig(BaseConfig):
         self.saturation_trans_grow = (0.1, 0.2)
         self.hue_trans_max = 0.1  # 色相变换
         self.hue_trans_grow = (0.1, 0.2)
-        self.blur_trans_max = 0.4
+        self.blur_trans_max = 0.4  # 运动模糊
         self.blur_trans_grow = (0.1, 0.2)
         # loss scale
-        self.rgb_loss_max = 0  # 0.5
+        self.rgb_loss_max = 0
         self.rgb_loss_grow = (1.7, 2)
         self.hsv_loss_max = 0
         self.hsv_loss_grow = (1.7, 2)
         self.yuv_loss_max = 1
-        self.yuv_loss_grow = (0, 2)
+        self.yuv_loss_grow = None
         self.lpips_loss_max = 1
-        self.lpips_loss_grow = (2, 3)
+        self.lpips_loss_grow = (0.5, 1)
         # other
         self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
         self.stn_loss_grow = (0.3, 0.3)  # todo 不能施加太大的loss
@@ -121,7 +120,7 @@ class TrainConfig(BaseConfig):
 
     def check_cfg(self):
         self.exp_name = self.exp_name + time.strftime('_%Y-%m-%d-%H-%M-%S', time.localtime())
-        self.num_workers = min([self.batch_size if self.batch_size > 1 else 0, self.num_workers, os.cpu_count(), 8]) \
+        self.num_workers = min([self.batch_size if self.batch_size > 1 else 0, self.num_workers, os.cpu_count(), 16]) \
             if "win" not in sys.platform else 0
         if len(self.resume) != 0:
             self.exp_name = self.resume.split("/")[-2]
@@ -186,5 +185,14 @@ if __name__ == '__main__':
     for epoch in range(0, 10):
         for iters in range(0, 10):
             scale = cfg.get_cur_scales(cur_iter=iters, cur_epoch=epoch)
-            startpoints, boxpoints, endpoints = get_custom_perspective_params(torch.randn(1, 3, 100, 100), scale)
-            print("startpoints:", startpoints, "boxpoints:", boxpoints, "endpoints", endpoints)
+            # print(scale["erasing_trans"])
+            # print(scale['angle_trans'])
+            print("epoch:",epoch)
+            print("erasing_trans",scale["erasing_trans"])
+            print("myPolicy",scale["myPolicy"])
+            print("perspective",scale["perspective_trans"])
+
+            # startpoints, boxpoints, endpoints = get_custom_perspective_params(torch.randn(1, 3, 100, 100), scale)
+            # print("startpoints:", startpoints, "boxpoints:", boxpoints, "endpoints", endpoints)
+
+
