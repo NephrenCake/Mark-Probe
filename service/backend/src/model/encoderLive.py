@@ -1,5 +1,6 @@
 # encoding: utf-8
 # 拉流，处理，推流
+# 处理帧的核心逻辑在第 77 行部分
 
 import queue
 import threading
@@ -57,11 +58,11 @@ class Live(object):
                 '-s', "{}x{}".format(width, height),    # 画面分辨率
                 '-i', '-',              # 输入
                 '-max_delay', '100',    # 最大延迟毫秒数
-                '-g', '10',             # GOP 大小
-                '-b:v', '500K',         # 视频码率（音频码率为 -b:a）
+                '-g', '20',             # GOP 大小
+                '-b:v', '50K',          # 视频码率（音频码率为 -b:a）
                 '-c:v', 'h264_nvenc',   # 编解码器，libx264：H264-CPU，h264_nvenc：H264-CUDA
                 '-pix_fmt', 'yuv420p',  # 输出颜色空间
-                '-bufsize', '500K',     # 缓冲区大小，一般而言，码率*帧率*5
+                '-bufsize', '100K',     # 缓冲区大小，一般而言，码率*帧率*5
                 # '-maxrate', '1000K'     # 最大码率
                 # '-preset', 'ultrafast',      # 预设（CUDA 下不可用）
                 '-f', 'flv',            # 输出格式
@@ -107,10 +108,10 @@ class Live(object):
                 #     frame = self.last_encoded_frame
                 
                 # 写数据库
-                # present_minute = utils.getMinutesTs()
-                # if (present_minute - self.last_minute >= 1):
-                #     utils.insertLog(properties.SQLITE_LOCATION, present_minute, self.uid, self.uip)
-                #     self.last_minute = present_minute
+                present_minute = utils.getMinutesTs()
+                if (present_minute - self.last_minute >= 1):
+                    utils.insertLog(properties.SQLITE_LOCATION, present_minute, self.uid, self.uip)
+                    self.last_minute = present_minute
                 
                 # 写入管道
                 self.pipe.stdin.write(frame.tobytes())
