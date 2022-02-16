@@ -2,7 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from steganography.models.swin import swin_tiny_patch4_window7_224, SwinTransformer
+from steganography.models.swin import SwinTransformer
+
 
 
 

@@ -2,9 +2,11 @@
 import os
 import sys
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tensorboardX import SummaryWriter
 from torch.optim import lr_scheduler
 import torch
+import torch.nn as tnn
 
 from steganography.models.CINet import CIDecoder, CIEncoder
 from steganography.utils.dataset import get_dataloader
@@ -39,12 +41,21 @@ def main():
     logger.info(f'{cfg.iter_per_epoch} iterations per epoch.')
 
     # 实例化模型
-    Encoder = CIEncoder(msg_size=cfg.msg_size,
-                        img_size=cfg.img_size[0]).to(cfg.device)
-    Decoder = CIDecoder(msg_size=cfg.msg_size,
-                        img_size=cfg.img_size[0],
-                        decoder_type="conv").to(cfg.device)
-    lpips_metric = LPIPS(net="alex").to(cfg.device)
+    if cfg.single:
+        Encoder = CIEncoder(msg_size=cfg.msg_size,
+                            img_size=cfg.img_size[0]).to(cfg.device)
+        Decoder = CIDecoder(msg_size=cfg.msg_size,
+                            img_size=cfg.img_size[0],
+                            decoder_type="conv").to(cfg.device)
+        lpips_metric = LPIPS(net="alex").to(cfg.device)
+    else:
+        # 多卡并行模型
+        Encoder = tnn.DataParallel(CIEncoder(msg_size=cfg.msg_size,
+                                             img_size=cfg.img_size[0]).to(cfg.device)).to(cfg.device)
+        Decoder = tnn.DataParallel(CIDecoder(msg_size=cfg.msg_size,
+                                             img_size=cfg.img_size[0],
+                                             decoder_type="conv")).to(cfg.device)
+        lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
@@ -109,7 +120,8 @@ def main():
                     f"img_loss:{round(val_result['img_loss'], 4)} "
                     f"msg_loss:{round(val_result['msg_loss'], 4)} "
                     f"bit_acc:{round(val_result['bit_acc'], 4)} "
-                    f"str_acc:{round(val_result['str_acc'], 2)} ")
+                    f"str_acc:{round(val_result['str_acc'], 2)} "
+                    f"right_str_acc:{round(val_result['right_str_acc'], 2)}")
         # save weights
         if val_result["loss"] < best_loss and epoch >= cfg.start_save_best:  # todo 不合理
             save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, "best.pth")

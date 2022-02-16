@@ -8,8 +8,6 @@ import numpy as np
 
 import torch
 
-from steganography.utils.distortion import get_custom_perspective_params
-
 
 class BaseConfig:
     def __init__(self):
@@ -51,11 +49,12 @@ class TrainConfig(BaseConfig):
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 8  # 15  # 训练的总轮数
+        self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 32  # 一个批次的图片数量
+        self.batch_size = 48  # 一个批次的图片数量
         self.num_workers = 16  # 进程数
+        self.single = True  # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率
         self.lr_max = 0.5  # 最高学习率倍率
@@ -66,35 +65,28 @@ class TrainConfig(BaseConfig):
         self.msg_size = 96  # 输入网络的二进制字符串大小
 
         # ============== dynamic scales
-        # 注册使用的递增变换# "erasing_trans",
+        # 注册使用的递增变换
         self.scale_list = [
             "myPolicy",
-            "perspective_trans", "angle_trans", "cut_trans", "rand_cover","jpeg_trans", "noise_trans",
+            "perspective_trans", "angle_trans", "cut_trans", "erasing_trans","jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
             "rgb_loss", "hsv_loss",  "yuv_loss", "lpips_loss", 'stn_loss',
         ]
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
-        self.perspective_trans_max = 0.1  # 0.1  # 透视变换
-        self.perspective_trans_grow = (0.5, 5)
-        self.perspective_no_edge = False
+        self.perspective_trans_max = 0.1  # 透视变换
+        self.perspective_trans_grow = (1, 5)
         self.angle_trans_max = 30  # 30  # 观察图片的视角，指与法线的夹角，入射角
         self.angle_trans_grow = (0.3, 0.7)
         self.cut_trans_max = 0.5  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
 
-        # myPolicy 的开关
-        self.myPolicy_max = 1
+        self.myPolicy_max = 1  # myPolicy 的开关
         self.myPolicy_grow = (2, 2)
-        # 随机遮挡;
-        # 定义当epoch==2的时候加入 rand_cover
-        self.rand_cover_max = 0.5
-        self.rand_cover_grow = (1, 2)
-        #
 
-        # self.erasing_trans_max = 0  # 0.5 擦除遮挡
-        # self.erasing_trans_grow = (0.3, 0.7)
-        self.jpeg_trans_max = 50  # todo 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
+        self.erasing_trans_max = 0.2  # 随机遮挡
+        self.erasing_trans_grow = (0.5, 1)
+        self.jpeg_trans_max = 50  # 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
         self.jpeg_trans_grow = (0.3, 0.4)
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
@@ -107,17 +99,17 @@ class TrainConfig(BaseConfig):
         self.saturation_trans_grow = (0.1, 0.2)
         self.hue_trans_max = 0.1  # 色相变换
         self.hue_trans_grow = (0.1, 0.2)
-        self.blur_trans_max = 0.4
+        self.blur_trans_max = 0.4  # 运动模糊
         self.blur_trans_grow = (0.1, 0.2)
         # loss scale
-        self.rgb_loss_max = 0  # 0.5
+        self.rgb_loss_max = 0
         self.rgb_loss_grow = (1.7, 2)
         self.hsv_loss_max = 0
         self.hsv_loss_grow = (1.7, 2)
         self.yuv_loss_max = 1
-        self.yuv_loss_grow = (0, 2)
+        self.yuv_loss_grow = None
         self.lpips_loss_max = 1
-        self.lpips_loss_grow = (2, 3)
+        self.lpips_loss_grow = (0.5, 1)
         # other
         self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
         self.stn_loss_grow = (0.3, 0.3)  # todo 不能施加太大的loss
@@ -194,10 +186,10 @@ if __name__ == '__main__':
     for epoch in range(0, 10):
         for iters in range(0, 10):
             scale = cfg.get_cur_scales(cur_iter=iters, cur_epoch=epoch)
-            # print(scale["rand_cover"])
+            # print(scale["erasing_trans"])
             # print(scale['angle_trans'])
             print("epoch:",epoch)
-            print("rand_cover",scale["rand_cover"])
+            print("erasing_trans",scale["erasing_trans"])
             print("myPolicy",scale["myPolicy"])
             print("perspective",scale["perspective_trans"])
 
