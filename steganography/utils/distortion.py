@@ -79,6 +79,10 @@ def non_spatial_trans(img, scale):
     if scale["noise_trans"] != 0:
         img = rand_noise(img, scale["noise_trans"])
         # print("noise_trans")
+    # 加入grayscale 变换
+    if scale["grayscale_trans"]!=0:
+        if random.randint(1,10)<=3:
+            img = transforms.Grayscale()(img)
 
     return img
 
@@ -172,4 +176,5 @@ def make_trans_for_photo(img, scale):
     if scale['perspective_trans'] != 0:
         startpoints, endpoints = get_perspective_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])
         img = F.perspective(img, startpoints, endpoints)
+
     return img
