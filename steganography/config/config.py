@@ -39,7 +39,10 @@ class TrainConfig(BaseConfig):
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
-        self.resume = ""  # 继续中断的训练
+        self.resume = "train_log/CI-test_2022-02-16-22-58-11/best.pth"  # 继续中断的训练
+        '''
+        train_log/CI-test_2022-02-16-22-58-11/best.pth
+        '''
         self.load_models = ['Encoder', 'Decoder']
         path = "/root/src/"
         self.img_set_list = {
@@ -67,7 +70,7 @@ class TrainConfig(BaseConfig):
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
-            "myPolicy",
+            "myPolicy","grayscale_trans",
             "perspective_trans", "angle_trans", "cut_trans", "erasing_trans","jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
             "rgb_loss", "hsv_loss",  "yuv_loss", "lpips_loss", 'stn_loss',
@@ -83,6 +86,10 @@ class TrainConfig(BaseConfig):
 
         self.myPolicy_max = 1  # myPolicy 的开关
         self.myPolicy_grow = (2, 2)
+
+        # 添加的grayscale_trans 变换
+        self.grayscale_trans_max = 1
+        self.grayscale_trans_grow = (0.8, 0.8)
 
         self.erasing_trans_max = 0.2  # 随机遮挡
         self.erasing_trans_grow = (0.5, 1)

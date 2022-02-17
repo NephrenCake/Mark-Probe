@@ -35,13 +35,15 @@ def process_forward(Encoder,
 
     # Decoder
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
-    crop_msg_pred, _ = Decoder(crop_img, use_stn=False)
+    crop_msg_pred, _ = Decoder(crop_img, use_stn=False)  # 将use_stn 设置为True
 
     # ------------------loss
     # todo 可以尝试使用其他实现方式，高斯模糊并不是最佳选择，期望标定的高频区域范围更多一些
+    # 添加gaussian_blur的掩码可以将。。的权重设置的更高
     weight_mask = torch.abs(img - transforms_F.gaussian_blur(img, [7, 7], [10, 10]))
     weight_mask = torch.max(weight_mask) - weight_mask  # low weight in high frequency
 
+    #
     img_loss = torch.zeros(1).to(cfg.device)
     if scales["rgb_loss"] != 0:
         rgb_loss = mse_loss(encoded_img, img, mask=weight_mask)

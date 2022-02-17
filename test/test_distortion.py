@@ -104,9 +104,15 @@ def test1():
     show_img(img_)
     pass
 
+def test_grayscale():
+    img_ = transforms.Grayscale()(img).squeeze(0)
+    show_img(img_)
+    pass
+
 
 
 if __name__ == '__main__':
     # test_crop()
     # test_perspective()
-    test1()
+    # test1()
+    test_grayscale()
