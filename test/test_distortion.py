@@ -1,6 +1,8 @@
 import os
 import sys
 
+import cv2
+
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
 import torch
@@ -9,9 +11,10 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import functional as F
 
-from steganography.utils.distortion import rand_crop
+from steganography.utils.distortion import rand_crop, grayscale_trans
 
 img_path = "test_source/COCO_train2014_000000000009.jpg"
+img_path = "D:\learning\COCOTrain+Val\\test2014\COCO_test2014_000000000001.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {
@@ -105,11 +108,39 @@ def test1():
     pass
 
 def test_grayscale():
-    print(img.shape)
-    img_ = transforms.Grayscale()(img).squeeze(0)
-    print(img_.shape)
-    show_img(img_)
+    print(img.shape[:])
+    # img_ = transforms.Grayscale()(img).squeeze(0)
+    # 使用luma原理来实现grayscale变换
+    # print(img_.shape)
+    # show_img(img_)
+    # 输入一个 b 3 h w 的图片组 通过grayscale 会变为 b 1 h w的图片组 c通道少了俩 grayscale 保留的是哪一个通道的灰度图?
+    # luma L = R * 299/1000 + G * 587/1000 + B * 114/1000，下取整
+    # b,c,h,w = img.shape
+    # for i in range(0,b):
+    #     img[i][0] = img[i][0]*0.299+img[i][1]*0.587+img[i][2]*0.114
+    #     img[i][1] = img[i][0]
+    #     img[i][2] = img[i][0]
+    # img_ = img.squeeze(0)
+    # print(img_.shape)
+    # print(img.shape)
+    # show_img(img.squeeze(0))
+    # 测试img 是否直接被 函数修改 应该是直接被修改了 tensor是个可变参数
+    grayscale_trans(img,0)
+    show_img(img.squeeze(0))
+
     pass
+
+def test_contrast():
+    _img = F.adjust_contrast(img,contrast_factor=0.4).squeeze(0)
+    show_img(_img)
+
+
+def test_gray_trans():
+    _img = cv2.imread(img_path)
+    _img_gray = cv2.cvtColor(_img,cv2.COLOR_BGR2GRAY)
+    print(_img.shape)
+    print(_img[0:10][0:10][1])
+    print(_img_gray[0:10][0:10])
 
 
 
@@ -118,3 +149,5 @@ if __name__ == '__main__':
     # test_perspective()
     # test1()
     test_grayscale()
+    # test_contrast()
+    # test_gray_trans()
