@@ -94,21 +94,19 @@ def rand_erase(img, _cover_rate, block_size=20):
     cover_rate: [0.~ 1.0)
     block_size: 遮挡块的大小 建议 0~20 pixel 规定遮挡块 是正方形
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
+    # 这里的 rand_erase 会导致 遮挡的很多部分集中在图片的上半部分。 已经改进！
+
     """
     cover_rate = random.uniform(0, _cover_rate)
     b, c, h, w = img.shape
     block_num = [int(h * w * cover_rate) // (block_size * block_size)]
-
-    vis_w = [True] * w
-    vis_h = [True] * h
-    fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size, vis_w, vis_h)
-    # 将下面两行注释掉就实现无重叠 block覆盖 但是无法实现 指定的覆盖率
+    fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size)
     while block_num[0]:
-        fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size, vis_w, vis_h)
+        fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size)
     return img
 
 
-def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, block_size, vis_w, vis_h):
+def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, block_size):
     # (block_num[0] <= 0)
     if (block_num[0] <= 0) or (end_idx_w - start_idx_w <= block_size) or (end_idx_h - start_idx_h <= block_size):
         return
@@ -120,11 +118,22 @@ def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, 
     block_num[0] -= 1
     # 这里涉及到 传入的img参数能否像c语言那样指定为&形式
     # torch.Tensor 是一个可变参数
-    fill_block(img_, start_idx_w, start_idx_h, w_x + block_size, h_y, block_num, block_size, vis_w, vis_h)  # part 1
-    fill_block(img_, w_x + block_size, start_idx_h, end_idx_w, h_y + block_size, block_num, block_size, vis_w,
-               vis_h)  # part 2
-    fill_block(img_, w_x, h_y + block_size, end_idx_w, end_idx_h, block_num, block_size, vis_w, vis_h)  # part 3
-    fill_block(img_, start_idx_w, h_y + block_size, w_x, end_idx_h, block_num, block_size, vis_w, vis_h)  # part 4
+    para_list = [
+        [start_idx_w, start_idx_h, w_x + block_size, h_y],
+        [w_x + block_size, start_idx_h, end_idx_w, h_y + block_size],
+        [w_x, h_y + block_size, end_idx_w, end_idx_h],
+        [start_idx_w, h_y + block_size, w_x, end_idx_h]
+    ]
+    idx_lis = random.sample(range(0, 4), 4)
+
+    fill_block(img_, para_list[idx_lis[0]][0], para_list[idx_lis[0]][1], para_list[idx_lis[0]][2],
+               para_list[idx_lis[0]][3], block_num, block_size)  # part 1
+    fill_block(img_, para_list[idx_lis[1]][0], para_list[idx_lis[1]][1], para_list[idx_lis[1]][2],
+               para_list[idx_lis[1]][3], block_num, block_size)  # part 2
+    fill_block(img_, para_list[idx_lis[2]][0], para_list[idx_lis[2]][1], para_list[idx_lis[2]][2],
+               para_list[idx_lis[2]][3], block_num, block_size)  # part 3
+    fill_block(img_, para_list[idx_lis[3]][0], para_list[idx_lis[3]][1], para_list[idx_lis[3]][2],
+               para_list[idx_lis[3]][3], block_num, block_size)  # part 4
 
 
 def get_perspective_params(width: int, height: int, distortion_scale: float):

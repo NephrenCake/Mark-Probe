@@ -55,7 +55,7 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 48  # 一个批次的图片数量
+        self.batch_size = 32  # 一个批次的图片数量
         self.num_workers = 16  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 

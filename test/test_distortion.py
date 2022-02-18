@@ -12,6 +12,7 @@ from torchvision.transforms import functional as F
 from steganography.utils.distortion import rand_crop
 
 img_path = "test_source/COCO_train2014_000000000009.jpg"
+img_path = "D:\learning\COCOTrain+Val\\test2014\COCO_test2014_000000000001.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {
@@ -111,10 +112,16 @@ def test_grayscale():
     show_img(img_)
     pass
 
+def test_contrast():
+    _img = F.adjust_contrast(img,contrast_factor=0.4).squeeze(0)
+    show_img(_img)
+
+
 
 
 if __name__ == '__main__':
     # test_crop()
     # test_perspective()
     # test1()
-    test_grayscale()
+    # test_grayscale()
+    test_contrast()
