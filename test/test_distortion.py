@@ -105,7 +105,9 @@ def test1():
     pass
 
 def test_grayscale():
+    print(img.shape)
     img_ = transforms.Grayscale()(img).squeeze(0)
+    print(img_.shape)
     show_img(img_)
     pass
 
