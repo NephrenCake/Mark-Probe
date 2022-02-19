@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 import torch
 import torch.nn.functional as F
 
-from steganography.models.CINet import CIEncoder, STN, CIDecoder
+from steganography.models.MPNet import MPEncoder, STN, MPDecoder
 
 img_size = 448
 msg_size = 96
@@ -18,14 +18,14 @@ def test_encoder_model():
     img = torch.randn((batch_size, 3, img_size, img_size)).to(device)
     msg = torch.randn(batch_size, msg_size).to("cuda")
 
-    net = CIEncoder().to("cuda")
+    net = MPEncoder().to("cuda")
     output = net({"img": img, "msg": msg})
 
     print(output.size())
     # print(net.residual.weight.shape)
     # print(output)
     # print(net)
-    print(sum(p.numel() for p in net.parameters()))  # stega 1739999  CIEncoder 1713071
+    print(sum(p.numel() for p in net.parameters()))  # stega 1739999  MPEncoder 1713071
 
 
 def test_stn():
@@ -42,7 +42,7 @@ def test_decoder_model():
     img = torch.randn((batch_size, 3, img_size, img_size)).to(device)
     msg = torch.randn((batch_size, msg_size)).to(device)
 
-    net = CIDecoder(msg_size=msg_size, img_size=img_size, decoder_type="conv").to(device)
+    net = MPDecoder(msg_size=msg_size, img_size=img_size, decoder_type="conv").to(device)
     output = net(img)
 
     print(output[0].size(), msg.size())
