@@ -71,12 +71,14 @@ def get_dataloader(img_set_list: dict,
                                                batch_size=batch_size,
                                                shuffle=True,
                                                num_workers=num_workers,
-                                               drop_last=True)
+                                               drop_last=True,
+                                               pin_memory=True)
     val_loader = torch.utils.data.DataLoader(val_data_set,
                                              batch_size=batch_size,
                                              shuffle=False,
                                              num_workers=num_workers,
-                                             drop_last=True)
+                                             drop_last=True,
+                                             pin_memory=True)
 
     return train_loader, val_loader
 

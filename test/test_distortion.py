@@ -26,6 +26,13 @@ img = transforms.Compose([
 ])(Image.open(img_path).convert("RGB")).unsqueeze(0)
 torchvision.utils.save_image(img, "test_source/test.jpg")
 
+def show_img(_img: torch.Tensor):
+    '''
+    展示一张tensor形式的图片
+    '''
+    img_ = transforms.ToPILImage()(_img)
+    img_.show()
+    pass
 
 def test_crop():
     global img
@@ -67,7 +74,39 @@ def test_perspective():
     img_ = F.perspective(img_, startpoints, endpoints)
     torchvision.utils.save_image(img_, "test_source/test_perspective.jpg")
 
+def get_params(width: int, height: int, distortion_scale: float):
+    distort_width = int(distortion_scale * (width // 2)) + 1
+    distort_height = int(distortion_scale * (height // 2)) + 1
+
+    topleft = [
+        int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
+        int(torch.randint(-distort_height, distort_height, size=(1, )).item())
+    ]
+    topright = [
+        int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
+        int(torch.randint(-distort_height, distort_height, size=(1, )).item())
+    ]
+    botright = [
+        int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
+        int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
+    ]
+    botleft = [
+        int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
+        int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
+    ]
+    startpoints = [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]]
+    endpoints = [topleft, topright, botright, botleft]
+    return startpoints, endpoints
+
+def test1():
+    startpoints, endpoints = get_params(img_size[0], img_size[0], scale["perspective_trans"])
+    img_ = F.perspective(img, startpoints, endpoints).squeeze(0)
+    show_img(img_)
+    pass
+
+
 
 if __name__ == '__main__':
-    test_crop()
-    test_perspective()
+    # test_crop()
+    # test_perspective()
+    test1()

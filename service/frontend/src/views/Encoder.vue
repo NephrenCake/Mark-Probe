@@ -202,10 +202,11 @@ export default {
         isLive: true,
         fluid: true,
         stashInitialSize: 128,
-        url: 'http://127.0.0.1:81/live?port=1935&app=live&stream=test'
+        url: 'http://127.0.0.1/live?app=live&stream=test'
       },{
         enableStashBuffer: false,
         fixAudioTimestampGap: false,
+        isLive: true
       });
     },
     // 图片转 blob(url) 再转为 base64

@@ -41,19 +41,20 @@ class TrainConfig(BaseConfig):
         self.pretrained = ""  # 使用预训练权重
         self.resume = ""  # 继续中断的训练
         self.load_models = ['Encoder', 'Decoder']
-        path = "D:\ProjectFiles\Image_Steganography\StegDev/"
+        path = "/root/src/"
         self.img_set_list = {
-            path + "data/train2014": 0.01, path + "data/val2014": 0.01
+            path + "COCO2014/train2014": 1, path + "COCO2014/val2014": 1,  # for test
+            # path + "data/train2014": 1, path + "data/val2014": 1,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 8  # 15  # 训练的总轮数
+        self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 16  # 一个批次的图片数量
+        self.batch_size = 48  # 一个批次的图片数量
         self.num_workers = 16  # 进程数
-        self.single = False  # 是否多卡训练
+        self.single = True  # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率
         self.lr_max = 0.5  # 最高学习率倍率
@@ -83,7 +84,7 @@ class TrainConfig(BaseConfig):
         self.myPolicy_max = 1  # myPolicy 的开关
         self.myPolicy_grow = (2, 2)
 
-        self.erasing_trans_max = 0.5  # 随机遮挡
+        self.erasing_trans_max = 0.2  # 随机遮挡
         self.erasing_trans_grow = (0.5, 1)
         self.jpeg_trans_max = 50  # 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
         self.jpeg_trans_grow = (0.3, 0.4)
