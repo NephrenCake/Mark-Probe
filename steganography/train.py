@@ -3,12 +3,13 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from tensorboardX import SummaryWriter
 from torch.optim import lr_scheduler
 import torch
 import torch.nn as tnn
 
-from steganography.models.CINet import CIDecoder, CIEncoder
+from steganography.models.MPNet import MPDecoder, MPEncoder
 from steganography.utils.dataset import get_dataloader
 from steganography.utils.log_utils import get_logger
 from steganography.utils.train_utils import train_one_epoch, evaluate_one_epoch
@@ -42,17 +43,17 @@ def main():
 
     # 实例化模型
     if cfg.single:
-        Encoder = CIEncoder(msg_size=cfg.msg_size,
+        Encoder = MPEncoder(msg_size=cfg.msg_size,
                             img_size=cfg.img_size[0]).to(cfg.device)
-        Decoder = CIDecoder(msg_size=cfg.msg_size,
+        Decoder = MPDecoder(msg_size=cfg.msg_size,
                             img_size=cfg.img_size[0],
                             decoder_type="conv").to(cfg.device)
         lpips_metric = LPIPS(net="alex").to(cfg.device)
     else:
         # 多卡并行模型
-        Encoder = tnn.DataParallel(CIEncoder(msg_size=cfg.msg_size,
-                                             img_size=cfg.img_size[0]).to(cfg.device)).to(cfg.device)
-        Decoder = tnn.DataParallel(CIDecoder(msg_size=cfg.msg_size,
+        Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
+                                             img_size=cfg.img_size[0])).to(cfg.device)
+        Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
                                              img_size=cfg.img_size[0],
                                              decoder_type="conv")).to(cfg.device)
         lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)

@@ -39,9 +39,12 @@ class TrainConfig(BaseConfig):
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
-        self.resume = "train_log/CI-test_2022-02-16-22-58-11/best.pth"  # 继续中断的训练
+        self.resume = ""  # 继续中断的训练
         '''
-        train_log/CI-test_2022-02-16-22-58-11/best.pth
+        train_log/CI-test_2022-02-16-22-58-11/best.pth # 添加了rand_erase() 的训练 但是最后图像出现了网格状的图案
+        train_log/CI-test_2022-02-19-13-23-41/latest-1.pth # 将rand_erase 注释掉之后的训练 perspective 仍然在使用
+        train_log/CI-test_2022-02-20-14-09-43
+         
         '''
         self.load_models = ['Encoder', 'Decoder']
         path = "/root/src/"
@@ -55,8 +58,8 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 32  # 一个批次的图片数量
-        self.num_workers = 16  # 进程数
+        self.batch_size = 46  # 一个批次的图片数量
+        self.num_workers = 12  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率

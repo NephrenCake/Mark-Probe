@@ -16,56 +16,55 @@ class StegaStampEncoder(nn.Module):
         super(StegaStampEncoder, self).__init__()
         self.msg_dense = nn.Sequential(
             nn.Linear(msg_size, 7500),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(6, 32, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
         self.conv2 = nn.Sequential(
             nn.Conv2d(32, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
         self.conv3 = nn.Sequential(
             nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
         self.conv4 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
         self.conv5 = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
         self.up6 = nn.Sequential(
             nn.ZeroPad2d((0, 1, 0, 1)),
             nn.Conv2d(256, 128, kernel_size=(2, 2)),
-            nn.LeakyReLU(inplace=True))
+            nn.ReLU(inplace=True))
         self.conv6 = nn.Sequential(
             nn.Conv2d(256, 128, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True))  # 7
+            nn.ReLU(inplace=True))  # 7
         self.up7 = nn.Sequential(
             nn.ZeroPad2d((0, 1, 0, 1)),
             nn.Conv2d(128, 64, kernel_size=(2, 2)),
-            nn.LeakyReLU(inplace=True))  # 8
+            nn.ReLU(inplace=True))  # 8
         self.conv7 = nn.Sequential(
             nn.Conv2d(128, 64, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True))  # 9
+            nn.ReLU(inplace=True))  # 9
         self.up8 = nn.Sequential(
             nn.ZeroPad2d((0, 1, 0, 1)),
             nn.Conv2d(64, 32, kernel_size=(2, 2)),
-            nn.LeakyReLU(inplace=True))  # 10
+            nn.ReLU(inplace=True))  # 10
         self.conv8 = nn.Sequential(
             nn.Conv2d(64, 32, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True))  # 11
+            nn.ReLU(inplace=True))  # 11
         self.up9 = nn.Sequential(
             nn.ZeroPad2d((0, 1, 0, 1)),
             nn.Conv2d(32, 32, kernel_size=(2, 2)),
-            nn.LeakyReLU(inplace=True))  # 12
+            nn.ReLU(inplace=True))  # 12
         self.conv9 = nn.Sequential(
             nn.Conv2d(70, 32, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True))  # 13
+            nn.ReLU(inplace=True))  # 13
         self.residual = nn.Conv2d(32, 3, kernel_size=(1, 1))  # 13
 
         self.up_x2 = nn.Upsample(scale_factor=2)
         self.up_x8 = nn.Upsample(scale_factor=8)
-
 
         self.initialize_weights()
 
@@ -121,11 +120,11 @@ class StegaStampDecoder(nn.Module):
         # 空间变换器定位 - 网络
         self.localization = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
         )
         # 3 * 2 affine矩阵的回归量
         self.fc_loc = nn.Sequential(
@@ -136,22 +135,22 @@ class StegaStampDecoder(nn.Module):
         # 解码器
         self.decoder = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(32, 32, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Flatten(),
             nn.Linear(21632, 512),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Linear(512, msg_size),
             nn.Sigmoid()
         )
@@ -190,18 +189,18 @@ class StegaStampDecoder(nn.Module):
         return self.decoder(x), x + .5
 
 
-class Discriminator(nn.Module):
+class StegaStampDiscriminator(nn.Module):
     def __init__(self):
-        super(Discriminator, self).__init__()
+        super(StegaStampDiscriminator, self).__init__()
         self.model = nn.Sequential(
             nn.Conv2d(3, 8, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(8, 16, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(16, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(64, 1, kernel_size=(3, 3), padding=1),
             nn.Sigmoid()
         )
@@ -227,86 +226,3 @@ class Discriminator(nn.Module):
         x = self.model(x)
         output = torch.mean(x.view(image.shape[0], -1), dim=1)
         return output
-
-
-class MyDecoder(nn.Module):
-    def __init__(self, msg_size=100, height=400, width=400):
-        super(MyDecoder, self).__init__()
-
-        # 空间变换器定位 - 网络
-        self.localization = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-        )
-        # 4 * 2 矩阵的回归量
-        self.fc_loc = nn.Sequential(
-            nn.Linear(320000, 256),
-            nn.ReLU(True),
-            nn.Linear(256, 4 * 2))
-
-        # 解码器
-        self.decoder = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(32, 32, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(2, 2), padding=1),
-            nn.LeakyReLU(inplace=True),
-            nn.Flatten(),
-            nn.Linear(21632, 512),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(512, msg_size),
-            nn.Sigmoid()
-        )
-
-        self.initialize_weights()
-
-    def initialize_weights(self):
-        # 定义权值初始化
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                torch.nn.init.kaiming_normal_(m.weight.data)
-                if m.bias is not None:
-                    m.bias.data.zero_()
-            elif isinstance(m, nn.Linear):
-                torch.nn.init.kaiming_uniform_(m.weight.data)
-                m.bias.data.zero_()
-
-        # 使用身份转换初始化权重/偏差
-        self.fc_loc[2].weight.data.zero_()
-        self.fc_loc[2].bias.data.copy_(torch.tensor([0., 0.,
-                                                     1., 0.,
-                                                     1., 1.,
-                                                     0., 1.]))
-
-    def forward(self, x, use_stn=True):
-        b, c, w, h = x.shape
-
-        startpoints = torch.tensor([[[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]]]
-                                   ).to(x.device, torch.float32).expand(b, -1, -1)
-        if use_stn:
-            # 空间变换器网络转发功能
-            # 需要待 decoder 部分稳定才可以开启 STN
-            xs = self.localization(x).reshape(-1, 320000)
-            startpoints = self.fc_loc(xs).reshape(-1, 4, 2)
-            startpoints = startpoints
-
-            endpoints = torch.tensor([[[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]]]
-                                     ).to(x.device, torch.float32).expand(b, -1, -1)
-            # 使用 kornia 提供的函数以确保预测的参数到透视变换输入图像这个过程可微
-            M_end2start = get_perspective_transform(endpoints, startpoints * (w - 1))
-            x = warp_perspective(x, M_end2start, (w, h), align_corners=True)
-
-        return self.decoder(x), x.data, startpoints

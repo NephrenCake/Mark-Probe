@@ -142,12 +142,20 @@ def test_gray_trans():
     print(_img[0:10][0:10][1])
     print(_img_gray[0:10][0:10])
 
+def test_gaussian_blur():
+    img_cv = cv2.imread(img_path)
+    img_cv_ = cv2.GaussianBlur(img_cv,(7,1),2,sigmaY=2)
+    cv2.imshow("de",img_cv_)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    pass
 
 
 if __name__ == '__main__':
     # test_crop()
     # test_perspective()
     # test1()
-    test_grayscale()
+    # test_grayscale()
     # test_contrast()
     # test_gray_trans()
+    test_gaussian_blur()

@@ -5,8 +5,6 @@ import torch.nn.functional as F
 from steganography.models.swin import SwinTransformer
 
 
-
-
 def initialize_weights(net):
     for m in net.modules():
         if isinstance(m, nn.Conv2d):
@@ -18,9 +16,9 @@ def initialize_weights(net):
             m.bias.data.zero_()
 
 
-class CIEncoder(nn.Module):
+class MPEncoder(nn.Module):
     """
-    CookieImage-Encoder
+    Mark-Probe-Encoder
     todo Upsample -> Repeat
         [由于已经扩大了感受野，暂时先不改]
     dilation -> (2, 2) 一个空洞
@@ -34,7 +32,7 @@ class CIEncoder(nn.Module):
     """
 
     def __init__(self, msg_size=96, img_size=448):
-        super(CIEncoder, self).__init__()
+        super(MPEncoder, self).__init__()
         self.msg_dense_size = int(img_size / 8)
         msg_dense_out = int(img_size * img_size * 3 / (8 * 8))
 
@@ -106,14 +104,14 @@ class CIEncoder(nn.Module):
         return self.residual(conv9)  # residual 448*448*3
 
 
-class CIDecoder(nn.Module):
+class MPDecoder(nn.Module):
     """
-    CookieImage-Decoder
+    Mark-Probe-Decoder
     已修改，加入了 "swin" or "conv" 可选 decoder
     """
 
     def __init__(self, msg_size=96, img_size=448, decoder_type="swin", has_stn=True):
-        super(CIDecoder, self).__init__()
+        super(MPDecoder, self).__init__()
         self.has_stn = has_stn
         if has_stn:
             self.stn = STN(img_size=img_size)

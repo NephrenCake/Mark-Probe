@@ -242,11 +242,11 @@ def get_msg_acc(msg_true, msg_pred):
     # ===================================================
 
     # 创建一个correct_pred 的深拷贝
-    # todo 应该可以优化成并行计算，尽量避免循环
+    # 优化： correct_pred_copy 本质上是 correct_pred  tensor的数据进行加减运算的时候 将所有的内容都进行运算
+    #       correct_pred_copy 中存放的是 一个batch中 的一行数据里面正确的位数
+    # 修改了一下 比原来的简洁了一点
     correct_pred_copy = copy.deepcopy(correct_pred)
-    for idx in range(len(correct_pred_copy)):
-        if correct_pred_copy[idx] > correct_bit:
-            correct_pred_copy[idx] = full_bits
+    correct_pred_copy[correct_pred>correct_bit] = full_bits
 
     # msg_pre-msg_true
     str_acc = 1.0 - torch.count_nonzero(correct_pred - (msg_pred.size()[1])) / correct_pred.size()[0]
@@ -254,6 +254,7 @@ def get_msg_acc(msg_true, msg_pred):
     # 添加一个right_str_acc
     right_str_acc = 1.0 - torch.count_nonzero(correct_pred_copy - (msg_pred.size()[1])) / correct_pred.size()[0]
     return bit_acc, str_acc, right_str_acc
+
 
 
 def mse_loss(pre, tar, mask):

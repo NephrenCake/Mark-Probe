@@ -9,6 +9,12 @@ from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 
 
+
+# def motion_blur():
+#     #  实现运动模糊
+#
+#     pass
+
 def rand_blur(img, p):
     """
     实现随机高斯模糊
@@ -93,6 +99,7 @@ def non_spatial_trans(img, scale):
     if scale["grayscale_trans"]!=0:
         if random.randint(1,10)<=3:
             grayscale_trans(img)
+
     return img
 
 
@@ -188,8 +195,8 @@ def make_trans_for_photo(img, scale):
     # ----------------------非空间变换
     img = non_spatial_trans(img, scale)
     # 随机块遮挡： 可能是随机块遮挡导致 出现了网格状的 图案
-    # if scale['erasing_trans'] != 0:
-    #     img = rand_erase(img, scale['erasing_trans'], block_size=random.randint(10, 30))
+    if scale['erasing_trans'] != 0:
+        img = rand_erase(img, scale['erasing_trans'], block_size=random.randint(10, 30))
     # 透视变换
     if scale['perspective_trans'] != 0:
         startpoints, endpoints = get_perspective_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])
