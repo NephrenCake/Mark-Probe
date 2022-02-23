@@ -107,10 +107,10 @@ class Live(object):
                 #     frame = self.last_encoded_frame
                 
                 # 写数据库
-                # present_minute = utils.getMinutesTs()
-                # if (present_minute - self.last_minute >= 1):
-                #     utils.insertLog(properties.SQLITE_LOCATION, present_minute, self.uid, self.uip)
-                #     self.last_minute = present_minute
+                present_minute = utils.getMinutesTs()
+                if (present_minute - self.last_minute >= 1):
+                    utils.insertLog(properties.SQLITE_LOCATION, present_minute, self.uid, self.uip)
+                    self.last_minute = present_minute
                 
                 # 写入管道
                 self.pipe.stdin.write(frame.tobytes())

@@ -10,8 +10,8 @@ class Http {
     });
   }
 
-  // 设置 ID
-  sendID(params) {
+  // 设置 编码信息
+  sendInfo(params) {
     const url = '/custom';
     return this.http.post(url, params);
   }
@@ -34,7 +34,7 @@ class Http {
     return this.http.post(url, params)
   }
 
-  // 上传图片以及校正参数
+  // 上传图片
   uploadPicEn(params) {
     const url = "/uploaden";
     return this.http.post(url, params)

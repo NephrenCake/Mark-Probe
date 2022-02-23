@@ -29,11 +29,11 @@ class MsgEnum(Enum):
     PULL_STREAM_OK = "拉流成功!"
     PUSH_STREAM_OK = "推流成功!"
     
-    PULL_PUSH_STREAM_OK = "推拉流成功!"
+    PULL_PUSH_STREAM_OK = "编码视频流拉取成功!"
     UNDER_STREAMING = "已经在推拉流!"
-    PULL_PUSH_STREAM_FAIL = "推拉流失败!"
-    STOP_STREAM_OK = "停止推拉流成功!"
-    STOP_STREAM_FAIL = "停止推拉流失败!"
+    PULL_PUSH_STREAM_FAIL = "编码视频流拉取失败!"
+    STOP_STREAM_OK = "编码视频流停止成功!"
+    STOP_STREAM_FAIL = "编码视频流停止失败!"
     
     UPLOAD_OK = "上传成功!"
 
