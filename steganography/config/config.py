@@ -58,7 +58,7 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 46  # 一个批次的图片数量
+        self.batch_size = 46  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 12  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
@@ -96,7 +96,7 @@ class TrainConfig(BaseConfig):
 
         self.erasing_trans_max = 0.2  # 随机遮挡
         self.erasing_trans_grow = (0.5, 1)
-        self.jpeg_trans_max = 50  # 这里表示压缩强度。而图像质量是 jpeg_quality = 100 - jpeg_trans_max
+        self.jpeg_trans_max = 50  # 这里表示压缩强度。而图像质量是   上调 <= 70
         self.jpeg_trans_grow = (0.3, 0.4)
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
@@ -114,9 +114,9 @@ class TrainConfig(BaseConfig):
         # loss scale
         self.rgb_loss_max = 0
         self.rgb_loss_grow = (1.7, 2)
-        self.hsv_loss_max = 0
+        self.hsv_loss_max = 0.7
         self.hsv_loss_grow = (1.7, 2)
-        self.yuv_loss_max = 1
+        self.yuv_loss_max = 0.3
         self.yuv_loss_grow = None
         self.lpips_loss_max = 1
         self.lpips_loss_grow = (0.5, 1)

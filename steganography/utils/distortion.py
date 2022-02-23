@@ -97,7 +97,7 @@ def non_spatial_trans(img, scale):
         # print("noise_trans")
     # 加入grayscale 变换
     if scale["grayscale_trans"]!=0:
-        if random.randint(1,10)<=3:
+        if random.randint(1,11)<=3:
             grayscale_trans(img)
 
     return img
