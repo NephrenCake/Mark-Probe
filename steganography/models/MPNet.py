@@ -204,7 +204,7 @@ class STN(nn.Module):
 
     def __init__(self, img_size=448):
         super(STN, self).__init__()
-        self.fc_loc_num = int(img_size * img_size / (16 * 16) * 256)
+        self.fc_loc_num = int(img_size * img_size / (8 * 8) * 128)
 
         # 空间变换器定位 - 网络
         self.localization = nn.Sequential(
@@ -213,8 +213,6 @@ class STN(nn.Module):
             nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
             nn.LeakyReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
-            nn.LeakyReLU(inplace=True),
-            nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
             nn.LeakyReLU(inplace=True),
         )
         # 3 * 2 affine矩阵的回归量
