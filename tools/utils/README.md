@@ -8,7 +8,7 @@
 
   > 首先需要创建一个对象来调用所有包装的方法。
 
-- bch.convert_uid_to_data(Union[int, str]) -> (bytearray, str)
+- bch.convert_uid_to_data(Union[int, str]) -> (bytearray, str, str)
 
   > 可以输入整数或者字符串类型，会对大小进行检查。
   >
@@ -16,7 +16,7 @@
   >
   > 转换成二进制流返回（注意此时长度将 / 8 ）
   >
-  > 同时返回写入信息的格林威治天文时间。
+  > 同时返回写入信息的格林威治天文时间，以及用于保存数据库附加信息的主键。
 
 - bch.convert_msg_to_data(str) -> bytearray
 
@@ -34,9 +34,9 @@
   >
   > 当纠错位数为 -1 时，表示检错成功但纠错失败。
 
-- bch.convert_data_to_uid(int, bytearray) -> (int, str)
+- bch.convert_data_to_uid(int, bytearray) -> (int, str, str)
 
-  > 解析上述纠错结果，并返回写入时的用户 id 和时间戳
+  > 解析上述纠错结果，并返回写入时的用户 id 、时间戳、以及用于查询数据库附加信息的主键
 
 - bch.convert_data_to_msg(int, bytearray) -> str
 
@@ -47,7 +47,8 @@
 ```python
 bch = BCHHelper()
 
-dat, now = bch.convert_uid_to_data(114514)  # uid -> msg数据段
+i = 114514
+dat, now, key = bch.convert_uid_to_data(i)  # uid -> msg数据段
 packet = bch.encode_data(dat)  # 数据段+校验段
 
 # make BCH_BITS errors
@@ -56,9 +57,9 @@ for _ in range(5):
     packet[byte_num] = 1 - packet[byte_num]
 
 bf, dat = bch.decode_data(packet)
-i, t = bch.convert_data_to_uid(bf, dat)
+i_, now_, key_ = bch.convert_data_to_uid(bf, dat)
 
-print(f"now:  {now}")
-print(f"time: {t}", f"uid: {i}")
+print(f"now:  {now}", f"uid: {i}", f"key: {key}")
+print(f"time: {now_}", f"uid: {i_}", f"key: {key_}")
 ```
 

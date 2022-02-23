@@ -29,7 +29,7 @@ class BCHHelper:
         self.uid_limits = 2 ** uid_size
         self.bch = bchlib.BCH(polynomial, bits)
 
-    def convert_uid_to_data(self, uid: Union[int, str]) -> (bytearray, str):
+    def convert_uid_to_data(self, uid: Union[int, str]) -> (bytearray, str, str):
         """
         给定十进制 uid，返回 msg 数据段的二进制流
         """
@@ -46,7 +46,7 @@ class BCHHelper:
         data = bytes(int(msg[i: i + 8], 2) for i in range(0, len(msg), 8))
 
         # print(msg, len(msg))
-        return bytearray(data), time.strftime(self.format_spec, time.gmtime(msg_time * 60 + self.start_time))
+        return bytearray(data), time.strftime(self.format_spec, time.gmtime(msg_time * 60 + self.start_time)), msg
 
     @staticmethod
     def convert_msg_to_data(msg: str) -> bytearray:
@@ -82,14 +82,16 @@ class BCHHelper:
 
         return bitflips, data
 
-    def convert_data_to_uid(self, bit_flips: int, data: bytearray) -> (int, str):
+    def convert_data_to_uid(self, bit_flips: int, data: bytearray) -> (int, str, str):
         if bit_flips == -1:
             print("Failed to decode. Can't correct data!")
 
         data = ''.join(format(x, '08b') for x in data)
         msg_uid, msg_time = data[:self.uid_size], data[-self.time_size:]
 
-        return int(msg_uid, 2), time.strftime(self.format_spec, time.gmtime(int(msg_time, 2) * 60 + self.start_time))
+        t = time.strftime(self.format_spec, time.gmtime(int(msg_time, 2) * 60 + self.start_time))
+
+        return int(msg_uid, 2), t, data
 
     @staticmethod
     def convert_data_to_msg(bit_flips: int, data: bytearray) -> str:
@@ -115,7 +117,8 @@ class BCHHelper:
 if __name__ == '__main__':
     bch = BCHHelper()
 
-    dat, now = bch.convert_uid_to_data(114514)  # uid -> msg数据段
+    i = 114514
+    dat, now, key = bch.convert_uid_to_data(i)  # uid -> msg数据段
     packet = bch.encode_data(dat)  # 数据段+校验段
 
     # make BCH_BITS errors
@@ -124,7 +127,7 @@ if __name__ == '__main__':
         packet[byte_num] = 1 - packet[byte_num]
 
     bf, dat = bch.decode_data(packet)
-    i, t = bch.convert_data_to_uid(bf, dat)
+    i_, now_, key_ = bch.convert_data_to_uid(bf, dat)
 
-    print(f"now:  {now}")
-    print(f"time: {t}", f"uid: {i}")
+    print(f"now:  {now}", f"uid: {i}", f"key: {key}")
+    print(f"time: {now_}", f"uid: {i_}", f"key: {key_}")
