@@ -30,6 +30,8 @@ Vue.prototype.$flv = flvjs;
 
 Vue.prototype.$res = res;
 
+Vue.prototype.$store = store;
+
 new Vue({
   router,
   store,

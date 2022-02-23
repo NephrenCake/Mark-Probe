@@ -6,36 +6,46 @@ Vue.use(VueRouter);
 const routes = [
   {
     path: '/',
-    name: 'Main',
-    component: () => import('@/views/Main'),
-  },
-  {
-    path: '/encoder',
-    name: 'Frame',
+    // name: 'Frame',
     component: () => import('@/views/Frame'),
     children: [
       {
-        path: '/encoder',
-        name: 'Encoder',
-        component: () => import('@/views/Encoder')
+        path: '/',
+        name: 'Main',
+        component: () => import('@/views/Main')
       },
       {
-        path: '/decoder',
-        name: 'Decoder',
-        component: () => import('@/views/Decoder')
-      }
+        path: '/encoder/pic',
+        name: 'EncoderPic',
+        component: () => import('@/views/EncoderPic')
+      },
+      {
+        path: '/encoder/stream',
+        name: 'EncoderStream',
+        component: () => import('@/views/EncoderStream')
+      },
+      {
+        path: '/decoder/pic',
+        name: 'DecoderPic',
+        component: () => import('@/views/DecoderPic')
+      },
+      // {
+      //   path: '/decoder/stream',
+      //   name: 'DecoderStream',
+      //   component: () => import('@/views/DecoderStream')
+      // },
+      {
+        path: '/ps',
+        name: 'PS',
+        component: () => import('@/views/PS')
+      },
+      {
+        path: '*',
+        name: 'NotFound',
+        component: () => import('@/views/404')
+      } 
     ]
-  },
-  {
-    path: '/404',
-    name: '404',
-    component: () => import('@/views/404')
-  },
-  {
-    path: '*',
-    name: 'NotFound',
-    component: () => import('@/views/404')
-  }  
+  }
 ];
 
 const router = new VueRouter({

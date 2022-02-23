@@ -2,83 +2,68 @@
   <div>
     <div id="container">
       <el-row :gutter="0">
-        <el-col :span="8" :offset="8">
+        <el-col :span="14" :offset="5">
           <el-card id="card">
-            <div style="text-align: center; margin: 19px;">
-              <p style="margin-bottom: 40px;">
-                <a href="/encoder" class="ref">Encoder 演示</a>
-              </p>
-              <p>
-                <a href="/decoder" class="ref">Decoder 演示</a>
-              </p>
+            <div id="welcome">
+              <p>Mark-Probe&nbsp;防泄漏暗水印系统</p>
+              <p>演示程序 (Web 端)</p>
+              <p class="team">团队编号: 2101421</p>
+              <p class="team" style="margin-top: 10px;">团队名称: <span>永远不要抛弃僚机</span></p>
+              <p>演示日期: {{date}}</p>
+            </div>
+            <div id="version">
+              <p>系统版本号: V 1.0</p>
+              <p>演示程序版本号: V 1.0</p>
             </div>
           </el-card>
         </el-col>
       </el-row>
     </div> 
-
-    <div class="footer">
-      <div class="info">
-        <span>2022 服务外包 A06&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        <a href="https://github.com/NephrenCake/HiddenWatermark/" id="github" target="_blank">点击访问本项目 Github</a>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "Main"
+  name: "Main",
+  computed: {
+    date: function () {
+      return this.$func.getDate();
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
-.ref {
-  position: relative;
-  text-decoration: none;
-  font-size: 30px;
-  color: #000;
-  font-family: 'HOS Medium';
-}
-.ref:before{
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 100%;
-  height: 1.5px;
-  background: #000;
-  transform: scale(0);
-  transition: all .3s;
-}
-.ref:hover:before {
-  transform: scale(1);
-}
-.footer{
-  height: 39px !important;
-  text-align: center;
-  border-top: 1px solid #d8dce5;
-  background: #eee;
-  padding-left: 20px;
-  padding-right: 20px;
-  .info {
-    margin: 12px 0;
-    font-size: 14px;
-    color: #888;
-    #github {
-      color: #888;
-    }
-    #github:hover {
-      color: #aaa;
-    }
-  }
-}
 #container {
-  height: calc(100vh - 40px);
-  background: #e3e3e3;
+  margin-top: 50px;
+}
+#card {
+  text-align: center;
+}
+#welcome {
+  margin: 30px;
+  font-size: 50px;
+  color: #000;
 
-  #card{
-    margin-top: 30vh;
+  p:nth-child(1) {
+    font-family: 'HOS Medium';
   }
+  p:nth-child(2) {
+    margin-top: 20px;
+    font-size: 35px;
+  }
+  .team {
+    margin-top: 60px;
+    font-size: 25px;
+  }
+  p:nth-child(5) {
+    margin-top: 60px;
+    font-size: 20px;
+  }
+}
+#version {
+  margin-right: 30px;
+  font-size: 10px;
+  text-align: right;
 }
 </style>

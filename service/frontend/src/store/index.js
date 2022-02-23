@@ -1,15 +1,24 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Vue from 'vue';
+import Vuex from 'vuex';
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 
-export default new Vuex.Store({
+const store = new Vuex.Store({
   state: {
+    // subNavOpen: false
   },
   mutations: {
+    // closeSubNav() {
+    //   state.subNavOpen = false;
+    // },
+    // showSubNav() {
+    //   state.subNavOpen = !state.subNavOpen;
+    // }
   },
   actions: {
   },
   modules: {
   }
-})
+});
+
+export default store;

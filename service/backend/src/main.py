@@ -8,7 +8,6 @@ import properties
 from model.encoderLive import Live
 from utils import *
 
-
 app = Flask(__name__)
 
 app.debug = True
@@ -17,6 +16,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///db.sqlite3"
 
 # 解决跨域
 CORS(app)
+
 # 数据库
 # from flask_sqlalchemy import SQLAlchemy
 # from werkzeug.utils import secure_filename
@@ -35,35 +35,45 @@ CORS(app)
     
 #     def __repr__(self):
 #         return '<Records {},{},{}>'.format(str(self.time_stamp), self.uid, self.ip)
-    
-
 
 # 全局变量
 custom_id = None
-live = Live(src=properties.SRC_RTMP_URL, dst=properties.DST_RTMP_URL, uid=properties.UID, uip=properties.UIP)
+custom_info = None
+live = None
 is_live = False
 
-
-
-
-
+# API
 # 自定义 ID
 @app.route("/custom", methods = ["POST"])
 def customID():
-    global custom_id
+    global custom_id, custom_info
     try:
         data = request.get_json()
         custom_id = data["id"]
-        return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.ID_SET_OK, out_dict={"id": custom_id}, specify_msg=("设置成功! 当前 ID 为 " + custom_id))
+        custom_info = data["extendInfo"]
+        
+        out_d = {"id": custom_id, "extendInfo": custom_info}
+        
+        if (custom_info != ""):
+            s_msg = "设置成功! 当前 ID 为 " + custom_id + " 。当前自定义信息为 " + custom_info + " 。"
+        else:
+            s_msg = "设置成功! 当前 ID 为 " + custom_id + " 。当前未自定义信息。"
+        
+        return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.ID_SET_OK, out_dict=out_d, specify_msg=s_msg)
     except:
         return reponseJson(code=CodeEnum.HTTP_BAD_REQUEST, msg=MsgEnum.FAIL)
 
 # 推流（包含拉流过程，先拉后推）
 @app.route("/pull", methods = ["GET"])
 def pullStream():
-    global is_live, live
+    global custom_id, custom_info, is_live, live
     try:
         if (is_live == False):
+            sql_id = custom_id if (custom_id is None) else properties.UID
+            sql_info = custom_info if (custom_info is None) else properties.UIP
+                
+            live = Live(src=properties.SRC_RTMP_URL, dst=properties.DST_RTMP_URL, uid=sql_id, uip=sql_info)
+            
             is_live = True
             live.run()
             return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.PULL_PUSH_STREAM_OK)
@@ -89,6 +99,7 @@ def upload():
     data = request.get_json()
     fileBase64 = data["fileBase64"]
     points = data["positions"]
+    imgType = data["type"]
     
     img = base64ToCv2Img(fileBase64)
     
@@ -107,13 +118,15 @@ def upload():
     outDict = {"data": resList}
     
     # 返回变换后图像 base64
-    outDict["editedImg"] = cv2ImgToBase64(img)
+    outDict["fixedImg"] = cv2ImgToBase64(img)
 
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
 # encoder 上传图片
 @app.route('/uploaden', methods=['POST'])
 def uploadEn():
+    global custom_id, custom_info
+    
     data = request.get_json()
     fileBase64 = data["fileBase64"]
     
@@ -122,9 +135,10 @@ def uploadEn():
     # 编码后图片
     # img = encoder(img)
     
-    # cv2.imshow('', img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    sql_id = custom_id if (custom_id is None) else properties.UID
+    sql_info = custom_info if (custom_info is None) else properties.UIP
+    
+    insertLog(properties.SQLITE_LOCATION, getMinutesTs(), sql_id, sql_info)
     
     # 返回变换后图像 base64
     outDict = {"encodedImg": cv2ImgToBase64(img)}
