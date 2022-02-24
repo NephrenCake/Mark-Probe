@@ -46,7 +46,7 @@ class BCHHelper:
         data = bytes(int(msg[i: i + 8], 2) for i in range(0, len(msg), 8))
 
         # print(msg, len(msg))
-        return bytearray(data), time.strftime(self.format_spec, time.gmtime(msg_time * 60 + self.start_time)), msg
+        return bytearray(data), time.strftime(self.format_spec, time.localtime(msg_time * 60 + self.start_time)), msg
 
     @staticmethod
     def convert_msg_to_data(msg: str) -> bytearray:
@@ -89,7 +89,7 @@ class BCHHelper:
         data = ''.join(format(x, '08b') for x in data)
         msg_uid, msg_time = data[:self.uid_size], data[-self.time_size:]
 
-        t = time.strftime(self.format_spec, time.gmtime(int(msg_time, 2) * 60 + self.start_time))
+        t = time.strftime(self.format_spec, time.localtime(int(msg_time, 2) * 60 + self.start_time))
 
         return int(msg_uid, 2), t, data
 
