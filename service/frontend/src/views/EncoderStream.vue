@@ -159,14 +159,14 @@ export default {
           this.playerO = this.stopStreaming(this.playerO);
           this.srcOn = false;
           this.$message({
-            message: "源视频流拉取停止成功!",
+            message: "源视频流停止成功!",
             type: 'success',
             showClose: true
           });
         } catch(err) {
           console.log(err);
           this.$message({
-            message: "源视频流拉取停止失败!",
+            message: "源视频流停止失败!",
             type: 'error',
             showClose: true
           });

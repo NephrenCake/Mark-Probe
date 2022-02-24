@@ -99,12 +99,23 @@ def upload():
     data = request.get_json()
     fileBase64 = data["fileBase64"]
     points = data["positions"]
+    auto = data["auto"]
     imgType = data["type"]
     
     img = base64ToCv2Img(fileBase64)
     
-    if (len(points) != 0):
-        img = perspectiveTrans(img, points)
+    if (auto == 1):
+        if (len(points) != 0):
+            img = perspectiveTrans(img, points)
+    # elif (auto == 2):
+    #     img = autoPerspectiveTrans(img)
+        
+    # if (imgType == 1):
+    #     # 若是截图，免 STN
+    #     # decodedInfo = decoder(img)
+    # elif (imgType is 2):
+    #     # 若是照片，进 STN
+    #     # decodedInfo = decoder_with_stn(img)
     
     # 解码后信息
     # decodedInfo = decoder(img)
@@ -119,6 +130,30 @@ def upload():
     
     # 返回变换后图像 base64
     outDict["fixedImg"] = cv2ImgToBase64(img)
+
+    return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
+
+# ps 上传图片
+@app.route('/ps', methods=['POST'])
+def ps():
+    data = request.get_json()
+    fileBase64 = data["fileBase64"]
+    
+    # brightness = data["brightness"]
+    # contrast = data["contrast"]
+    # saturation = data["saturation"]
+    # hue = data["hue"]
+    # GBlur = data["GBlur"]
+    # randomNoise = data["randomNoise"]
+    # grayscale = data["grayscale"]
+    # randomCover = data["randomCover"]
+    # JpegZip = data["JpegZip"]
+    
+    img = base64ToCv2Img(fileBase64)
+    img = psPic(img, data)
+
+    # 返回变换后图像 base64
+    outDict = {"fixedImg": cv2ImgToBase64(img)}
 
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 

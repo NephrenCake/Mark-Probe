@@ -61,9 +61,10 @@
                   </div>
                 </el-image>
 
-                <el-button type="primary" v-if="showDownload" class="img-btn">
+                <el-button type="primary" v-if="showDownload" class="img-btn" style="margin-right: 30px;">
                   <a :href="fixedUrl" download>下载透视校正图</a>
                 </el-button>
+                <el-button type="primary" v-if="showDownload" class="img-btn" @click="dialogVisibleT = true">查看溯源结果</el-button>
               </div>
             </div>
           </div>
@@ -73,12 +74,14 @@
               <el-form class="form-all" ref="form" :model="form" label-width="85px" :rules="rules">
                 <el-form-item label="图片类型" prop="type">
                   <el-radio-group v-model="form.type" size="medium">
-                    <el-radio border :label="0">截图</el-radio>
-                    <el-radio border :label="1">照片</el-radio>
+                    <el-radio border :label="1">截图</el-radio>
+                    <el-radio border :label="2">照片</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-form>
-              <el-button type="primary" style="margin-right: 40px;" @click="processButtonClick">上传泄漏图并查看解码溯源结果</el-button>
+              <el-button type="primary" style="margin-right: 20px;" :disabled="notAllowMark" @click="markUpload(2)">辅助标定后上传</el-button>
+              <el-button type="primary" style="margin-right: 30px;" @click="showMarkDialog" :disabled="notAllowMark">手动标定</el-button>
+              <el-button type="primary" style="margin-right: 40px; margin-top: 22px;" @click="markUpload(1)" :disabled="notAllowMark">直接上传泄漏图并查看解码溯源结果</el-button>
             </div>
           </div>
         </el-card>
@@ -101,7 +104,7 @@
 
       <div slot="footer">
         <el-button @click="cancelMark" style="margin-right: 10px;">取消</el-button>
-        <el-button type="primary" @click="processButtonClick">确定上传</el-button>
+        <el-button type="primary" @click="markUpload(1)">确定上传</el-button>
       </div>
     </el-dialog>
   </div>
@@ -115,7 +118,7 @@
       top="7vh"
       :before-close="handleCloseT">
       <div>
-        <el-table stripe :data="infoList" class="table" height="100%">
+        <el-table stripe :data="infoList" class="table" height=475>
           <el-table-column prop="id" label="ID" width="150" fixed></el-table-column>
           <el-table-column prop="timeStamp" label="时间" width="auto"></el-table-column>
           <el-table-column prop="ip" label="信息" width="auto"></el-table-column>
@@ -143,9 +146,9 @@ export default {
       form: {
         fileBase64: null,
 
-        // 0: 截图
-        // 1: 照片
-        type: null
+        // 1: 截图
+        // 2: 照片
+        type: null,
       },
 
       dialogVisible: false,
@@ -192,8 +195,8 @@ export default {
       this.isShowImgUpload = true;
       this.isShowUpload = false;
     },
-    // 上传图片
-    processButtonClick() {
+    // 上传图片（autoVal: 1: 不自动标定; 2: 自动标定）
+    markUpload(autoVal) {
       if (this.localUrl == null) {
         this.$message({
           message: "请先上传泄漏图!",
@@ -215,7 +218,8 @@ export default {
           fileBase64: this.form.fileBase64,
           // positions: this.positionList.length === 0 ? this.$res.defaultPos : this.positionList
           positions: this.positionList.length === 0 ? "" : this.positionList,
-          type: this.form.type
+          type: this.form.type,
+          auto: autoVal
         };
         this.$http.uploadPic(params).then(res => {
           const data = res.data;
@@ -230,7 +234,7 @@ export default {
             this.delAllMarks();
 
             this.infoList = data.data;
-            this.fixedUrl = this.$func.createDownloadFileUrl("fixedPic.jpg", data.fixedImg);
+            this.fixedUrl = this.$func.createDownloadFileUrl("decodedPic.jpg", data.fixedImg);
 
             this.dialogVisibleT = true;
           }
@@ -387,6 +391,14 @@ export default {
     },
   },
   mounted() {
+    // 检查是否从图片攻击部分携带图片跳转而来
+    let storedPic = this.$store.getters.getPsPicToDecode;
+    if (storedPic) {
+      this.isShowUpload = false;
+      this.isShowImgUpload = true;
+      this.form.fileBase64 = storedPic;
+      this.localUrl = this.$func.createDownloadFileUrl("tempPsPic.jpg", storedPic);
+    }
   },
   computed: {
     // 显示下载按钮
@@ -396,7 +408,21 @@ export default {
       } else {
         return false;
       }
+    },
+    // 是否允许标定
+    notAllowMark() {
+      let isEmpty = null;
+      if (this.form.type === 1 || this.form.type === 2) {
+        isEmpty = false;
+      } else {
+        isEmpty = true;
+      }
+      return (isEmpty || this.isShowUpload);
     }
+  },
+  beforeDestroy() {
+    // 销毁实例前清除图片
+    this.$store.commit('rmPsPicToDecode');
   }
 };
 </script>
@@ -417,7 +443,7 @@ export default {
   }
 
   #total-control-panel {
-    margin-top: 205.2px;
+    margin-top: 361.2px;
     margin-left: 30px;
     width: 370px;
 
@@ -450,6 +476,12 @@ export default {
 .img-btn {
   margin-top: 30px;
   margin-bottom: 10px;
+}
+.dialog-class {
+  text-align: center;
+}
+#dialog-table {
+  text-align: center;
 }
 </style>
 

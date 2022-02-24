@@ -83,6 +83,21 @@ class Func {
     blob.name = fileName;
     return URL.createObjectURL(blob);
   }
+
+  // blob 对象转 base64
+  blob2Base64(blob) {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        resolve(e.target.result);
+      };
+      // readAsDataURL
+      fileReader.readAsDataURL(blob);
+      fileReader.onerror = () => {
+        reject(new Error('blobToBase64 error'));
+      };
+    });
+  }
 }
 
 export default new Func();

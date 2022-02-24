@@ -39,6 +39,12 @@ class Http {
     const url = "/uploaden";
     return this.http.post(url, params)
   }
+
+  // 图片攻击
+  psPic(params) {
+    const url = "/ps";
+    return this.http.post(url, params)
+  }
 } 
 
 export default new Http();
