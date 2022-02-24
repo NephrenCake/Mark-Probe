@@ -114,9 +114,9 @@ class TrainConfig(BaseConfig):
         # loss scale
         self.rgb_loss_max = 0
         self.rgb_loss_grow = (1.7, 2)
-        self.hsv_loss_max = 0.7
+        self.hsv_loss_max = 0.5
         self.hsv_loss_grow = (1.7, 2)
-        self.yuv_loss_max = 0.3
+        self.yuv_loss_max = 0.5
         self.yuv_loss_grow = None
         self.lpips_loss_max = 1
         self.lpips_loss_grow = (0.5, 1)

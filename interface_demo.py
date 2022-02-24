@@ -1,7 +1,5 @@
 import cv2
 
-from steganography.utils.interface.distortion_interface import *
-
 img_path = "D:\learning\COCOTrain+Val\\test2014\COCO_test2014_000000000001.jpg"
 image = cv2.imread(img_path)
 

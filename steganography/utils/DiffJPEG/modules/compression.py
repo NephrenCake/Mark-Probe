@@ -70,7 +70,9 @@ class block_splitting(nn.Module):
     def forward(self, image):
         height, width = image.shape[1:3]
         batch_size = image.shape[0]
-        image_reshaped = image.view(batch_size, height // self.k, self.k, -1, self.k)
+        print(height)
+        image_reshaped = image.view(batch_size,  height // self.k, self.k, -1, self.k)
+
         image_transposed = image_reshaped.permute(0, 1, 3, 2, 4)
         return image_transposed.contiguous().view(batch_size, -1, self.k, self.k)
     

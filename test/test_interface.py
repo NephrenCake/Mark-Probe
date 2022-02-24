@@ -1,14 +1,11 @@
-import copy
-
 import numpy as np
 import torch
 
-from steganography.utils.interface.distortion_interface import *
-from torchvision import transforms
 import cv2
 
 
 img_path = "D:\learning\COCOTrain+Val\\test2014\COCO_test2014_000000000001.jpg"
+# img_path = "D:\learning\pythonProjects\HiddenWatermark1\\test\\test_source\\01.jpg"
 image = cv2.imread(img_path)
 
 def cv_show(img, name = "default"):
@@ -53,9 +50,10 @@ def test_jpeg_trans():
     # 在使用jpeg压缩时候出现了图片和原图的不一致
     factor = 30
     im = image
-    img = jpeg_trans(image, factor)
-    img2 = jpeg_trans(image, 50)
-    cv_show(np.hstack((image, img)), "Jpeg Compression  factor{}".format(factor))
+
+    img = jpeg_trans(im, factor)
+    # img2 = jpeg_trans(image, 30)
+    cv_show(np.hstack((im, img)), "Jpeg Compression  factor{}".format(factor))
     print(img[10][10])
     print(image[10][10])
 
@@ -72,8 +70,9 @@ def test_rand_erase():
     pass
 
 def test():
-    idx_lis = random.sample(range(0, 4), 4)
-    print(idx_lis)
+    a = torch.empty(1).uniform_(0, 1+0.3)
+    print(a)
+    pass
 
 
 if __name__=="__main__":
@@ -84,6 +83,6 @@ if __name__=="__main__":
     # test_gaussian_blur()
     # test_rand_noise()
     # test_jpeg_trans()
-    test_grayscale_trans()
+    # test_grayscale_trans()
     # test_rand_erase()
-    # test()
+    test()

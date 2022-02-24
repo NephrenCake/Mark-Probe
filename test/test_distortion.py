@@ -131,8 +131,13 @@ def test_grayscale():
     pass
 
 def test_contrast():
-    _img = F.adjust_contrast(img,contrast_factor=0.4).squeeze(0)
+    _img = F.adjust_contrast(img,contrast_factor=0.7).squeeze(0)
     show_img(_img)
+
+def test_ColorJiff():
+    _img = transforms.ColorJitter(0.3,0,0,0)(img).squeeze(0)
+    show_img(_img)
+    pass
 
 
 def test_gray_trans():
@@ -158,4 +163,5 @@ if __name__ == '__main__':
     # test_grayscale()
     # test_contrast()
     # test_gray_trans()
-    test_gaussian_blur()
+    # test_gaussian_blur()
+    test_ColorJiff()

@@ -18,14 +18,16 @@ def brightness_trans(img, brightness, gamma=0):
 
     # 亮度就是每个像素所有通道都加上b
     # 新建全零(黑色)图片数组:np.zeros(img1.shape, dtype=uint8)
-    dst = cv2.addWeighted(img, brightness+1, np.zeros(img.shape, img.dtype), 0, gamma)
-    return dst
+    im = img.astype(np.float32) * (brightness+1)
+    im = im.clip(min=0, max=255)
+    return im.astype(img.dtype)
 
 def contrast_trans(img, contrast_factor):
     '''
     实现对比度的增强
     使用 线性变换 y=ax+b
     '''
+    contrast_factor = contrast_factor+1
     im = img.astype(np.float32)
     mean = round(cv2.cvtColor(im, cv2.COLOR_RGB2GRAY).mean())
     im = (1 - contrast_factor) * mean + contrast_factor * im
@@ -64,6 +66,12 @@ def rand_noise(img, std, mean=0):
 
 def jpeg_trans(img, factor):
     # 将img 转换为 b x 3 x h x w
+    # 添加一个判断 如果 图片的长宽高不满足要求就 用距离最近的size 进行一个resize 将resize之后 图片放入jpeg中然后 再将图片resize到原图像大小 并返回。
+    w_o,h_o,_ = img.shape
+    f_ = False
+    if w_o%16 or h_o%16:
+        img = cv2.resize(img,((h_o//16+1)*16,(w_o//16+1)*16))
+        f_ = True
     img_tensor = transforms.ToTensor()(img).unsqueeze(0)
     b, c, h, w = img_tensor.shape
     _img = DiffJPEG(height=h, width=w, differentiable=True,
@@ -75,6 +83,8 @@ def jpeg_trans(img, factor):
     array1 = array1 * 255 / maxValue  # normalize，将图像数据扩展到[0,255]
     mat = np.uint8(array1)  # float32-->uint8
     mat = mat.transpose(1, 2, 0)  # mat_shape: (982, 814，3)
+    if f_:
+        mat = cv2.resize(mat,(h_o,w_o))
     # mat = cv2.cvtColor(mat, cv2.COLOR_BGR2RGB)
     return mat
 

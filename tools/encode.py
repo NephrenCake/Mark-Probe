@@ -12,7 +12,7 @@ from steganography.models import stega_net
 import numpy as np
 
 from tools.utils.bch_utils import get_byte_msg
-from steganography.utils.distortion import make_trans
+from steganography.utils.distortion import make_trans_for_photo as make_trans
 from steganography.utils.train_utils import get_msg_acc
 
 
