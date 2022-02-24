@@ -9,6 +9,8 @@ import numpy as np
 from enum import Enum
 from flask import jsonify
 
+from interface.distortion_interface import *
+
 # HTTP 状态枚举类
 class CodeEnum(Enum):
     HTTP_OK = 200
@@ -131,3 +133,42 @@ def perspectiveTrans(img, ratioPos:list):
 
     return res
     
+# 按序图像攻击
+def psPic(img, requestDict: dict):
+    brightness = requestDict["brightness"]
+    contrast = requestDict["contrast"]
+    saturation = requestDict["saturation"]
+    hue = requestDict["hue"]
+    GBlur = requestDict["GBlur"]
+    randomNoise = requestDict["randomNoise"]
+    grayscale = requestDict["grayscale"]
+    randomCover = requestDict["randomCover"]
+    JpegZip = requestDict["JpegZip"]
+    
+    if (brightness != 0):
+        img = brightness_trans(img=img, brightness=brightness)
+    
+    # img = contrast_trans(img=img, contrast_factor=contrast)
+    
+    if (saturation != 1):
+        img = saturation_trans(img=img, saturation_factor=saturation)
+        
+    if (hue != 0):
+        img = hue_trans(img=img, hue_factor=hue)
+        
+    if (GBlur):
+        img = gaussian_blur(img=img)
+    
+    if (randomNoise != 0):
+        img = rand_noise(img=img, std=randomNoise)
+    
+    if (grayscale):
+        img = grayscale_trans(img=img)
+        
+    if (randomCover != 0):
+        img = rand_erase(img=img, _cover_rate=randomCover)
+        
+    # if (JpegZip != 0):
+    #     img = jpeg_trans(img=img, factor=JpegZip)
+    
+    return img
