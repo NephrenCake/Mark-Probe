@@ -6,44 +6,44 @@ import numpy as np
 from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 
-'''
-
-'''
 
 def brightness_trans(img, brightness, gamma=0):
-    '''
+    """
     传入的是cv格式的图片
     对图片进行 亮度调整 将cv图片中的每一个像素的灰度值增加1+brightness% 的量
-    '''
+    """
 
     # 亮度就是每个像素所有通道都加上b
     # 新建全零(黑色)图片数组:np.zeros(img1.shape, dtype=uint8)
-    im = img.astype(np.float32) * (brightness+1)
+    im = img.astype(np.float32) * (brightness + 1)
     im = im.clip(min=0, max=255)
     return im.astype(img.dtype)
 
+
 def contrast_trans(img, contrast_factor):
-    '''
+    """
     实现对比度的增强
     使用 线性变换 y=ax+b
-    '''
-    contrast_factor = contrast_factor+1
+    """
+    contrast_factor = contrast_factor + 1
     im = img.astype(np.float32)
     mean = round(cv2.cvtColor(im, cv2.COLOR_RGB2GRAY).mean())
     im = (1 - contrast_factor) * mean + contrast_factor * im
     im = im.clip(min=0, max=255)
     return im.astype(img.dtype)
 
+
 def saturation_trans(img, saturation_factor):
-    '''
+    """
     饱和度变换
-    '''
+    """
     im = img.astype(np.float32)
     degenerate = cv2.cvtColor(cv2.cvtColor(im, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
     # degenerate = copy.deepcopy(im)
     im = (1 - saturation_factor) * degenerate + saturation_factor * im
     im = im.clip(min=0, max=255)
     return im.astype(img.dtype)
+
 
 def hue_trans(img, hue_factor):
     im = img.astype(np.uint8)
@@ -52,11 +52,13 @@ def hue_trans(img, hue_factor):
     im = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB_FULL)
     return im.astype(img.dtype)
 
+
 def gaussian_blur(img, flag):
-    '''
+    """
     高斯模糊的核大小：[5,5], []
-    '''
-    return img if flag!=True else cv2.GaussianBlur(img, (5,5), sigmaX=0.1, sigmaY=2)
+    """
+    return img if flag != True else cv2.GaussianBlur(img, (5, 5), sigmaX=0.1, sigmaY=2)
+
 
 def rand_noise(img, std, mean=0):
     imgtype = img.dtype
@@ -64,13 +66,14 @@ def rand_noise(img, std, mean=0):
     noisy = np.clip((1 + gauss) * img.astype(np.float32), 0, 255)
     return noisy.astype(imgtype)
 
+
 def jpeg_trans(img, factor):
     # 将img 转换为 b x 3 x h x w
     # 添加一个判断 如果 图片的长宽高不满足要求就 用距离最近的size 进行一个resize 将resize之后 图片放入jpeg中然后 再将图片resize到原图像大小 并返回。
-    w_o,h_o,_ = img.shape
+    w_o, h_o, _ = img.shape
     f_ = False
-    if w_o%16 or h_o%16:
-        img = cv2.resize(img,((h_o//16+1)*16,(w_o//16+1)*16))
+    if w_o % 16 or h_o % 16:
+        img = cv2.resize(img, ((h_o // 16 + 1) * 16, (w_o // 16 + 1) * 16))
         f_ = True
     img_tensor = transforms.ToTensor()(img).unsqueeze(0)
     b, c, h, w = img_tensor.shape
@@ -84,16 +87,18 @@ def jpeg_trans(img, factor):
     mat = np.uint8(array1)  # float32-->uint8
     mat = mat.transpose(1, 2, 0)  # mat_shape: (982, 814，3)
     if f_:
-        mat = cv2.resize(mat,(h_o,w_o))
+        mat = cv2.resize(mat, (h_o, w_o))
     # mat = cv2.cvtColor(mat, cv2.COLOR_BGR2RGB)
     return mat
 
+
 def grayscale_trans(img, flag):
-    if len(img.shape)==3 and flag:
+    if len(img.shape) == 3 and flag:
         img = cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
-    elif len(img.shape)==2 and flag:
+    elif len(img.shape) == 2 and flag:
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     return img
+
 
 def rand_erase(img, _cover_rate, block_size=20):
     im = copy.deepcopy(img)
@@ -124,12 +129,13 @@ def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, 
         [w_x, h_y + block_size, end_idx_w, end_idx_h],
         [start_idx_w, h_y + block_size, w_x, end_idx_h]
     ]
-    idx_lis = random.sample(range(0,4),4)
+    idx_lis = random.sample(range(0, 4), 4)
 
-    fill_block(img_, para_list[idx_lis[0]][0], para_list[idx_lis[0]][1], para_list[idx_lis[0]][2], para_list[idx_lis[0]][3], block_num, block_size)  # part 1
-    fill_block(img_, para_list[idx_lis[1]][0], para_list[idx_lis[1]][1], para_list[idx_lis[1]][2], para_list[idx_lis[1]][3], block_num, block_size)  # part 2
-    fill_block(img_, para_list[idx_lis[2]][0], para_list[idx_lis[2]][1], para_list[idx_lis[2]][2], para_list[idx_lis[2]][3], block_num, block_size)  # part 3
-    fill_block(img_, para_list[idx_lis[3]][0], para_list[idx_lis[3]][1], para_list[idx_lis[3]][2], para_list[idx_lis[3]][3], block_num, block_size)  # part 4
-
-
-
+    fill_block(img_, para_list[idx_lis[0]][0], para_list[idx_lis[0]][1], para_list[idx_lis[0]][2],
+               para_list[idx_lis[0]][3], block_num, block_size)  # part 1
+    fill_block(img_, para_list[idx_lis[1]][0], para_list[idx_lis[1]][1], para_list[idx_lis[1]][2],
+               para_list[idx_lis[1]][3], block_num, block_size)  # part 2
+    fill_block(img_, para_list[idx_lis[2]][0], para_list[idx_lis[2]][1], para_list[idx_lis[2]][2],
+               para_list[idx_lis[2]][3], block_num, block_size)  # part 3
+    fill_block(img_, para_list[idx_lis[3]][0], para_list[idx_lis[3]][1], para_list[idx_lis[3]][2],
+               para_list[idx_lis[3]][3], block_num, block_size)  # part 4

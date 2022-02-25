@@ -91,7 +91,7 @@ class TrainConfig(BaseConfig):
         self.myPolicy_grow = (2, 2)
 
         # 添加的grayscale_trans 变换
-        self.grayscale_trans_max = 1
+        self.grayscale_trans_max = 0.2
         self.grayscale_trans_grow = (0.8, 0.8)
 
         self.erasing_trans_max = 0.2  # 随机遮挡

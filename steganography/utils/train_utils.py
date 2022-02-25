@@ -35,7 +35,7 @@ def process_forward(Encoder,
 
     # Decoder
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
-    crop_msg_pred, _ = Decoder(crop_img, use_stn=False)  # 将use_stn 设置为True
+    crop_msg_pred, _ = Decoder(crop_img, use_stn=False)
 
     # ------------------loss
     # todo 可以尝试使用其他实现方式，高斯模糊并不是最佳选择，期望标定的高频区域范围更多一些
@@ -43,7 +43,6 @@ def process_forward(Encoder,
     weight_mask = torch.abs(img - transforms_F.gaussian_blur(img, [7, 7], [10, 10]))
     weight_mask = torch.max(weight_mask) - weight_mask  # low weight in high frequency
 
-    #
     img_loss = torch.zeros(1).to(cfg.device)
     if scales["rgb_loss"] != 0:
         rgb_loss = mse_loss(encoded_img, img, mask=weight_mask)
@@ -246,7 +245,7 @@ def get_msg_acc(msg_true, msg_pred):
     #       correct_pred_copy 中存放的是 一个batch中 的一行数据里面正确的位数
     # 修改了一下 比原来的简洁了一点
     correct_pred_copy = copy.deepcopy(correct_pred)
-    correct_pred_copy[correct_pred>correct_bit] = full_bits
+    correct_pred_copy[correct_pred > correct_bit] = full_bits
 
     # msg_pre-msg_true
     str_acc = 1.0 - torch.count_nonzero(correct_pred - (msg_pred.size()[1])) / correct_pred.size()[0]
@@ -254,7 +253,6 @@ def get_msg_acc(msg_true, msg_pred):
     # 添加一个right_str_acc
     right_str_acc = 1.0 - torch.count_nonzero(correct_pred_copy - (msg_pred.size()[1])) / correct_pred.size()[0]
     return bit_acc, str_acc, right_str_acc
-
 
 
 def mse_loss(pre, tar, mask):

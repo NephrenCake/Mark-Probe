@@ -1,8 +1,6 @@
 import os
 import sys
 
-import cv2
-
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
 import torch
@@ -11,10 +9,9 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import functional as F
 
-from steganography.utils.distortion import rand_crop, grayscale_trans
+from steganography.utils.distortion import rand_crop
 
 img_path = "test_source/COCO_train2014_000000000009.jpg"
-img_path = "D:\learning\COCOTrain+Val\\test2014\COCO_test2014_000000000001.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {
@@ -29,20 +26,32 @@ img = transforms.Compose([
 ])(Image.open(img_path).convert("RGB")).unsqueeze(0)
 torchvision.utils.save_image(img, "test_source/test.jpg")
 
-def show_img(_img: torch.Tensor):
-    '''
-    展示一张tensor形式的图片
-    '''
-    img_ = transforms.ToPILImage()(_img)
-    img_.show()
-    pass
+
+def show_result(img0: torch.Tensor, save_img=None, show_img=True):
+    """
+    展示一张tensor形式的图片，并可选保存图片。若为4维度，则自动解除第一个维度
+    """
+    img_ = img0.clone().detach()
+    if len(img_.size()) == 4:
+        assert img_.size()[0] == 1, "请勿放多张图片"
+        img_ = img_.squeeze(0)
+
+    if save_img is not None:
+        assert isinstance(save_img, str), "请给出字符串形式文件名"
+        assert save_img.endswith((".jpg", ".png")), "请将文件名以 .jpg 或 .png 结尾"
+        torchvision.utils.save_image(img_, save_img)
+
+    if show_img:
+        img_ = transforms.ToPILImage()(img_)
+        img_.show()
+
 
 def test_crop():
     global img
     img_ = img.clone().detach()
 
     img_ = rand_crop(img_, scale, change_pos=False)
-    torchvision.utils.save_image(img_, "test_source/test_crop.jpg")
+    show_result(img_)
 
 
 def test_perspective():
@@ -51,20 +60,20 @@ def test_perspective():
         distort_height = int(distortion_scale * (height // 2)) + 1
 
         topleft = [
-            int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
-            int(torch.randint(-distort_height, distort_height, size=(1, )).item())
+            int(torch.randint(-distort_width, distort_width, size=(1,)).item()),
+            int(torch.randint(-distort_height, distort_height, size=(1,)).item())
         ]
         topright = [
-            int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
-            int(torch.randint(-distort_height, distort_height, size=(1, )).item())
+            int(torch.randint(width - distort_width, width + distort_width, size=(1,)).item()),
+            int(torch.randint(-distort_height, distort_height, size=(1,)).item())
         ]
         botright = [
-            int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
-            int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
+            int(torch.randint(width - distort_width, width + distort_width, size=(1,)).item()),
+            int(torch.randint(height - distort_height, height + distort_height, size=(1,)).item())
         ]
         botleft = [
-            int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
-            int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
+            int(torch.randint(-distort_width, distort_width, size=(1,)).item()),
+            int(torch.randint(height - distort_height, height + distort_height, size=(1,)).item())
         ]
         startpoints = [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]]
         endpoints = [topleft, topright, botright, botleft]
@@ -75,93 +84,24 @@ def test_perspective():
 
     startpoints, endpoints = get_params(img_size[0], img_size[0], scale["perspective_trans"])
     img_ = F.perspective(img_, startpoints, endpoints)
-    torchvision.utils.save_image(img_, "test_source/test_perspective.jpg")
+    show_result(img_)
 
-def get_params(width: int, height: int, distortion_scale: float):
-    distort_width = int(distortion_scale * (width // 2)) + 1
-    distort_height = int(distortion_scale * (height // 2)) + 1
-
-    topleft = [
-        int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
-        int(torch.randint(-distort_height, distort_height, size=(1, )).item())
-    ]
-    topright = [
-        int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
-        int(torch.randint(-distort_height, distort_height, size=(1, )).item())
-    ]
-    botright = [
-        int(torch.randint(width - distort_width, width + distort_width, size=(1, )).item()),
-        int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
-    ]
-    botleft = [
-        int(torch.randint(-distort_width, distort_width, size=(1, )).item()),
-        int(torch.randint(height - distort_height, height + distort_height, size=(1, )).item())
-    ]
-    startpoints = [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]]
-    endpoints = [topleft, topright, botright, botleft]
-    return startpoints, endpoints
-
-def test1():
-    startpoints, endpoints = get_params(img_size[0], img_size[0], scale["perspective_trans"])
-    img_ = F.perspective(img, startpoints, endpoints).squeeze(0)
-    show_img(img_)
-    pass
 
 def test_grayscale():
-    print(img.shape[:])
-    # img_ = transforms.Grayscale()(img).squeeze(0)
-    # 使用luma原理来实现grayscale变换
-    # print(img_.shape)
-    # show_img(img_)
-    # 输入一个 b 3 h w 的图片组 通过grayscale 会变为 b 1 h w的图片组 c通道少了俩 grayscale 保留的是哪一个通道的灰度图?
-    # luma L = R * 299/1000 + G * 587/1000 + B * 114/1000，下取整
-    # b,c,h,w = img.shape
-    # for i in range(0,b):
-    #     img[i][0] = img[i][0]*0.299+img[i][1]*0.587+img[i][2]*0.114
-    #     img[i][1] = img[i][0]
-    #     img[i][2] = img[i][0]
-    # img_ = img.squeeze(0)
-    # print(img_.shape)
-    # print(img.shape)
-    # show_img(img.squeeze(0))
-    # 测试img 是否直接被 函数修改 应该是直接被修改了 tensor是个可变参数
-    grayscale_trans(img,0)
-    show_img(img.squeeze(0))
+    global img
+    img_ = img.clone().detach()
 
-    pass
+    img_ = transforms.RandomGrayscale(p=0.9)(img_)
+    show_result(img_)
 
-def test_contrast():
-    _img = F.adjust_contrast(img,contrast_factor=0.7).squeeze(0)
-    show_img(_img)
 
 def test_ColorJiff():
-    _img = transforms.ColorJitter(0.3,0,0,0)(img).squeeze(0)
-    show_img(_img)
-    pass
-
-
-def test_gray_trans():
-    _img = cv2.imread(img_path)
-    _img_gray = cv2.cvtColor(_img,cv2.COLOR_BGR2GRAY)
-    print(_img.shape)
-    print(_img[0:10][0:10][1])
-    print(_img_gray[0:10][0:10])
-
-def test_gaussian_blur():
-    img_cv = cv2.imread(img_path)
-    img_cv_ = cv2.GaussianBlur(img_cv,(7,1),2,sigmaY=2)
-    cv2.imshow("de",img_cv_)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    pass
+    _img = transforms.ColorJitter(0.3, 0, 0, 0)(img).squeeze(0)
+    show_result(_img)
 
 
 if __name__ == '__main__':
-    # test_crop()
-    # test_perspective()
-    # test1()
-    # test_grayscale()
-    # test_contrast()
-    # test_gray_trans()
-    # test_gaussian_blur()
+    test_crop()
+    test_perspective()
+    test_grayscale()
     test_ColorJiff()

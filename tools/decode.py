@@ -14,7 +14,7 @@ from tools.utils.bch_utils import get_row_msg
 
 
 def main():
-    img_path = "out/encoded_COCO_val2014_000000000042.jpg"  # 替换
+    img_path = "out/encoded_COCO_val2014_000000000042.jpg"
     pretrained = "train_log/justCrop_2021-10-29-10-51-17/latest-5.pth"
     msg = "hello"
 

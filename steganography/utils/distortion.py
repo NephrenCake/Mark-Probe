@@ -9,12 +9,6 @@ from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 
 
-
-# def motion_blur():
-#     #  实现运动模糊
-#
-#     pass
-
 def rand_blur(img, p):
     """
     实现随机高斯模糊
@@ -59,16 +53,6 @@ def rand_crop(img, scale, change_pos=False):
 
     return crop_img
 
-# 修改了grayScale_trans 使之能编程三通道
-def grayscale_trans(img):
-    # 使用luma 原理对三通道的图片进行灰度转换
-    b, c, h, w = img.shape
-    for i in range(0, b):
-        img[i][0] = img[i][0] * 0.299 + img[i][1] * 0.587 + img[i][2] * 0.114
-        img[i][1] = img[i][0]
-        img[i][2] = img[i][0]
-    img_ = img.squeeze(0)
-
 
 def non_spatial_trans(img, scale):
     """
@@ -81,24 +65,19 @@ def non_spatial_trans(img, scale):
     if scale["brightness_trans"] + scale["contrast_trans"] + scale["saturation_trans"] + scale["hue_trans"] != 0:
         img = transforms.ColorJitter(brightness=scale["brightness_trans"], contrast=scale["contrast_trans"],
                                      saturation=scale["saturation_trans"], hue=scale["hue_trans"])(img)
-        # print("color")
     # 模糊
     if scale['blur_trans'] != 0:
         img = rand_blur(img, scale['blur_trans'])
-        # print("blur_trans")
     # jpeg 压缩
     if int(scale["jpeg_trans"]) >= 1:
         img = DiffJPEG(height=h, width=w, differentiable=True,
                        quality=random.randint(100 - int(scale["jpeg_trans"]), 99)).to(img.device).eval()(img)
-        # print("jpeg_trans")
     # 随机噪声
     if scale["noise_trans"] != 0:
         img = rand_noise(img, scale["noise_trans"])
-        # print("noise_trans")
-    # 加入grayscale 变换
-    if scale["grayscale_trans"]!=0:
-        if random.randint(1,11)<=3:
-            grayscale_trans(img)
+    # 灰度变换
+    if scale["grayscale_trans"] != 0:
+        img = transforms.RandomGrayscale(p=scale["grayscale_trans"])(img)
 
     return img
 
@@ -110,8 +89,7 @@ def rand_erase(img, _cover_rate, block_size=20):
     cover_rate: [0.~ 1.0)
     block_size: 遮挡块的大小 建议 0~20 pixel 规定遮挡块 是正方形
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
-    # 这里的 rand_erase 会导致 遮挡的很多部分集中在图片的上半部分。 已经改进！
-
+    这里的 rand_erase 会导致 遮挡的很多部分集中在图片的上半部分。 已经改进！
     """
     cover_rate = random.uniform(0, _cover_rate)
     b, c, h, w = img.shape
@@ -201,5 +179,4 @@ def make_trans_for_photo(img, scale):
     if scale['perspective_trans'] != 0:
         startpoints, endpoints = get_perspective_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])
         img = F.perspective(img, startpoints, endpoints)
-
     return img

@@ -11,7 +11,6 @@ import numpy as np
 from typing import List, Union
 
 
-
 class BCHHelper:
     def __init__(self,
                  polynomial=137,
@@ -116,7 +115,6 @@ class BCHHelper:
 
 
 if __name__ == '__main__':
-
     bch = BCHHelper()
 
     i = 114514
@@ -133,4 +131,3 @@ if __name__ == '__main__':
 
     print(f"now:  {now}", f"uid: {i}", f"key: {key}")
     print(f"time: {now_}", f"uid: {i_}", f"key: {key_}")
-
