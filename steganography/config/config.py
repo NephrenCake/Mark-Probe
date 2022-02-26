@@ -39,7 +39,7 @@ class TrainConfig(BaseConfig):
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
-        self.resume = ""  # 继续中断的训练
+        self.resume = "/train_log/CI-test_2022-02-23-14-01-56/best.pth"  # 继续中断的训练
         '''
         train_log/CI-test_2022-02-16-22-58-11/best.pth # 添加了rand_erase() 的训练 但是最后图像出现了网格状的图案
         train_log/CI-test_2022-02-19-13-23-41/latest-1.pth # 将rand_erase 注释掉之后的训练 perspective 仍然在使用

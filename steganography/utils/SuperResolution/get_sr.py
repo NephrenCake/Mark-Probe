@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 import torch
+import torchvision.transforms as transforms
 
 from steganography.utils.SuperResolution.utils import image_utils
 from steganography.utils.SuperResolution.srgraph import SRGraph
@@ -129,9 +130,42 @@ def main():
   tf.logging.info('averaged running time per image: %.3f sec' % (np.mean(running_time_list)))
 
 
+# 测试1
+# mp = "D:\ChromDownload\srzoo-master\srzoo-master\model\edsr_baseline_x2.pb"
+# cp = "D:\ChromDownload\srzoo-master\srzoo-master\configs\edsr_baseline.json"
+# 测试2
+# mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\edsr_x4.pb"
+# cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\edsr.json"
+
+# D:\learning\pythonProjects\HiddenWatermark1\steganography\utils\SuperResolution\model\edsr_x3.pb
+# 测试3
+# mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\edsr_x3.pb"
+# cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\edsr.json"
+
+# # 测试4
+# mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\carn_x2.pb"
+# cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\carn.json"
+
+# 测试5
+# mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\\frsr_x2.pb"
+# cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\\frsr_x2.json"
+
+# 测试6
+# mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\\edsr_baseline_x4.pb"
+# cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\\edsr_baseline.json"
+
+# 测试7
+# mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\\esrgan_x4.pb"
+# cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\\esrgan.json"
+
+# 测试8
+mp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\model\\eusr_x2.pb"
+cp = "D:\learning\pythonProjects\HiddenWatermark1\steganography\\utils\SuperResolution\configs\\eusr.json"
+
+
 def super_resolution(img:torch.Tensor,
-                     model_path = "D:\ChromDownload\srzoo-master\srzoo-master\model\edsr_baseline_x2.pb",
-                     config_path= "D:\ChromDownload\srzoo-master\srzoo-master\configs\edsr_baseline.json",
+                     model_path = mp,
+                     config_path= cp,
                      scale = 8):
   #
   # img.tolist() -> 将数据转换为list
@@ -142,7 +176,13 @@ def super_resolution(img:torch.Tensor,
   #
 
   # img 是 b c h w 数据 需要进行 suqeeze(0) 然后transpose（1,2,0）
-  img = img.squeeze(0).permute(1,2,0)
+  # img = img.squeeze(0).permute(1,2,0)
+  # 将torch 的数据转换到 0~255 之间 然后送进去
+  max_vr = torch.max(img)
+  min_vr = torch.min(img)
+  img = transforms.ToPILImage()(img.squeeze(0))
+  img = np.array(img)
+
   with open(config_path, 'r') as f:
     sr_config = json.load(f)
 
@@ -154,10 +194,11 @@ def super_resolution(img:torch.Tensor,
   input_image = np.zeros([32, 32, 3], dtype=np.uint8)
   sr_model.get_output([input_image])
   # get_output 需要传入的参数 list包括的 uint8 的图片形式
-  out_put = sr_model.get_output([img.tolist()])[0]
+  out_put = sr_model.get_output([img])[0]
+  out_put = np.clip(out_put, min_vr.item(), max_vr.item())
 
 
-  return torch.from_numpy(out_put).permute(2,1,0)
+  return torch.from_numpy(out_put).permute(2,0,1)
 
 
 if __name__ == '__main__':
