@@ -2,11 +2,19 @@
 import math
 import random
 
+import cv2
+
 import torch
-import torchvision.transforms.functional as F
+
 from torchvision import transforms
 
+
+import torchvision.transforms.functional as F
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
+
+# 实现运动模糊
+
+
 
 
 def rand_blur(img, p):

@@ -1,5 +1,9 @@
 import os
+import random
 import sys
+import time
+
+import numpy as np
 
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
@@ -8,8 +12,8 @@ import torchvision
 from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import functional as F
-
 from steganography.utils.distortion import rand_crop
+from steganography.utils.distortion_motion_blur import Motion_Blur
 
 img_path = "test_source/COCO_train2014_000000000009.jpg"
 img_size = (448, 448)
@@ -99,9 +103,17 @@ def test_ColorJiff():
     _img = transforms.ColorJitter(0.3, 0, 0, 0)(img).squeeze(0)
     show_result(_img)
 
+def test_Motion_Blur():
+    angle = random.randint(0, 180)
+    kernel_size = random.randint(1, 3) * 2 + 1
+    a = Motion_Blur(img, angle, kernel_size)
+    out = a.motion_blur()
+    show_result(out)
+
 
 if __name__ == '__main__':
     test_crop()
     test_perspective()
     test_grayscale()
     test_ColorJiff()
+    test_Motion_Blur()
