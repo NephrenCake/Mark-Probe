@@ -22,10 +22,10 @@ def test_encoder_model():
     output = net({"img": img, "msg": msg})
 
     print(output.size())
-    # print(net.residual.weight.shape)
-    # print(output)
-    # print(net)
-    print(sum(p.numel() for p in net.parameters()))  # stega 1739999  MPEncoder 1713071
+    print(net.residual.weight.shape)
+    print(output)
+    print(net)
+    print(sum(p.numel() for p in net.parameters()))
 
 
 def test_stn():
@@ -35,7 +35,7 @@ def test_stn():
     output = net(img)
 
     print(output.size())
-    print(sum(p.numel() for p in net.parameters()))  # 41054150 -> 26079430
+    print(sum(p.numel() for p in net.parameters()))
 
 
 def test_decoder_model():
@@ -46,10 +46,10 @@ def test_decoder_model():
     output = net(img)
 
     print(output[0].size(), msg.size())
-    # msg_loss = F.binary_cross_entropy(output[0], msg)
-    # print(msg_loss)
-    # msg_loss.backward()
-    print(sum(p.numel() for p in net.parameters()))  # stega 52505482  conv 39298182 swin 53672608
+    msg_loss = F.binary_cross_entropy(output[0], msg)
+    print(msg_loss)
+    msg_loss.backward()
+    print(sum(p.numel() for p in net.parameters()))
 
 
 if __name__ == '__main__':

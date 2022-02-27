@@ -10,18 +10,8 @@ from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 
 
 def rand_blur(img, p):
-    """
-    实现随机高斯模糊
-    todo 实现8方向高斯模糊
-    """
-    if p < torch.rand(1):
-        return img
-    kernel_size = random.randint(1, 3) * 2 + 1
-    t = transforms.RandomChoice([
-        transforms.GaussianBlur(kernel_size=kernel_size, sigma=(0.1, 2.0)),
-        transforms.GaussianBlur(kernel_size=(kernel_size, 1), sigma=(0.1, 2.0)),
-        transforms.GaussianBlur(kernel_size=(1, kernel_size), sigma=(0.1, 2.0)), ])
-    return t(img)
+    # todo 实现8方向高斯模糊
+    pass
 
 
 def rand_noise(img, rnd_noise):
@@ -68,13 +58,13 @@ def non_spatial_trans(img, scale):
     # 模糊
     if scale['blur_trans'] != 0:
         img = rand_blur(img, scale['blur_trans'])
+    # 随机噪声
+    if scale["noise_trans"] != 0:
+        img = rand_noise(img, scale["noise_trans"])
     # jpeg 压缩
     if int(scale["jpeg_trans"]) >= 1:
         img = DiffJPEG(height=h, width=w, differentiable=True,
                        quality=random.randint(100 - int(scale["jpeg_trans"]), 99)).to(img.device).eval()(img)
-    # 随机噪声
-    if scale["noise_trans"] != 0:
-        img = rand_noise(img, scale["noise_trans"])
     # 灰度变换
     if scale["grayscale_trans"] != 0:
         img = transforms.RandomGrayscale(p=scale["grayscale_trans"])(img)

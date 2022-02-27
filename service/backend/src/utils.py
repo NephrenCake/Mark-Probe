@@ -9,7 +9,7 @@ import numpy as np
 from enum import Enum
 from flask import jsonify
 
-from interface.distortion_interface import *
+from tools.interface.attack import *
 
 # HTTP 状态枚举类
 class CodeEnum(Enum):

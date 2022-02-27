@@ -2,7 +2,7 @@
 """
 @Date: 2021/12/15 22:51
 @Author: NephrenCake
-@File: bch_utils.py
+@File: bch.py
 """
 import random
 import time
@@ -19,8 +19,7 @@ class BCHHelper:
                  time_size=26,
                  ecc_size=40,
                  format_spec="%Y-%m-%d %H:%M:%S",
-                 start_time_str="2022-01-01 00:00:00",
-                 ):
+                 start_time_str="2022-01-01 00:00:00"):
         self.format_spec = format_spec
         self.start_time = int(time.mktime(time.strptime(start_time_str, format_spec)))
         self.ecc_size = ecc_size

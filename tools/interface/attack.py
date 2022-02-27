@@ -11,10 +11,9 @@ def brightness_trans(img, brightness, gamma=0):
     """
     传入的是cv格式的图片
     对图片进行 亮度调整 将cv图片中的每一个像素的灰度值增加1+brightness% 的量
+    亮度就是每个像素所有通道都加上b
+    新建全零(黑色)图片数组:np.zeros(img1.shape, dtype=uint8)
     """
-
-    # 亮度就是每个像素所有通道都加上b
-    # 新建全零(黑色)图片数组:np.zeros(img1.shape, dtype=uint8)
     im = img.astype(np.float32) * (brightness + 1)
     im = im.clip(min=0, max=255)
     return im.astype(img.dtype)
@@ -39,7 +38,6 @@ def saturation_trans(img, saturation_factor):
     """
     im = img.astype(np.float32)
     degenerate = cv2.cvtColor(cv2.cvtColor(im, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
-    # degenerate = copy.deepcopy(im)
     im = (1 - saturation_factor) * degenerate + saturation_factor * im
     im = im.clip(min=0, max=255)
     return im.astype(img.dtype)
