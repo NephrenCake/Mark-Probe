@@ -102,8 +102,9 @@ def test_dataset():
             img = img_back * (1 - front_mask_0) + img_front  # 带边框的前景嵌入背景图
             front_mask[0, 1:, ...] *= 0
 
-            torchvision.utils.save_image(front_mask, seg_save_path)
-            torchvision.utils.save_image(img, img_save_path)
+            return front_mask,img
+
+            
 
     front_key = 200
     back_key = 200
