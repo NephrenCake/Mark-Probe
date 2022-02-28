@@ -52,7 +52,7 @@ class Motion_Blur():
         return self.kernel
 
     def motion_blur(self):
-        return conv2d(self.img,self.kernel,groups=self.img.shape[-3])
+        return conv2d(self.img,self.kernel,groups=self.img.shape[-3],padding=self.kernel_size//2)
 
 
 

@@ -12,7 +12,7 @@ import torch
 class BaseConfig:
     def __init__(self):
         # basic config
-        self.device = "cuda"
+        self.device = "cpu"
         self.seed = 2021
 
         # basic setting
@@ -42,17 +42,17 @@ class TrainConfig(BaseConfig):
         self.resume = ""  # 继续中断的训练
         self.load_models = ['Encoder', 'Decoder']
         self.img_set_list = {
-            "/root/src/COCO2014/train2014": 1,
-            "/root/src/COCO2014/val2014": 1,
+            "D:\learning\COCOTrain+Val\\train2014": 0.0001,
+            "D:\learning\COCOTrain+Val\\val2014": 0.0001,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 30  # 15  # 训练的总轮数
+        self.max_epoch = 2  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 46  # 一个批次的图片数量 # batch_size 会有影响
-        self.num_workers = 12  # 进程数
+        self.batch_size = 1  # 一个批次的图片数量 # batch_size 会有影响
+        self.num_workers = 1  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率
@@ -66,7 +66,7 @@ class TrainConfig(BaseConfig):
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
-            "grayscale_trans",
+            "grayscale_trans","motion_blur",
             "perspective_trans", "angle_trans", "cut_trans", "erasing_trans", "jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
             "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", 'stn_loss',
@@ -79,6 +79,7 @@ class TrainConfig(BaseConfig):
         self.angle_trans_grow = (0.3, 0.7)
         self.cut_trans_max = 0.5  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
+
 
         self.grayscale_trans_max = 0.2
         self.grayscale_trans_grow = (0.8, 0.8)
@@ -100,6 +101,10 @@ class TrainConfig(BaseConfig):
         self.hue_trans_grow = (0.1, 0.2)
         self.blur_trans_max = 0.4  # 运动模糊
         self.blur_trans_grow = (0.1, 0.2)
+
+        self.motion_blur_max = 3  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
+        self.motion_blur_grow = (0.1, 0.4)
+
         # loss scale
         self.rgb_loss_max = 0
         self.rgb_loss_grow = (1.7, 2)

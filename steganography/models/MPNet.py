@@ -66,7 +66,7 @@ class MPEncoder(nn.Module):
                                  nn.LeakyReLU(inplace=True))  # 12
         self.conv9 = nn.Sequential(nn.Conv2d(70, 32, kernel_size=(3, 3), padding=(2, 2), dilation=(2, 2)),
                                    nn.LeakyReLU(inplace=True))  # 13
-        # out
+        # encode_output_file
         self.residual = nn.Conv2d(32, 3, kernel_size=(1, 1))  # 13
 
         self.up_x2 = nn.Upsample(scale_factor=2)
