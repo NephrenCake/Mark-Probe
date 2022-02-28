@@ -152,7 +152,7 @@ def get_row_msg(msg_pred):
 
 
 def decode(img_path, msg, pretrained):
-    # img_path = "out/encoded_COCO_val2014_000000000042.jpg"
+    # img_path = "encode_output_file/encoded_COCO_val2014_000000000042.jpg"
     # pretrained = "train_log/test_CustomPer_2021-12-03-14-26-56/latest-5.pth"
     # msg = "hello"
 
@@ -227,7 +227,7 @@ def singl_operation_runtime_consumption():
     pre_path = "D:\learning\COCOTrain+Val/val2014"
     img_path = pre_path + "/" + pic_name
     msg = "hello"
-    save_dir = "./out"
+    save_dir = "./encode_output_file"
     out_path = save_dir + "/" + "encoded_" + pic_name
     pretrained = "train_log/test_CustomPer_2021-12-03-14-26-56/latest-5.pth"
 

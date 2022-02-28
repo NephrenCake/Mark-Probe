@@ -98,17 +98,18 @@ def test_ColorJiff():
     _img = transforms.ColorJitter(0.3, 0, 0, 0)(img).squeeze(0)
     show_result(_img)
 
+
 def test_Motion_Blur():
-    angle = random.randint(0, 180)
-    kernel_size = random.randint(1, 3) * 2 + 1
-    a = Motion_Blur(img, angle, kernel_size)
-    out = a.motion_blur()
+    # angle = random.randint(0, 180)
+    # kernel_size = random.randint(1, 3) * 2 + 1
+    out = Motion_Blur(img, angle=random.uniform(0,180), kernel_size=5).motion_blur()
+    print(out.shape[-2:])
     show_result(out)
 
 
 if __name__ == '__main__':
-    test_crop()
-    test_perspective()
-    test_grayscale()
-    test_ColorJiff()
+    # test_crop()
+    # test_perspective()
+    # test_grayscale()
+    # test_ColorJiff()
     test_Motion_Blur()

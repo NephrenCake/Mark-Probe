@@ -19,19 +19,24 @@ def process_forward(Encoder,
                     data,
                     scales,
                     cfg):
-    img = data["img"].to(cfg.device)
+    img = data["img"].to(cfg.device)  # 传进来的是需要超分图
     msg = data["msg"].to(cfg.device)
 
+    img_low = transforms_F.resize(img, cfg.img_size)
     # ------------------forward
     # Encoder
-    res_img = Encoder({"img": img, "msg": msg})
-    encoded_img = img + res_img
+    res_low = Encoder({"img": img_low, "msg": msg})
+    res_high = transforms_F.resize(res_low, img.shape[-2:])
+    encoded_img = img + res_high
     encoded_img = torch.clamp(encoded_img, 0., 1.)
 
     # transform
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换
     photo_img = make_trans_for_photo(encoded_img, scales)
     crop_img = make_trans_for_crop(encoded_img, scales)
+
+    photo_img = transforms_F.resize(photo_img, cfg.img_size)
+    crop_img = transforms_F.resize(crop_img, cfg.img_size)
 
     # Decoder
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
@@ -61,17 +66,10 @@ def process_forward(Encoder,
     crop_msg_loss = nn_F.binary_cross_entropy(crop_msg_pred, msg)
     msg_loss = (photo_msg_loss + crop_msg_loss) / 2
 
-    if torch.ge(msg_loss, 0.2) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
+    if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
         loss = msg_loss
     else:
         loss = img_loss + msg_loss
-
-    # test if backward is enabled
-    # print(msg_loss)
-    # msg_loss = scales["msg_loss"] * msg_loss
-    # msg_loss.backward()
-    # print(scales["msg_loss"], StegaStampEncoder.residual.weight.grad[0][0][0][0])
-    # input("wait")
 
     # ------------------compute acc
     photo_bit_acc, photo_str_acc, photo_right_str_acc = get_msg_acc(msg, photo_msg_pred)
@@ -80,8 +78,9 @@ def process_forward(Encoder,
     str_acc = (photo_str_acc + crop_str_acc) / 2
     right_str_acc = (photo_right_str_acc + crop_right_str_acc) / 2
 
-    vis_img = {"res_img": res_img.data, "encoded_img": encoded_img.data,
-               "photo_img": photo_img.data, "crop_img": crop_img.data, "stn_img": stn_img, }
+    vis_img = {"res_low": res_low.data, "encoded_img": encoded_img.data,
+               "photo_img": photo_img.data, "crop_img": crop_img.data,
+               "stn_img": stn_img, }
     metric_result = {
         "loss": loss, "img_loss": img_loss, "msg_loss": msg_loss,
         "bit_acc": bit_acc, "str_acc": str_acc, "right_str_acc": right_str_acc,
@@ -93,7 +92,10 @@ def process_forward(Encoder,
 
 
 def make_null_metric_dict():
-    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc"]
+    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc",
+                   "photo_msg_loss", "crop_msg_loss",
+                   "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
+                   "crop_bit_acc", "crop_str_acc", "crop_right_str_acc"]
     return 0, {i: 0 for i in METRIC_LIST}
 
 
@@ -217,40 +219,19 @@ def compute_time(start, cur_iter, iterations):
 def get_msg_acc(msg_true, msg_pred):
     """
     str_acc 当一个batch中的msg_pred 与 msg_true 完全相等的时候 这一个msg才会被判定为正确
-    torch.count_nonzero(correct_pred - (msg_pred.size()[1])) 才会小于msg_pred.size()[1]
-    right_str_acc 应为msg存在校验位 也就是本身信息有着校验的能力 所以存在容忍能力 当msg_pred 的预测在msg校验能力之内就可以判定该msg_pred 就是正确的。
+    right_str_acc 应为msg存在校验位 也就是本身信息有着校验的能力 当msg_pred 的预测在msg校验能力之内就可以判定该msg_pred 就是正确的。
     """
-
-    correct_bit = msg_pred.size()[1] - 5  # 只要有少于五个bit错误就可以认为正确 95位correct 定义容忍位
-    full_bits = msg_pred.size()[1]
-
-    # right_str_acc:
     msg_pred = torch.round(msg_pred)
-    # batch中二进制级预测正确的列表
-    # msg_pred 出来的是一个行矩阵 所以 msg_pred.size()[1] 表示的是其列数 也就是行宽
     correct_pred = (msg_pred.size()[1]) - torch.count_nonzero(msg_pred - msg_true, dim=1)  # 正确了多少个位
-    # torch.count_nonzero(input,dim) dim表示统计的方向 dim=1 表示按照行统计 即统计每一行上面的非0元素个数
 
-    # ==================================================
-    # 测试
-    # torch.set_printoptions(profile="full")
-    # print("msg_pred.size()[1]",msg_pred.size()[1])
-    # print("torch.count_nonzero(msg_pred - msg_true, dim=1):",torch.count_nonzero(msg_pred - msg_true, dim=1))
-    # print("torch.count_nonzero(correct_pred - (msg_pred.size()[1]))",torch.count_nonzero(correct_pred - (msg_pred.size()[1])))
-    # print("correct_pred",correct_pred)
-    # ===================================================
-
-    # 创建一个correct_pred 的深拷贝
     # 优化： correct_pred_copy 本质上是 correct_pred  tensor的数据进行加减运算的时候 将所有的内容都进行运算
     #       correct_pred_copy 中存放的是 一个batch中 的一行数据里面正确的位数
-    # 修改了一下 比原来的简洁了一点
+    # 只要有少于五个bit错误就可以认为正确 91 位correct 定义容忍位
     correct_pred_copy = copy.deepcopy(correct_pred)
-    correct_pred_copy[correct_pred > correct_bit] = full_bits
+    correct_pred_copy[correct_pred > msg_pred.size()[1] - 5] = msg_pred.size()[1]
 
-    # msg_pre-msg_true
     str_acc = 1.0 - torch.count_nonzero(correct_pred - (msg_pred.size()[1])) / correct_pred.size()[0]
     bit_acc = torch.sum(correct_pred) / (msg_pred.size()[0] * msg_pred.size()[1])
-    # 添加一个right_str_acc
     right_str_acc = 1.0 - torch.count_nonzero(correct_pred_copy - (msg_pred.size()[1])) / correct_pred.size()[0]
     return bit_acc, str_acc, right_str_acc
 

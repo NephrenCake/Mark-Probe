@@ -5,20 +5,12 @@ import torch
 from torchvision import transforms
 import torchvision.transforms.functional as F
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
+from steganography.utils.distortion_motion_blur import Motion_Blur
+
 
 def rand_blur(img, p):
-    """
-    实现随机高斯模糊
-    todo 实现8方向高斯模糊
-    """
-    if p < torch.rand(1):
-        return img
-    kernel_size = random.randint(1, 3) * 2 + 1
-    t = transforms.RandomChoice([
-        transforms.GaussianBlur(kernel_size=kernel_size, sigma=(0.1, 2.0)),
-        transforms.GaussianBlur(kernel_size=(kernel_size, 1), sigma=(0.1, 2.0)),
-        transforms.GaussianBlur(kernel_size=(1, kernel_size), sigma=(0.1, 2.0)), ])
-    return t(img)
+    # todo 实现8方向高斯模糊
+    pass
 
 
 def rand_noise(img, rnd_noise):
@@ -62,19 +54,22 @@ def non_spatial_trans(img, scale):
     if scale["brightness_trans"] + scale["contrast_trans"] + scale["saturation_trans"] + scale["hue_trans"] != 0:
         img = transforms.ColorJitter(brightness=scale["brightness_trans"], contrast=scale["contrast_trans"],
                                      saturation=scale["saturation_trans"], hue=scale["hue_trans"])(img)
-    # 模糊
-    if scale['blur_trans'] != 0:
-        img = rand_blur(img, scale['blur_trans'])
+
+    # 运动模糊
+    if scale['motion_blur'] != 0:
+        img = Motion_Blur(img, angle=random.uniform(0, 180),
+                          kernel_size=2 * random.randint(0, round(scale["motion_blur"])) + 1)
+    # 随机噪声
+    if scale["noise_trans"] != 0:
+        img = rand_noise(img, scale["noise_trans"])
     # jpeg 压缩
     if int(scale["jpeg_trans"]) >= 1:
         img = DiffJPEG(height=h, width=w, differentiable=True,
                        quality=random.randint(100 - int(scale["jpeg_trans"]), 99)).to(img.device).eval()(img)
-    # 随机噪声
-    if scale["noise_trans"] != 0:
-        img = rand_noise(img, scale["noise_trans"])
     # 灰度变换
     if scale["grayscale_trans"] != 0:
         img = transforms.RandomGrayscale(p=scale["grayscale_trans"])(img)
+
 
     return img
 
@@ -150,6 +145,10 @@ def get_perspective_params(width: int, height: int, distortion_scale: float):
     startpoints = [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]]
     endpoints = [topleft, topright, botright, botleft]
     return startpoints, endpoints
+
+
+def fit_superResolution(img, p):
+    pass
 
 
 def make_trans_for_crop(img, scale):
