@@ -6,6 +6,7 @@ from torchvision import transforms
 import os
 import cv2 as cv
 import torchvision.transforms.functional as F
+import numpy as np
 
 img_save_source = 'D:\Program data\pythonProject\deeplabv3-plus-pytorch-main\VOCdevkit\VOC2007\JPEGImages'
 seg_save_source = 'D:\Program data\pythonProject\deeplabv3-plus-pytorch-main\VOCdevkit\VOC2007\SegmentationClass'
@@ -34,36 +35,78 @@ def test_dataset():
         img_back_path = os.path.join(fileDir, back_name)
         img_back_size = Image.open(img_back_path).size
 
-        scale = {
-            "area": [0.3, 0.7],
-            "ratio": [9 / 16, 16 / 9],
-            "perspective": 0.2
-        }
-
         trans = transforms.Compose([
             torchvision.transforms.Resize(img_back_size),
             torchvision.transforms.ToTensor()
         ])
 
-        img_back = trans(Image.open(img_back_path).convert("RGB")).unsqueeze(0)
-        img_front = trans(Image.open(img_front_path).convert("RGB")).unsqueeze(0)
+        img_back = trans(Image.open(img_back_path).convert("RGB")).unsqueeze(0)  # 背景图
+        img_front = trans(Image.open(img_front_path).convert("RGB")).unsqueeze(0)  # 前景图
+        front_mask_0 = torch.ones(img_front.shape)
 
-        front_mask = torch.ones(img_front.shape)
+        i = random.randint(0, 1)  # 0 ->打印纸 1 -> 显示屏
+        if i == 0:
+            startpoints, endpoints = get_params(img_front, {
+                "area": [0.9, 0.9],
+                "ratio": [1, 1],
+                "perspective": 0
+            })
+            img_front = F.perspective(img_front, startpoints, endpoints)
+            front_mask = F.perspective(front_mask_0, startpoints, endpoints)
+            img_front = torch.ones(img_front.shape) * (1 - front_mask) * (
+                    np.random.randint(1, 50) / 255) + img_front  # 前景嵌入边框中
 
-        startpoints, endpoints = get_params(img_front, scale)
+            front_mask = torch.ones(img_front.shape)
 
-        img_front = F.perspective(img_front, startpoints, endpoints)
-        front_mask = F.perspective(front_mask, startpoints, endpoints)
-        img = img_back * (1 - front_mask) + img_front
-        front_mask[0, 1:, ...] *= 0
+            scale = {
+                "area": [0.3, 0.7],
+                "ratio": [9 / 16, 16 / 9],
+                "perspective": 0.2
+            }
 
-        torchvision.utils.save_image(img_back, "img_back.jpg")
-        torchvision.utils.save_image(img_front, "img_front.jpg")
-        torchvision.utils.save_image(front_mask, seg_save_path)
-        torchvision.utils.save_image(img, img_save_path)
+            startpoints, endpoints = get_params(img_front, scale)
 
-    front_key = 1500
-    back_key = 1500
+            img_front = F.perspective(img_front, startpoints, endpoints)  # 对带边框的前景透视变换
+            front_mask = F.perspective(front_mask, startpoints, endpoints)  # 对带边框的前景的mask透视变换
+            front_mask_0 = F.perspective(front_mask_0, startpoints, endpoints)
+
+            img = img_back * (1 - front_mask_0) + img_front  # 带边框的前景嵌入背景图
+            front_mask[0, 2:, ...] *= 0
+
+            torchvision.utils.save_image(front_mask, seg_save_path)
+            torchvision.utils.save_image(img, img_save_path)
+        else:
+            startpoints, endpoints = get_params(img_front, {
+                "area": [0.3, 0.4],
+                "ratio": [1, 1],
+                "perspective": 0
+            })
+            img_front = F.perspective(img_front, startpoints, endpoints)
+            front_mask = F.perspective(front_mask_0, startpoints, endpoints)
+            img_front = torch.ones(img_front.shape) * (1 - front_mask) * (np.random.randint(1, 50) / 255) + img_front
+
+            front_mask = torch.ones(img_front.shape)
+
+            scale = {
+                "area": [0.3, 0.7],
+                "ratio": [9 / 16, 16 / 9],
+                "perspective": 0.2
+            }
+
+            startpoints, endpoints = get_params(img_front, scale)
+
+            img_front = F.perspective(img_front, startpoints, endpoints)  # 对带边框的前景透视变换
+            front_mask = F.perspective(front_mask, startpoints, endpoints)  # 对带边框的前景的mask透视变换
+            front_mask_0 = F.perspective(front_mask_0, startpoints, endpoints)
+
+            img = img_back * (1 - front_mask_0) + img_front  # 带边框的前景嵌入背景图
+            front_mask[0, 1:, ...] *= 0
+
+            torchvision.utils.save_image(front_mask, seg_save_path)
+            torchvision.utils.save_image(img, img_save_path)
+
+    front_key = 200
+    back_key = 200
     pathDir = os.listdir(fileDir)  # 取图片的原始路径
     front_img = random.sample(pathDir, front_key)  # 随机选取前景图片
     back_img = random.sample(pathDir, back_key)  # 随机获取背景图片
