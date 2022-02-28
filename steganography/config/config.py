@@ -39,18 +39,11 @@ class TrainConfig(BaseConfig):
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
-        self.resume = "/train_log/CI-test_2022-02-23-14-01-56/best.pth"  # 继续中断的训练
-        '''
-        train_log/CI-test_2022-02-16-22-58-11/best.pth # 添加了rand_erase() 的训练 但是最后图像出现了网格状的图案
-        train_log/CI-test_2022-02-19-13-23-41/latest-1.pth # 将rand_erase 注释掉之后的训练 perspective 仍然在使用
-        train_log/CI-test_2022-02-20-14-09-43
-         
-        '''
+        self.resume = ""  # 继续中断的训练
         self.load_models = ['Encoder', 'Decoder']
-        path = "/root/src/"
         self.img_set_list = {
-            path + "COCO2014/train2014": 1, path + "COCO2014/val2014": 1,  # for test
-            # path + "data/train2014": 1, path + "data/val2014": 1,
+            "/root/src/COCO2014/train2014": 1,
+            "/root/src/COCO2014/val2014": 1,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
@@ -73,10 +66,10 @@ class TrainConfig(BaseConfig):
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
-            "myPolicy","grayscale_trans",
-            "perspective_trans", "angle_trans", "cut_trans", "erasing_trans","jpeg_trans", "noise_trans",
+            "grayscale_trans",
+            "perspective_trans", "angle_trans", "cut_trans", "erasing_trans", "jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
-            "rgb_loss", "hsv_loss",  "yuv_loss", "lpips_loss", 'stn_loss',
+            "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", 'stn_loss',
         ]
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
@@ -87,10 +80,6 @@ class TrainConfig(BaseConfig):
         self.cut_trans_max = 0.5  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
 
-        self.myPolicy_max = 1  # myPolicy 的开关
-        self.myPolicy_grow = (2, 2)
-
-        # 添加的grayscale_trans 变换
         self.grayscale_trans_max = 0.2
         self.grayscale_trans_grow = (0.8, 0.8)
 
@@ -114,9 +103,9 @@ class TrainConfig(BaseConfig):
         # loss scale
         self.rgb_loss_max = 0
         self.rgb_loss_grow = (1.7, 2)
-        self.hsv_loss_max = 0.5
+        self.hsv_loss_max = 1
         self.hsv_loss_grow = (1.7, 2)
-        self.yuv_loss_max = 0.5
+        self.yuv_loss_max = 1
         self.yuv_loss_grow = None
         self.lpips_loss_max = 1
         self.lpips_loss_grow = (0.5, 1)
@@ -187,23 +176,3 @@ class TrainConfig(BaseConfig):
 def _check_dir(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
-
-
-if __name__ == '__main__':
-    cfg = TrainConfig()
-    cfg.set_iteration(10)
-    item = "cut_trans"
-    for epoch in range(0, 10):
-        for iters in range(0, 10):
-            scale = cfg.get_cur_scales(cur_iter=iters, cur_epoch=epoch)
-            # print(scale["erasing_trans"])
-            # print(scale['angle_trans'])
-            print("epoch:",epoch)
-            print("erasing_trans",scale["erasing_trans"])
-            print("myPolicy",scale["myPolicy"])
-            print("perspective",scale["perspective_trans"])
-
-            # startpoints, boxpoints, endpoints = get_custom_perspective_params(torch.randn(1, 3, 100, 100), scale)
-            # print("startpoints:", startpoints, "boxpoints:", boxpoints, "endpoints", endpoints)
-
-

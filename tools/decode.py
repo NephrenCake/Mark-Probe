@@ -10,7 +10,7 @@ from encode import get_byte_msg
 from steganography.models import stega_net
 import numpy as np
 
-from tools.utils.bch_utils import get_row_msg
+from tools.interface.bch import get_row_msg
 
 
 def main():

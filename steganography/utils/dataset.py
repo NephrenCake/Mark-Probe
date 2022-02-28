@@ -47,11 +47,11 @@ def get_dataloader(img_set_list: dict,
 
     # 定义训练以及预测时的预处理方法
     data_transform = {
-        "train": transforms.Compose([transforms.RandomResizedCrop(img_size, scale=(0.7, 1)),
+        "train": transforms.Compose([transforms.RandomResizedCrop(img_size, scale=(0.5, 1)),
                                      transforms.RandomHorizontalFlip(),
                                      transforms.RandomVerticalFlip(),
                                      transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
-                                     transforms.RandomGrayscale(p=0.01),
+                                     transforms.RandomGrayscale(p=0.05),
                                      transforms.ToTensor(),
                                      ]),
         "val": transforms.Compose([transforms.Resize(img_size),

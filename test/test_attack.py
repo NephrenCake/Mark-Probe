@@ -1,4 +1,4 @@
-from tools.attack.distortion_interface import *
+from tools.interface.attack import *
 
 img_path = "test_source\\01.jpg"
 image = cv2.imread(img_path)
@@ -17,12 +17,12 @@ def test_brightness_trans(brightness):
 
 def test_contrast_trans(contrast_factor):
     _img = contrast_trans(image, contrast_factor)
-    cv_show(np.hstack((image, _img)), "contrast adjust contrast_factor={}" / format(contrast_factor))
+    cv_show(np.hstack((image, _img)), f"contrast adjust contrast_factor={contrast_factor}")
 
 
 def test_saturation_trans(saturation_factor):
     _img = saturation_trans(image, saturation_factor)
-    cv_show(np.hstack((image, _img)), "saturation adjust saturation_factor={}" / format(saturation_factor))
+    cv_show(np.hstack((image, _img)), f"saturation adjust saturation_factor={saturation_factor}")
 
 
 def test_gaussian_blur(flag):
