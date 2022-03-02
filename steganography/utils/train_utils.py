@@ -19,26 +19,26 @@ def process_forward(Encoder,
                     data,
                     scales,
                     cfg):
-    img = data["img"].to(cfg.device)  # 传进来的是需要超分图
+    img = data["img"].to(cfg.device)  # 传进来的是需要超分图  origin image
     msg = data["msg"].to(cfg.device)
 
-    img_low = transforms_F.resize(img, cfg.img_size)
+    img_low = transforms_F.resize(img, cfg.img_size)   # simulate the process of resize
     # ------------------forward
     # Encoder
-    res_low = Encoder({"img": img_low, "msg": msg})
-    res_high = transforms_F.resize(res_low, img.shape[-2:])
+    res_low = Encoder({"img": img_low, "msg": msg})     # res_image (448,448)  the encoder_module start forward
+    res_high = transforms_F.resize(res_low, img.shape[-2:]) # res_low  -> resize to original size
     encoded_img = img + res_high
     encoded_img = torch.clamp(encoded_img, 0., 1.)
 
     # transform
-    # 一个分支实现整体识别的变换，一个分支实现局部识别的变换
+    # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
     photo_img = make_trans_for_photo(encoded_img, scales)
     crop_img = make_trans_for_crop(encoded_img, scales)
 
     photo_img = transforms_F.resize(photo_img, cfg.img_size)
     crop_img = transforms_F.resize(crop_img, cfg.img_size)
 
-    # Decoder
+    # Decoder  for the BalanceDataParallel Decoder is safe
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
     crop_msg_pred, _ = Decoder(crop_img, use_stn=False)
 

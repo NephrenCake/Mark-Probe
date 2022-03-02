@@ -14,7 +14,7 @@ from steganography.utils.dataset import get_dataloader
 from steganography.utils.log_utils import get_logger
 from steganography.utils.train_utils import train_one_epoch, evaluate_one_epoch
 from steganography.config.config import TrainConfig
-
+from steganography.utils.data_parallel import BalancedDataParallel
 from lpips import LPIPS
 
 
@@ -50,13 +50,24 @@ def main():
                             decoder_type="conv").to(cfg.device)
         lpips_metric = LPIPS(net="alex").to(cfg.device)
     else:
-        # 多卡并行模型
-        Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
-                                             img_size=cfg.img_size[0])).to(cfg.device)
-        Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
-                                             img_size=cfg.img_size[0],
-                                             decoder_type="conv")).to(cfg.device)
-        lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
+        # 多卡并行模型  why the gpu0 is gaining its size?
+        gpu0_bsz = 0
+        batch_chunk = 1  # gpu0_bsz==2 batch_chunk==2  4 devices the batch_size is 14 -> batch_distribution [1,9,9,9]
+        encoder_module = MPEncoder(msg_size=cfg.msg_size,img_size=cfg.img_size[0]).to(cfg.device)
+        decoder_module = MPDecoder(msg_size=cfg.msg_size,img_size=cfg.img_size[0],decoder_type="conv").to(cfg.device)
+        lpips_module = LPIPS(net="alex").to(cfg.device)
+        Encoder = BalancedDataParallel(gpu0_bsz // batch_chunk,encoder_module,dim=0).to(cfg.device)
+        Decoder = BalancedDataParallel(gpu0_bsz // batch_chunk,decoder_module,dim=0).to(cfg.device)
+        lpips_metric = BalancedDataParallel(gpu0_bsz // batch_chunk,lpips_module,dim=0).to(cfg.device)
+
+        #==============================================
+
+        # Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
+        #                                      img_size=cfg.img_size[0])).to(cfg.device)
+        # Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
+        #                                      img_size=cfg.img_size[0],
+        #                                      decoder_type="conv")).to(cfg.device)
+        # lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[

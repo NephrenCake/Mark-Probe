@@ -11,8 +11,8 @@ import torch
 
 class BaseConfig:
     def __init__(self):
-        # basic config
-        self.device = "cpu"
+        # basic config dasibuyongcpu
+        self.device = "cuda"
         self.seed = 2021
 
         # basic setting
@@ -42,18 +42,18 @@ class TrainConfig(BaseConfig):
         self.resume = ""  # 继续中断的训练
         self.load_models = ['Encoder', 'Decoder']
         self.img_set_list = {
-            "D:\learning\COCOTrain+Val\\train2014": 0.0001,
-            "D:\learning\COCOTrain+Val\\val2014": 0.0001,
+            "D:\服务外包大赛_project\遥感图像\DOTA\\train\images\images": 1,
+            "D:\服务外包大赛_project\遥感图像\DOTA\\val\images\images": 1,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 2  # 15  # 训练的总轮数
+        self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 1  # 一个批次的图片数量 # batch_size 会有影响
-        self.num_workers = 1  # 进程数
-        self.single = True  # 是否多卡训练  False：使用多卡
+        self.batch_size = 3  # 一个批次的图片数量 # batch_size 会有影响
+        self.num_workers = 0  # 进程数
+        self.single = False # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率
         self.lr_max = 0.5  # 最高学习率倍率
@@ -77,16 +77,16 @@ class TrainConfig(BaseConfig):
         self.perspective_trans_grow = (1, 5)
         self.angle_trans_max = 30  # 30  # 观察图片的视角，指与法线的夹角，入射角
         self.angle_trans_grow = (0.3, 0.7)
-        self.cut_trans_max = 0.5  # 0.4  # 0.5 舍弃的图片区域
+        self.cut_trans_max = 0.3  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
 
 
-        self.grayscale_trans_max = 0.2
+        self.grayscale_trans_max = 0.05
         self.grayscale_trans_grow = (0.8, 0.8)
 
-        self.erasing_trans_max = 0.2  # 随机遮挡
-        self.erasing_trans_grow = (0.5, 1)
-        self.jpeg_trans_max = 50  # 这里表示压缩强度。而图像质量是   上调 <= 70
+        self.erasing_trans_max = 0.1 # 随机遮挡
+        self.erasing_trans_grow = (0.5, 1.0)
+        self.jpeg_trans_max = 60  # 这里表示压缩强度。而图像质量是   上调 <= 70
         self.jpeg_trans_grow = (0.3, 0.4)
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
@@ -99,10 +99,11 @@ class TrainConfig(BaseConfig):
         self.saturation_trans_grow = (0.1, 0.2)
         self.hue_trans_max = 0.1  # 色相变换
         self.hue_trans_grow = (0.1, 0.2)
-        self.blur_trans_max = 0.4  # 运动模糊
-        self.blur_trans_grow = (0.1, 0.2)
+        # 下面两个可以删了
+        # self.blur_trans_max = 0.4  # 运动模糊
+        # self.blur_trans_grow = (0.1, 0.2)
 
-        self.motion_blur_max = 3  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
+        self.motion_blur_max = 5  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
         self.motion_blur_grow = (0.1, 0.4)
 
         # loss scale
