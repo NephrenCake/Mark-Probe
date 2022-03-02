@@ -9,10 +9,9 @@ import torchvision.transforms.functional as F
 import numpy as np
 
 
-def test_dataset(name,fileDir):
+def test_dataset(name, fileDir):
     # img_save_source = 'D:\Program data\pythonProject\deeplabv3-plus-pytorch-main\VOCdevkit\VOC2007\JPEGImages'
     # seg_save_source = 'D:\Program data\pythonProject\deeplabv3-plus-pytorch-main\VOCdevkit\VOC2007\SegmentationClass'
-
 
     def get_params(img_, scale_):
         b, c, w, h = img_.shape
@@ -28,15 +27,14 @@ def test_dataset(name,fileDir):
         return [[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], startpoint
 
     def compose(front_name, back_name):
-        temp = random.randint(1,2)
+        temp = random.randint(1, 2)
         # seg_save_path = os.path.join(seg_save_source, count + '.png')
         # img_save_path = os.path.join(img_save_source, count + '.jpg')
         img_front_path = os.path.join(fileDir, front_name)
         img_back_path = os.path.join(fileDir, back_name)
-        img_back_size = Image.open(img_back_path).size
 
         trans = transforms.Compose([
-            torchvision.transforms.Resize(img_back_size),
+            torchvision.transforms.Resize((512, 512)),
             torchvision.transforms.ToTensor()
         ])
 
@@ -111,7 +109,7 @@ def test_dataset(name,fileDir):
     back_name = back_img_list[0]
     front_mask, img = compose(name, back_name)
     front_mask = torch.squeeze(front_mask, 0)
-    img = torch.squeeze(img,0)
+    img = torch.squeeze(img, 0)
     front_mask = torchvision.transforms.functional.to_pil_image(front_mask)
     img = torchvision.transforms.functional.to_pil_image(img)
     return front_mask, img
