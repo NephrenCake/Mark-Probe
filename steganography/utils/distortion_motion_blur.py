@@ -19,7 +19,7 @@ class Motion_Blur():
         self.angle = angle
         self.kernel_size = kernel_size
         self.lintype = linetype
-        self.kernel = self.get_kernel()
+        self.kernel = self.get_kernel().to(self.img.device)
 
     def nearestValue(self,theta, validAngles):
         idx = (np.abs(validAngles - theta)).argmin()
@@ -52,9 +52,10 @@ class Motion_Blur():
         return self.kernel
 
     def motion_blur(self):
+
         return conv2d(self.img,self.kernel,groups=self.img.shape[-3],padding=self.kernel_size//2)
 
-
+# kernel_size>=3!!!
 
     def SanitizeAngleValue(self,kernelCenter, angle):
         numDistinctLines = kernelCenter * 4

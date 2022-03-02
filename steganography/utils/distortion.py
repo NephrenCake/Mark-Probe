@@ -12,6 +12,12 @@ def rand_blur(img, p):
     # todo 实现8方向高斯模糊
     pass
 
+def jpeg_trans(img,p):
+    h = img.shape[-2]
+    w = img.shape[-1]
+    img = F.resize(img, [(h // 16 + 1) * 16, (img.shape[-1] // 16 + 1) * 16])
+    return F.resize(DiffJPEG(height=img.shape[-2], width=img.shape[-1], differentiable=True,
+                   quality=random.randint(100 - int(p), 99)).to(img.device).eval()(img),[h,w])
 
 def rand_noise(img, rnd_noise):
     """
@@ -56,16 +62,17 @@ def non_spatial_trans(img, scale):
                                      saturation=scale["saturation_trans"], hue=scale["hue_trans"])(img)
 
     # 运动模糊
-    if scale['motion_blur'] != 0:
+    if scale['motion_blur'] >=1:
+        k = id(img)
         img = Motion_Blur(img, angle=random.uniform(0, 180),
-                          kernel_size=2 * random.randint(0, round(scale["motion_blur"])) + 1)
+                          kernel_size=2 * random.randint(1, round(scale["motion_blur"])) + 1).motion_blur()
     # 随机噪声
     if scale["noise_trans"] != 0:
         img = rand_noise(img, scale["noise_trans"])
     # jpeg 压缩
     if int(scale["jpeg_trans"]) >= 1:
-        img = DiffJPEG(height=h, width=w, differentiable=True,
-                       quality=random.randint(100 - int(scale["jpeg_trans"]), 99)).to(img.device).eval()(img)
+        # fit the size of JPEG_trans asked
+        img = jpeg_trans(img,scale["jpeg_trans"])
     # 灰度变换
     if scale["grayscale_trans"] != 0:
         img = transforms.RandomGrayscale(p=scale["grayscale_trans"])(img)
@@ -83,13 +90,15 @@ def rand_erase(img, _cover_rate, block_size=20):
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
     这里的 rand_erase 会导致 遮挡的很多部分集中在图片的上半部分。 已经改进！
     """
+    # more than one element of the written-to tensor refers to a single memory location. Please clone() the tensor before performing the operation.
+    img_ = img.clone()
     cover_rate = random.uniform(0, _cover_rate)
-    b, c, h, w = img.shape
+    b, c, h, w = img_.shape
     block_num = [int(h * w * cover_rate) // (block_size * block_size)]
-    fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size)
+    fill_block(img_, 0, 0, w - 1, h - 1, block_num, block_size)
     while block_num[0]:
-        fill_block(img, 0, 0, w - 1, h - 1, block_num, block_size)
-    return img
+        fill_block(img_, 0, 0, w - 1, h - 1, block_num, block_size)
+    return img_
 
 
 def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, block_size):
@@ -147,8 +156,6 @@ def get_perspective_params(width: int, height: int, distortion_scale: float):
     return startpoints, endpoints
 
 
-def fit_superResolution(img, p):
-    pass
 
 
 def make_trans_for_crop(img, scale):
@@ -167,6 +174,7 @@ def make_trans_for_photo(img, scale):
     该部分专门训练整体识别
     """
     # ----------------------非空间变换
+    k = id(img)
     img = non_spatial_trans(img, scale)
     # 随机块遮挡： 可能是随机块遮挡导致 出现了网格状的 图案
     if scale['erasing_trans'] != 0:
