@@ -19,26 +19,26 @@ def process_forward(Encoder,
                     data,
                     scales,
                     cfg):
-    img = data["img"].to(cfg.device)  # 传进来的是需要超分图
+    img = data["img"].to(cfg.device)  # 传进来的是需要超分图  origin image
     msg = data["msg"].to(cfg.device)
 
-    img_low = transforms_F.resize(img, cfg.img_size)
+    img_low = transforms_F.resize(img, cfg.img_size)   # simulate the process of resize
     # ------------------forward
     # Encoder
-    res_low = Encoder({"img": img_low, "msg": msg})
-    res_high = transforms_F.resize(res_low, img.shape[-2:])
+    res_low = Encoder({"img": img_low, "msg": msg})     # res_image (448,448)  the encoder_module start forward
+    res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
     encoded_img = img + res_high
     encoded_img = torch.clamp(encoded_img, 0., 1.)
 
     # transform
-    # 一个分支实现整体识别的变换，一个分支实现局部识别的变换
+    # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
     photo_img = make_trans_for_photo(encoded_img, scales)
     crop_img = make_trans_for_crop(encoded_img, scales)
 
     photo_img = transforms_F.resize(photo_img, cfg.img_size)
     crop_img = transforms_F.resize(crop_img, cfg.img_size)
 
-    # Decoder
+    # Decoder  for the BalanceDataParallel Decoder is safe
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
     crop_msg_pred, _ = Decoder(crop_img, use_stn=False)
 
@@ -88,6 +88,9 @@ def process_forward(Encoder,
         "photo_bit_acc": photo_bit_acc, "photo_str_acc": photo_str_acc, "photo_right_str_acc": photo_right_str_acc,
         "crop_bit_acc": crop_bit_acc, "crop_str_acc": crop_str_acc, "crop_right_str_acc": crop_right_str_acc,
     }
+    # 清理显存。
+    del img, msg,res_low,res_high,img_low
+    torch.cuda.empty_cache()
     return metric_result, vis_img
 
 
@@ -166,7 +169,6 @@ def train_one_epoch(Encoder,
         # ------------------更新lr
         optimizer.zero_grad()
         scheduler.step()
-
     return
 
 
@@ -216,7 +218,7 @@ def compute_time(start, cur_iter, iterations):
     return cur_time_cost, pre_cost_time
 
 
-def get_msg_acc(msg_true, msg_pred):
+def get_msg_acc(msg_true: torch.Tensor, msg_pred:torch.Tensor):
     """
     str_acc 当一个batch中的msg_pred 与 msg_true 完全相等的时候 这一个msg才会被判定为正确
     right_str_acc 应为msg存在校验位 也就是本身信息有着校验的能力 当msg_pred 的预测在msg校验能力之内就可以判定该msg_pred 就是正确的。

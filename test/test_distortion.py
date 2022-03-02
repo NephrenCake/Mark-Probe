@@ -8,7 +8,7 @@ import torchvision
 from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import functional as F
-from steganography.utils.distortion import rand_crop
+from steganography.utils.distortion import rand_crop,rand_erase
 from steganography.utils.distortion_motion_blur import Motion_Blur
 
 img_path = "test_source/COCO_train2014_000000000009.jpg"
@@ -106,10 +106,15 @@ def test_Motion_Blur():
     print(out.shape[-2:])
     show_result(out)
 
+def test_erase():
+    out = rand_erase(img,0.2)
+    show_result(out)
+    pass
 
 if __name__ == '__main__':
     # test_crop()
     # test_perspective()
     # test_grayscale()
     # test_ColorJiff()
-    test_Motion_Blur()
+    # test_Motion_Blur()
+    test_erase()
