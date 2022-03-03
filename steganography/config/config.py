@@ -53,7 +53,7 @@ class TrainConfig(BaseConfig):
         self.use_warmup = False
         self.batch_size = 3  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 0  # 进程数
-        self.single = False # 是否多卡训练  False：使用多卡
+        self.single = False  # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率
         self.lr_max = 0.5  # 最高学习率倍率
@@ -66,7 +66,7 @@ class TrainConfig(BaseConfig):
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
-            "grayscale_trans","motion_blur",
+            "grayscale_trans", "motion_blur",
             "perspective_trans", "angle_trans", "cut_trans", "erasing_trans", "jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
             "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", 'stn_loss',
@@ -80,11 +80,10 @@ class TrainConfig(BaseConfig):
         self.cut_trans_max = 0.3  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
 
-
         self.grayscale_trans_max = 0.05
         self.grayscale_trans_grow = (0.8, 0.8)
 
-        self.erasing_trans_max = 0.1 # 随机遮挡
+        self.erasing_trans_max = 0.1  # 随机遮挡
         self.erasing_trans_grow = (0.5, 1.0)
         self.jpeg_trans_max = 60  # 这里表示压缩强度。而图像质量是   上调 <= 70
         self.jpeg_trans_grow = (0.3, 0.4)

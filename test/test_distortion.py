@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
 import torch
@@ -8,10 +9,9 @@ import torchvision
 from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import functional as F
-from steganography.utils.distortion import rand_crop,rand_erase
-from steganography.utils.distortion_motion_blur import Motion_Blur
+from steganography.utils.distortion import rand_crop
 
-img_path = "test_source/COCO_train2014_000000000009.jpg"
+img_path = "out/grayscale_trans.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {
@@ -24,7 +24,6 @@ img = transforms.Compose([
     torchvision.transforms.Resize(img_size),
     torchvision.transforms.ToTensor()
 ])(Image.open(img_path).convert("RGB")).unsqueeze(0)
-torchvision.utils.save_image(img, "test_source/test.jpg")
 
 
 def show_result(img0: torch.Tensor, save_img=None, show_img=True):
@@ -51,7 +50,7 @@ def test_crop():
     img_ = img.clone().detach()
 
     img_ = rand_crop(img_, scale, change_pos=False)
-    show_result(img_)
+    show_result(img_, "out/crop.jpg")
 
 
 def test_perspective():
@@ -84,37 +83,9 @@ def test_perspective():
 
     startpoints, endpoints = get_params(img_size[0], img_size[0], scale["perspective_trans"])
     img_ = F.perspective(img_, startpoints, endpoints)
-    show_result(img_)
+    show_result(img_, "out/perspective.jpg")
 
-
-def test_grayscale():
-    global img
-    img_ = img.clone().detach()
-    img_ = transforms.RandomGrayscale(p=0.9)(img_)
-    show_result(img_)
-
-
-def test_ColorJiff():
-    _img = transforms.ColorJitter(0.3, 0, 0, 0)(img).squeeze(0)
-    show_result(_img)
-
-
-def test_Motion_Blur():
-    # angle = random.randint(0, 180)
-    # kernel_size = random.randint(1, 3) * 2 + 1
-    out = Motion_Blur(img, angle=random.uniform(0,180), kernel_size=5).motion_blur()
-    print(out.shape[-2:])
-    show_result(out)
-
-def test_erase():
-    out = rand_erase(img,0.2)
-    show_result(out)
-    pass
 
 if __name__ == '__main__':
-    # test_crop()
+    test_crop()
     # test_perspective()
-    # test_grayscale()
-    # test_ColorJiff()
-    # test_Motion_Blur()
-    test_erase()
