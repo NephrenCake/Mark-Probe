@@ -63,11 +63,11 @@ def main(args):
                                              model=decoder,
                                              use_stn=True)
 
-    print("水印指向用户：", i_)
-    print("水印指向时间：", now_)
-    print("水印原生内容：", key_)
-    # print("水印正确率：", )
-    print("水印置信度：", score)
+    print("水印指向用户: ", i_)
+    print("水印指向时间: ", now_)
+    print("水印原生内容: ", key_)
+    # print("水印正确率: ", )
+    print("水印置信度: ", score)
 
 
 if __name__ == '__main__':

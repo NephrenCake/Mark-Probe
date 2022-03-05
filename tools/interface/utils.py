@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 import cv2
@@ -47,3 +48,8 @@ def convert_img_type(img: Union[np.ndarray, Image.Image, torch.Tensor]) -> torch
             assert img.shape[0] == 1, "请勿放多张图片"
         assert img.shape[1] == 3, "传个三通道, thanks"
     return img
+
+
+def check_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)

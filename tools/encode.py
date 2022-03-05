@@ -16,7 +16,7 @@ from torchvision.transforms import transforms
 from steganography.models.MPNet import MPEncoder
 
 from tools.interface.bch import BCHHelper
-from tools.interface.utils import model_import, get_device, convert_img_type
+from tools.interface.utils import model_import, get_device, convert_img_type, check_dir
 
 
 @torch.no_grad()
@@ -67,6 +67,7 @@ def main(args):
                                   bch=bch,
                                   device=device)
 
+    check_dir(args.output_path)
     transforms.ToPILImage()(encoded_img).save(os.path.join(args.output_path, 'encoded.jpg'))
     transforms.ToPILImage()(res_img + 0.5).save(os.path.join(args.output_path, 'residual.jpg'))
 
