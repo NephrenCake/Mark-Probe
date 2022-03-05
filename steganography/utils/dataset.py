@@ -6,7 +6,6 @@ import random
 import cv2
 import numpy as np
 import torch
-
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms

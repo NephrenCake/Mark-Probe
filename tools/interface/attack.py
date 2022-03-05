@@ -5,8 +5,7 @@ import cv2
 import numpy as np
 from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
-from steganography.utils.distortion_motion_blur import Motion_Blur
-
+import kornia
 
 def brightness_trans(img: np.ndarray, brightness: float, gamma=0) -> np.ndarray:
     """
@@ -60,7 +59,7 @@ def gaussian_blur(img: np.ndarray, flag: bool) -> np.ndarray:
     return img if flag != True else cv2.GaussianBlur(img, (5, 5), sigmaX=0.1, sigmaY=2)
 
 
-def rand_noise(img: np.ndarray, std, mean=0) -> np.ndarray:
+def rand_noise(img: np.ndarray, std = 0.5, mean=0) -> np.ndarray:
     imgtype = img.dtype
     gauss = np.random.normal(mean, std, img.shape).astype(np.float32)
     noisy = np.clip((1 + gauss) * img.astype(np.float32), 0, 255)
@@ -147,7 +146,7 @@ def motion_blur(img: np.ndarray, kernel_size:int)->np.ndarray:
     img = transforms.Compose([
         transforms.ToTensor()
     ])(img).unsqueeze(0)
-    out = Motion_Blur(img, kernel_size=2*kernel_size+1, angle=random.uniform(0, 180)).motion_blur().squeeze(0)
+    out = kornia.filters.motion_blur(img, kernel_size=2*kernel_size+1, angle=random.uniform(0, 180),direction=random.uniform(-1,1)).squeeze(0)
     out = (out*255.).permute(1,2,0).byte().numpy()
     return out
 

@@ -1,20 +1,24 @@
 # -- coding: utf-8 --
 import math
 import random
+from kornia.filters import motion_blur
 import torch
 from torchvision import transforms
 import torchvision.transforms.functional as F
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
-from steganography.utils.distortion_motion_blur import Motion_Blur
 
 
-def jpeg_trans(img, p):
+def rand_blur(img, p):
+    # todo 实现8方向高斯模糊
+    pass
+
+# 注意这里是由于 之前的逻辑： 将“高分辨率图像传入并对其做失真扰乱”  而jpeg压缩对图像的大小有要求！
+def jpeg_trans(img,p):
     h = img.shape[-2]
     w = img.shape[-1]
     img = F.resize(img, [(h // 16 + 1) * 16, (img.shape[-1] // 16 + 1) * 16])
     return F.resize(DiffJPEG(height=img.shape[-2], width=img.shape[-1], differentiable=True,
-                             quality=random.randint(100 - int(p), 99)).to(img.device).eval()(img), [h, w])
-
+                   quality=random.randint(100 - int(p), 99)).to(img.device).eval()(img),[h,w])
 
 def rand_noise(img, rnd_noise):
     """
@@ -34,6 +38,7 @@ def rand_crop(img, scale, change_pos=False):
 
     i, j, h, w = transforms.RandomResizedCrop.get_params(img, scale=[1. - scale["cut_trans"], 1.],
                                                          ratio=[ratio, 1 / ratio])
+
     crop_img = torch.zeros(img.shape).to(img.device)
 
     if change_pos:
@@ -51,24 +56,31 @@ def non_spatial_trans(img, scale):
     此处主要实现大多数情况下共同包含的变换，多为非空间变换
     todo 加入反光变换
     """
+    b, c, w, h = img.size()
+
     # 色彩
     if scale["brightness_trans"] + scale["contrast_trans"] + scale["saturation_trans"] + scale["hue_trans"] != 0:
         img = transforms.ColorJitter(brightness=scale["brightness_trans"], contrast=scale["contrast_trans"],
                                      saturation=scale["saturation_trans"], hue=scale["hue_trans"])(img)
+
     # 运动模糊
-    if scale['motion_blur'] >= 1:
-        img = Motion_Blur(img, angle=random.uniform(0, 180),
-                          kernel_size=2 * random.randint(1, round(scale["motion_blur"])) + 1).motion_blur()
+    if scale['motion_blur'] >=1:
+        k = id(img)
+        # img = Motion_Blur(img, angler=random.uniform(0, 180),
+        #                   kernel_size=2 * random.randint(1, round(scale["motion_blur"])) + 1).motion_blur()
+        img = motion_blur(img,kernel_size=2 * random.randint(1, round(scale["motion_blur"])) + 1,
+                                         angle=random.uniform(0, 180),direction=random.uniform(-1,1))
     # 随机噪声
     if scale["noise_trans"] != 0:
         img = rand_noise(img, scale["noise_trans"])
     # jpeg 压缩
     if int(scale["jpeg_trans"]) >= 1:
         # fit the size of JPEG_trans asked
-        img = jpeg_trans(img, scale["jpeg_trans"])
+        img = jpeg_trans(img,scale["jpeg_trans"])
     # 灰度变换
     if scale["grayscale_trans"] != 0:
         img = transforms.RandomGrayscale(p=scale["grayscale_trans"])(img)
+
 
     return img
 
@@ -80,17 +92,16 @@ def rand_erase(img, _cover_rate, block_size=20):
     cover_rate: [0.~ 1.0)
     block_size: 遮挡块的大小 建议 0~20 pixel 规定遮挡块 是正方形
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
-    这里的 rand_erase 会导致 遮挡的很多部分集中在图片的上半部分。 已经改进！
     """
     # more than one element of the written-to tensor refers to a single memory location. Please clone() the tensor before performing the operation.
-    img_ = img.clone()
+    _img = img.clone()
     cover_rate = random.uniform(0, _cover_rate)
-    b, c, h, w = img_.shape
+    b, c, h, w = _img.shape
     block_num = [int(h * w * cover_rate) // (block_size * block_size)]
-    fill_block(img_, 0, 0, w - 1, h - 1, block_num, block_size)
+    fill_block(_img, 0, 0, w - 1, h - 1, block_num, block_size)
     while block_num[0]:
-        fill_block(img_, 0, 0, w - 1, h - 1, block_num, block_size)
-    return img_
+        fill_block(_img, 0, 0, w - 1, h - 1, block_num, block_size)
+    return _img
 
 
 def fill_block(img_, start_idx_w, start_idx_h, end_idx_w, end_idx_h, block_num, block_size):
@@ -148,6 +159,8 @@ def get_perspective_params(width: int, height: int, distortion_scale: float):
     return startpoints, endpoints
 
 
+
+
 def make_trans_for_crop(img, scale):
     """
     该部分专门训练局部识别
@@ -155,7 +168,7 @@ def make_trans_for_crop(img, scale):
     # ----------------------非空间变换
     img = non_spatial_trans(img, scale)
     # 随机裁剪
-    img = rand_crop(img, scale, change_pos=False)
+    img = rand_crop(img, scale,change_pos=False)
     return img
 
 
@@ -164,7 +177,6 @@ def make_trans_for_photo(img, scale):
     该部分专门训练整体识别
     """
     # ----------------------非空间变换
-    k = id(img)
     img = non_spatial_trans(img, scale)
     # 随机块遮挡： 可能是随机块遮挡导致 出现了网格状的 图案
     if scale['erasing_trans'] != 0:

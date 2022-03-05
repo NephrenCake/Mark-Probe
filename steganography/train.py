@@ -31,7 +31,6 @@ def main():
     logger.info(f'Using device: {cfg.device}')
     logger.info(f'Using dataloader workers: {cfg.num_workers}')
 
-    # 实例化数据集
     train_loader, val_loader = get_dataloader(img_set_list=cfg.img_set_list,
                                               img_size=(1080, 1920),
                                               msg_size=cfg.msg_size,

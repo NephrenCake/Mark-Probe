@@ -42,8 +42,9 @@ class TrainConfig(BaseConfig):
         self.resume = ""  # 继续中断的训练
         self.load_models = ['Encoder', 'Decoder']
         self.img_set_list = {
-            "D:\服务外包大赛_project\遥感图像\DOTA\\train\images\images": 1,
-            "D:\服务外包大赛_project\遥感图像\DOTA\\val\images\images": 1,
+            "/root/src/COCO2014/train2014": 1,
+            "/root/src/COCO2014/val2014": 1,
+            # "D:\learning\COCOTrain+Val\\val2014":0.001
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
@@ -51,9 +52,9 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 30  # 15  # 训练的总轮数
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 3  # 一个批次的图片数量 # batch_size 会有影响
-        self.num_workers = 0  # 进程数
-        self.single = False  # 是否多卡训练  False：使用多卡
+        self.batch_size = 4 # 一个批次的图片数量 # batch_size 会有影响
+        self.num_workers = 12  # 进程数
+        self.single = True # 是否多卡训练  False：使用多卡
 
         self.lr_base = 0.001  # 基础学习率
         self.lr_max = 0.5  # 最高学习率倍率
@@ -66,7 +67,7 @@ class TrainConfig(BaseConfig):
         # ============== dynamic scales
         # 注册使用的递增变换
         self.scale_list = [
-            "grayscale_trans", "motion_blur",
+            "grayscale_trans","motion_blur",
             "perspective_trans", "angle_trans", "cut_trans", "erasing_trans", "jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans",
             "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", 'stn_loss',
@@ -74,16 +75,17 @@ class TrainConfig(BaseConfig):
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
         self.perspective_trans_max = 0.1  # 透视变换
-        self.perspective_trans_grow = (1, 5)
+        self.perspective_trans_grow = (1, 5)  # (1, 5)
         self.angle_trans_max = 30  # 30  # 观察图片的视角，指与法线的夹角，入射角
         self.angle_trans_grow = (0.3, 0.7)
         self.cut_trans_max = 0.3  # 0.4  # 0.5 舍弃的图片区域
         self.cut_trans_grow = (0.3, 0.7)
 
+
         self.grayscale_trans_max = 0.05
         self.grayscale_trans_grow = (0.8, 0.8)
 
-        self.erasing_trans_max = 0.1  # 随机遮挡
+        self.erasing_trans_max = 0.1 # 随机遮挡
         self.erasing_trans_grow = (0.5, 1.0)
         self.jpeg_trans_max = 60  # 这里表示压缩强度。而图像质量是   上调 <= 70
         self.jpeg_trans_grow = (0.3, 0.4)
@@ -102,11 +104,11 @@ class TrainConfig(BaseConfig):
         # self.blur_trans_max = 0.4  # 运动模糊
         # self.blur_trans_grow = (0.1, 0.2)
 
-        self.motion_blur_max = 5  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
+        self.motion_blur_max = 3  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
         self.motion_blur_grow = (0.1, 0.4)
 
         # loss scale
-        self.rgb_loss_max = 0
+        self.rgb_loss_max = 1
         self.rgb_loss_grow = (1.7, 2)
         self.hsv_loss_max = 1
         self.hsv_loss_grow = (1.7, 2)
@@ -180,4 +182,4 @@ class TrainConfig(BaseConfig):
 
 def _check_dir(path: str):
     if not os.path.exists(path):
-        os.makedirs(path)
+        os.makedirs(path,exist_ok=True)
