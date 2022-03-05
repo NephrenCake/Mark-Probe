@@ -94,7 +94,7 @@ def main():
     bch = BCHHelper()
 
     encoded_img, res_img = encode(img=img, uid=args.user_id, model=encoder, bch=bch, device=device)  # 调用
-
+    # encoded_img = transforms.Resize([448,448])(encoded_img)
     encoded_img_save = transforms.ToPILImage()(encoded_img)
     res_img_save = transforms.ToPILImage()(res_img + 0.5)
     encoded_img_save.save(args.output_path+"/encoded.png")
