@@ -47,6 +47,7 @@ class DistortionTestHelper():
         if _show_contrast:
             img_contrast = copy.deepcopy(img)
         for idx in idxs:
+            ops = self.trans_Ops_list[idx]
             factor = self.ops_range_dict[ops][random.randint(0,9)]
             img_trans_order[ops]=factor
             img = self.trans(img,ops,factor)
