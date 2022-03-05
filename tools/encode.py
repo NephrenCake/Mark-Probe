@@ -5,7 +5,6 @@ import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
-import cv2
 import torch
 import argparse
 import numpy as np
@@ -17,27 +16,19 @@ from torchvision.transforms import transforms
 from steganography.models.MPNet import MPEncoder
 
 from tools.interface.bch import BCHHelper
-from tools.interface.utils import model_import, get_device
+from tools.interface.utils import model_import, get_device, convert_img_type
 
 
+@torch.no_grad()
 def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
            uid: Union[int, str],
            model: MPEncoder,
            bch: BCHHelper,
-           device) -> (torch.Tensor, torch.Tensor):
-    if isinstance(img, np.ndarray):
-        img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    if isinstance(img, Image.Image):
-        img = transforms.ToTensor()(img)
-    if isinstance(img, torch.Tensor):
-        if len(img.shape) == 3:
-            img = img.unsqueeze(0)
-        else:
-            assert img.shape[0] == 1, "请勿放多张图片"
-        assert img.shape[1] == 3, "传个三通道, thanks"
-    img = img.to(device)
+           device,
+           img_size=(448, 448)) -> (torch.Tensor, torch.Tensor):
+    img = convert_img_type(img).to(device)
 
-    img_low = transforms.Resize(model.img_size)(img)
+    img_low = transforms.Resize(img_size)(img)
     dat, now, key = bch.convert_uid_to_data(uid)
     packet = torch.tensor(bch.encode_data(dat), dtype=torch.float32, device=device).unsqueeze(0)  # 数据段+校验段
 
@@ -45,7 +36,7 @@ def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
     res_high = F.resize(res_low, img.shape[-2:])
     encoded_img = torch.clamp(res_high + img, 0., 1.)
 
-    return encoded_img.squeeze(0), res_low.squeeze(0)
+    return encoded_img.squeeze(0).cpu(), res_low.squeeze(0).cpu()
 
 
 def parse_args():
