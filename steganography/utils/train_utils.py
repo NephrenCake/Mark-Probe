@@ -21,6 +21,7 @@ def process_forward(Encoder,
                     cfg):
     img = data["img"].to(cfg.device)  # 传进来的是需要超分图  origin image
     msg = data["msg"].to(cfg.device)
+    mask = data["mask"].to(cfg.device)
 
     img_low = transforms_F.resize(img, cfg.img_size)   # simulate the process of resize
     # ------------------forward
@@ -43,20 +44,15 @@ def process_forward(Encoder,
     crop_msg_pred, _ = Decoder(crop_img, use_stn=False)
 
     # ------------------loss
-    # todo 可以尝试使用其他实现方式，高斯模糊并不是最佳选择，期望标定的高频区域范围更多一些
-    # 添加gaussian_blur的掩码可以将。。的权重设置的更高
-    weight_mask = torch.abs(img - transforms_F.gaussian_blur(img, [7, 7], [10, 10]))
-    weight_mask = torch.max(weight_mask) - weight_mask  # low weight in high frequency
-
     img_loss = torch.zeros(1).to(cfg.device)
     if scales["rgb_loss"] != 0:
-        rgb_loss = mse_loss(encoded_img, img, mask=weight_mask)
+        rgb_loss = mse_loss(encoded_img, img, mask=mask)
         img_loss += rgb_loss * scales["rgb_loss"]
     if scales["hsv_loss"] != 0:
-        hsv_loss = mse_loss(rgb_to_hsv(encoded_img), rgb_to_hsv(img), mask=weight_mask)
+        hsv_loss = mse_loss(rgb_to_hsv(encoded_img), rgb_to_hsv(img), mask=mask)
         img_loss += hsv_loss * scales["hsv_loss"]
     if scales["yuv_loss"] != 0:
-        yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=weight_mask)
+        yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=mask)
         img_loss += yuv_loss * scales["yuv_loss"]
     if scales["lpips_loss"] != 0:
         lpips_loss = lpips(img, encoded_img).mean()
@@ -88,6 +84,9 @@ def process_forward(Encoder,
         "photo_bit_acc": photo_bit_acc, "photo_str_acc": photo_str_acc, "photo_right_str_acc": photo_right_str_acc,
         "crop_bit_acc": crop_bit_acc, "crop_str_acc": crop_str_acc, "crop_right_str_acc": crop_right_str_acc,
     }
+
+    del img, msg, mask
+    torch.cuda.empty_cache()
     return metric_result, vis_img
 
 

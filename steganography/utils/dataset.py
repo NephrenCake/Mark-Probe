@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
+from kornia.enhance import normalize_min_max, AdjustGamma
+from kornia.filters import laplacian
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -87,6 +89,7 @@ class StegaDataset(Dataset):
         self.img_list = img_list
         self.msg_size = msg_size
         self.transform = transform
+        self.adjustGamma = AdjustGamma(10., 1.)
 
     def __len__(self):
         return len(self.img_list)
@@ -103,9 +106,15 @@ class StegaDataset(Dataset):
         msg = np.random.binomial(1, .5, self.msg_size)
         msg = torch.from_numpy(msg).to(torch.float)
 
+        # mask for loss function
+        # 现在 mask 是一个范围 [0., 1.] 边缘区域像素值低 平滑区域像素值高
+        mask = 1 - torch.abs(laplacian(img.unsqueeze(0), 3))  # low weight in high frequency
+        mask = self.adjustGamma(normalize_min_max(mask))
+
         return {
             "img": img,
-            "msg": msg
+            "msg": msg,
+            "mask": mask,
         }
 
 
