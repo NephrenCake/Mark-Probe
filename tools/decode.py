@@ -34,9 +34,9 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
     msg_pred = torch.round(msg_pred).numpy().ravel()
 
     bf, dat = bch.decode_data(msg_pred)
-    i_, now_, key_ = bch.convert_data_to_uid(bf, dat)
+    uid, time, content = bch.convert_data_to_uid(bf, dat)
 
-    return i_, now_, key_, msg_pred, score
+    return uid, time, content, msg_pred, score
 
 
 def parse_args():
@@ -57,15 +57,15 @@ def main(args):
     decoder = model_import(args.model_path, "Decoder", device=device)
 
     # 调用 api
-    i_, now_, key_, msg_pred, score = decode(img=img,
+    uid, time, content, msg_pred, score = decode(img=img,
                                              bch=bch,
                                              device=device,
                                              model=decoder,
                                              use_stn=True)
 
-    print("水印指向用户: ", i_)
-    print("水印指向时间: ", now_)
-    print("水印原生内容: ", key_)
+    print("水印指向用户: ", uid)
+    print("水印指向时间: ", time)
+    print("水印原生内容: ", content)
     # print("水印正确率: ", )
     print("水印置信度: ", score)
 
