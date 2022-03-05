@@ -109,7 +109,7 @@ class StegaDataset(Dataset):
         # mask for loss function
         # 现在 mask 是一个范围 [0., 1.] 边缘区域像素值低 平滑区域像素值高
         mask = 1 - torch.abs(laplacian(img.unsqueeze(0), 3))  # low weight in high frequency
-        mask = self.adjustGamma(normalize_min_max(mask))
+        mask = self.adjustGamma(normalize_min_max(mask)).squeeze(0)
 
         return {
             "img": img,

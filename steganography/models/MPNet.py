@@ -33,6 +33,9 @@ class MPEncoder(nn.Module):
 
     def __init__(self, msg_size=96, img_size=448):
         super(MPEncoder, self).__init__()
+        self.msg_size = msg_size
+        self.img_size = (img_size, img_size)
+
         self.msg_dense_size = int(img_size / 8)
         msg_dense_out = int(img_size * img_size * 3 / (8 * 8))
 
