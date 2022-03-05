@@ -62,7 +62,6 @@ def non_spatial_trans(img, scale):
     if scale["brightness_trans"] + scale["contrast_trans"] + scale["saturation_trans"] + scale["hue_trans"] != 0:
         img = transforms.ColorJitter(brightness=scale["brightness_trans"], contrast=scale["contrast_trans"],
                                      saturation=scale["saturation_trans"], hue=scale["hue_trans"])(img)
-
     # 运动模糊
     if scale['motion_blur'] >=1:
         k = id(img)
@@ -80,8 +79,6 @@ def non_spatial_trans(img, scale):
     # 灰度变换
     if scale["grayscale_trans"] != 0:
         img = transforms.RandomGrayscale(p=scale["grayscale_trans"])(img)
-
-
     return img
 
 
@@ -165,8 +162,6 @@ def make_trans_for_crop(img, scale):
     """
     该部分专门训练局部识别
     """
-    # ----------------------非空间变换
-    img = non_spatial_trans(img, scale)
     # 随机裁剪
     img = rand_crop(img, scale,change_pos=False)
     return img
@@ -176,8 +171,6 @@ def make_trans_for_photo(img, scale):
     """
     该部分专门训练整体识别
     """
-    # ----------------------非空间变换
-    img = non_spatial_trans(img, scale)
     # 随机块遮挡： 可能是随机块遮挡导致 出现了网格状的 图案
     if scale['erasing_trans'] != 0:
         img = rand_erase(img, scale['erasing_trans'], block_size=random.randint(10, 30))

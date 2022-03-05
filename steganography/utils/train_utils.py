@@ -10,7 +10,7 @@ import copy
 
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
-from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop
+from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop,non_spatial_trans
 
 
 def process_forward(Encoder,
@@ -33,6 +33,7 @@ def process_forward(Encoder,
 
     # transform
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
+    encoded_img = non_spatial_trans(encoded_img,scales)
     photo_img = make_trans_for_photo(encoded_img, scales)
     crop_img = make_trans_for_crop(encoded_img, scales)
 
