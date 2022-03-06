@@ -7,7 +7,7 @@ import torch.nn.functional as nn_F
 import torchvision.transforms.functional as transforms_F
 import logging
 import copy
-
+from kornia.augmentation import RandomMixUp
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
 from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
@@ -23,6 +23,7 @@ def process_forward(Encoder,
     msg = data["msg"].to(cfg.device)
     mask = data["mask"].to(cfg.device)
 
+
     img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
@@ -32,8 +33,11 @@ def process_forward(Encoder,
     del res_high
 
     # transform
+    # 添加反射  先把反射添加在 所有的变换之前试一试  # todo 反射变换的位置待定。
+    #
     # ----------------------非空间变换
-    trans_img = non_spatial_trans(encoded_img, scales)
+    trans_img = non_spatial_trans(encoded_img
+                                  if scales["reflection"]!=0 else RandomMixUp(p=scales["reflection"], lambda_val=(0., scales["reflection_strength"]))(encoded_img)[0], scales)
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
     photo_img = make_trans_for_photo(trans_img, scales)
     crop_img = make_trans_for_crop(trans_img, scales)
