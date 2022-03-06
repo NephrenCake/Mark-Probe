@@ -10,7 +10,7 @@ import copy
 
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
-from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop,non_spatial_trans
+from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
 
 
 def process_forward(Encoder,
@@ -23,19 +23,21 @@ def process_forward(Encoder,
     msg = data["msg"].to(cfg.device)
     mask = data["mask"].to(cfg.device)
 
-    img_low = transforms_F.resize(img, cfg.img_size)   # simulate the process of resize
+    img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    res_low = Encoder({"img": img_low, "msg": msg})     # res_image (448,448)  the encoder_module start forward
-    res_high = transforms_F.resize(res_low, img.shape[-2:]) # res_low  -> resize to original size
-    encoded_img = img + res_high
-    encoded_img = torch.clamp(encoded_img, 0., 1.)
+    res_low = Encoder({"img": img_low, "msg": msg})  # res_image (448,448)  the encoder_module start forward
+    res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
+    encoded_img = torch.clamp(img + res_high, 0., 1.)
+    del res_high
 
     # transform
+    # ----------------------非空间变换
+    trans_img = non_spatial_trans(encoded_img, scales)
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
-    encoded_img = non_spatial_trans(encoded_img,scales)
-    photo_img = make_trans_for_photo(encoded_img, scales)
-    crop_img = make_trans_for_crop(encoded_img, scales)
+    photo_img = make_trans_for_photo(trans_img, scales)
+    crop_img = make_trans_for_crop(trans_img, scales)
+    del trans_img
 
     photo_img = transforms_F.resize(photo_img, cfg.img_size)
     crop_img = transforms_F.resize(crop_img, cfg.img_size)
@@ -77,7 +79,7 @@ def process_forward(Encoder,
 
     vis_img = {"res_low": res_low.data, "encoded_img": encoded_img.data,
                "photo_img": photo_img.data, "crop_img": crop_img.data,
-               "stn_img": stn_img, }
+               "stn_img": stn_img.data, }
     metric_result = {
         "loss": loss, "img_loss": img_loss, "msg_loss": msg_loss,
         "bit_acc": bit_acc, "str_acc": str_acc, "right_str_acc": right_str_acc,
@@ -85,17 +87,16 @@ def process_forward(Encoder,
         "photo_bit_acc": photo_bit_acc, "photo_str_acc": photo_str_acc, "photo_right_str_acc": photo_right_str_acc,
         "crop_bit_acc": crop_bit_acc, "crop_str_acc": crop_str_acc, "crop_right_str_acc": crop_right_str_acc,
     }
-
-    del img, msg, mask
-    torch.cuda.empty_cache()
     return metric_result, vis_img
 
 
+METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc",
+               "photo_msg_loss", "crop_msg_loss",
+               "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
+               "crop_bit_acc", "crop_str_acc", "crop_right_str_acc"]
+
+
 def make_null_metric_dict():
-    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc",
-                   "photo_msg_loss", "crop_msg_loss",
-                   "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
-                   "crop_bit_acc", "crop_str_acc", "crop_right_str_acc"]
     return 0, {i: 0 for i in METRIC_LIST}
 
 
