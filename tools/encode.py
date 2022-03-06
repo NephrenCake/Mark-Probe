@@ -5,38 +5,14 @@ import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
-import torch
 import argparse
-import numpy as np
-import torchvision.transforms.functional as F
 
-from typing import Union
 from PIL import Image
 from torchvision.transforms import transforms
-from steganography.models.MPNet import MPEncoder
 
 from tools.interface.bch import BCHHelper
-from tools.interface.utils import model_import, get_device, convert_img_type, check_dir
-
-
-@torch.no_grad()
-def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
-           uid: Union[int, str],
-           model: MPEncoder,
-           bch: BCHHelper,
-           device,
-           img_size=(448, 448)) -> (torch.Tensor, torch.Tensor):
-    img = convert_img_type(img).to(device)
-
-    img_low = transforms.Resize(img_size)(img)
-    dat, now, key = bch.convert_uid_to_data(uid)
-    packet = torch.tensor(bch.encode_data(dat), dtype=torch.float32, device=device).unsqueeze(0)  # 数据段+校验段
-
-    res_low = model({"img": img_low, "msg": packet})
-    res_high = F.resize(res_low, img.shape[-2:])
-    encoded_img = torch.clamp(res_high + img, 0., 1.)
-
-    return encoded_img.squeeze(0).cpu(), res_low.squeeze(0).cpu()
+from tools.interface.utils import model_import, get_device, check_dir
+from tools.interface.predict import encode
 
 
 def parse_args():
