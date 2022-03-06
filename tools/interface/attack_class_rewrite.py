@@ -153,10 +153,13 @@ class Motion_blur(object):
             方向模糊的 方向参数我直接随机了
         '''
         angle = random.uniform(0, 180)
-        img = transforms.Compose([
+        out = transforms.Compose([
             transforms.ToTensor()
         ])(img).unsqueeze(0)
-        out = motion_blur(img, kernel_size=2 * kernel_size + 1, angle=random.uniform(0, 180),
+        if kernel_size!=0:
+            out = motion_blur(out, kernel_size=2 * kernel_size + 1, angle=random.uniform(0, 180),
                           direction=random.uniform(-1, 1)).squeeze(0)
-        out = (out * 255.).permute(1, 2, 0).byte().numpy()
+            out = (out * 255.).permute(1, 2, 0).byte().numpy()
+        else:
+            out = (out.squeeze(0) * 255.).permute(1, 2, 0).byte().numpy()
         return out
