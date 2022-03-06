@@ -7,10 +7,10 @@ import torch.nn.functional as nn_F
 import torchvision.transforms.functional as transforms_F
 import logging
 import copy
-
+from kornia.augmentation import RandomMixUp
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
-from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop
+from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
 
 
 def process_forward(Encoder,
@@ -21,19 +21,27 @@ def process_forward(Encoder,
                     cfg):
     img = data["img"].to(cfg.device)  # 传进来的是需要超分图  origin image
     msg = data["msg"].to(cfg.device)
+    mask = data["mask"].to(cfg.device)
 
-    img_low = transforms_F.resize(img, cfg.img_size)   # simulate the process of resize
+
+    img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    res_low = Encoder({"img": img_low, "msg": msg})     # res_image (448,448)  the encoder_module start forward
-    res_high = transforms_F.resize(res_low, img.shape[-2:]) # res_low  -> resize to original size
-    encoded_img = img + res_high
-    encoded_img = torch.clamp(encoded_img, 0., 1.)
+    res_low = Encoder({"img": img_low, "msg": msg})  # res_image (448,448)  the encoder_module start forward
+    res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
+    encoded_img = torch.clamp(img + res_high, 0., 1.)
+    del res_high
 
     # transform
+    # 添加反射  先把反射添加在 所有的变换之前试一试  # todo 反射变换的位置待定。
+    #
+    # ----------------------非空间变换
+    trans_img = non_spatial_trans(encoded_img
+                                  if scales["reflection"]!=0 else RandomMixUp(p=scales["reflection"], lambda_val=(0., scales["reflection_strength"]))(encoded_img)[0], scales)
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
-    photo_img = make_trans_for_photo(encoded_img, scales)
-    crop_img = make_trans_for_crop(encoded_img, scales)
+    photo_img = make_trans_for_photo(trans_img, scales)
+    crop_img = make_trans_for_crop(trans_img, scales)
+    del trans_img
 
     photo_img = transforms_F.resize(photo_img, cfg.img_size)
     crop_img = transforms_F.resize(crop_img, cfg.img_size)
@@ -43,20 +51,15 @@ def process_forward(Encoder,
     crop_msg_pred, _ = Decoder(crop_img, use_stn=False)
 
     # ------------------loss
-    # todo 可以尝试使用其他实现方式，高斯模糊并不是最佳选择，期望标定的高频区域范围更多一些
-    # 添加gaussian_blur的掩码可以将。。的权重设置的更高
-    weight_mask = torch.abs(img - transforms_F.gaussian_blur(img, [7, 7], [10, 10]))
-    weight_mask = torch.max(weight_mask) - weight_mask  # low weight in high frequency
-
     img_loss = torch.zeros(1).to(cfg.device)
     if scales["rgb_loss"] != 0:
-        rgb_loss = mse_loss(encoded_img, img, mask=weight_mask)
+        rgb_loss = mse_loss(encoded_img, img, mask=mask)
         img_loss += rgb_loss * scales["rgb_loss"]
     if scales["hsv_loss"] != 0:
-        hsv_loss = mse_loss(rgb_to_hsv(encoded_img), rgb_to_hsv(img), mask=weight_mask)
+        hsv_loss = mse_loss(rgb_to_hsv(encoded_img), rgb_to_hsv(img), mask=mask)
         img_loss += hsv_loss * scales["hsv_loss"]
     if scales["yuv_loss"] != 0:
-        yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=weight_mask)
+        yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=mask)
         img_loss += yuv_loss * scales["yuv_loss"]
     if scales["lpips_loss"] != 0:
         lpips_loss = lpips(img, encoded_img).mean()
@@ -80,7 +83,7 @@ def process_forward(Encoder,
 
     vis_img = {"res_low": res_low.data, "encoded_img": encoded_img.data,
                "photo_img": photo_img.data, "crop_img": crop_img.data,
-               "stn_img": stn_img, }
+               "stn_img": stn_img.data, }
     metric_result = {
         "loss": loss, "img_loss": img_loss, "msg_loss": msg_loss,
         "bit_acc": bit_acc, "str_acc": str_acc, "right_str_acc": right_str_acc,
@@ -91,11 +94,13 @@ def process_forward(Encoder,
     return metric_result, vis_img
 
 
+METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc",
+               "photo_msg_loss", "crop_msg_loss",
+               "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
+               "crop_bit_acc", "crop_str_acc", "crop_right_str_acc"]
+
+
 def make_null_metric_dict():
-    METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc",
-                   "photo_msg_loss", "crop_msg_loss",
-                   "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
-                   "crop_bit_acc", "crop_str_acc", "crop_right_str_acc"]
     return 0, {i: 0 for i in METRIC_LIST}
 
 
