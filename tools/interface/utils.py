@@ -6,7 +6,6 @@ import numpy as np
 import torch
 from PIL import Image
 from torchvision.transforms import transforms
-
 from steganography.models.MPNet import MPEncoder, MPDecoder
 
 
@@ -34,7 +33,7 @@ def get_device(device):
 
 def convert_img_type(img: Union[np.ndarray, Image.Image, torch.Tensor]) -> torch.Tensor:
     """
-    将 cv2、PIL、三维Tensor 统一转换成可进入模型的思维Tensor
+    将 cv2、PIL、三维Tensor 统一转换成可进入模型的四维Tensor
     todo 支持批量推理
     """
     if isinstance(img, np.ndarray):
@@ -53,3 +52,13 @@ def convert_img_type(img: Union[np.ndarray, Image.Image, torch.Tensor]) -> torch
 def check_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def tensor_2_cvImage(tensor_img: torch.Tensor)->np.ndarray:
+    '''
+    param: tensor_img 一定要是 从 pil img转过来的图片  也就是RGB图
+    return: cv2 图像 BGR 格式 维度信息为 (H,W,C)
+    '''
+    if len(tensor_img.shape)==4:
+        tensor_img = tensor_img.squeeze(0)
+    return cv2.cvtColor(np.asarray(transforms.ToPILImage()(tensor_img)),cv2.COLOR_RGB2BGR)
