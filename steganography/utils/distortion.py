@@ -71,7 +71,9 @@ def non_spatial_trans(img, scales):
     # jpeg 压缩
     if int(scales["jpeg_trans"]) >= 1:
         # fit the size of JPEG_trans asked
-        img = jpeg_trans(img, scales["jpeg_trans"])
+        # img = jpeg_trans(img, scales["jpeg_trans"])
+        img = DiffJPEG(height=img.shape[-2], width=img.shape[-1], differentiable=True,
+                             quality=random.randint(100 - int(scales["jpeg_trans"]), 99)).to(img.device).eval()(img)
     # 灰度变换
     if scales["grayscale_trans"] != 0:
         img = transforms.RandomGrayscale(p=scales["grayscale_trans"])(img)
@@ -79,7 +81,7 @@ def non_spatial_trans(img, scales):
     return img
 
 
-def rand_erase(img, _cover_rate, block_size=20):
+def rand_erase(_img, _cover_rate, block_size=20):
     """
     img: torch.Tensor
     cover_rate: [0.~ 1.0)
@@ -87,7 +89,7 @@ def rand_erase(img, _cover_rate, block_size=20):
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
     """
     # more than one element of the written-to tensor refers to a single memory location. Please clone() the tensor before performing the operation.
-    _img = img.clone()
+    # _img = img.clone()
     cover_rate = random.uniform(0, _cover_rate)
     b, c, h, w = _img.shape
     block_num = [int(h * w * cover_rate) // (block_size * block_size)]
