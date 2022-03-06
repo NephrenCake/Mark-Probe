@@ -126,4 +126,4 @@ def generate_random_circle_picture(d=500):
         radius = np.random.randint(5, d / 5)
         color = np.random.randint(0, 256, size=(3,)).tolist()
         cv2.circle(img, (center_x, center_y), radius, color, -1)
-    return Image.fromarray(img, mode='RGB').squeeze(0)
+    return Image.fromarray(img, mode='RGB')
