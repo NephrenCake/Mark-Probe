@@ -42,7 +42,7 @@ class DistortionTestHelper(object):
             return tensor_2_cvImage(img)
         if isinstance(img, np.ndarray):
             if img.dtype is float:
-                raise ValueError("输入 trans 的 ndarray数据类型为 float 达咩！！")
+                raise ValueError("输入 trans 的 ndarray 数据类型为 float 达咩！！")
             return img
         else:
             raise ValueError("输入的img 类型不是 torch.Tensor or np.ndarray!! 请检查")
@@ -75,6 +75,8 @@ class DistortionTestHelper(object):
             img = self.trans(img, ops, factor)
         if _show_result_img:
             self._show_img(img, img_contrast)
+        elif _show_contrast:
+            self._show_img(img_contrast)
 
         return img, img_trans_order
 

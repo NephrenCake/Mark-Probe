@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torchvision.transforms import transforms
+import torchvision.transforms.functional as F
 
 from steganography.models.MPNet import MPEncoder, MPDecoder
 from tools.interface.bch import BCHHelper
@@ -47,7 +48,7 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
     bf, dat = bch.decode_data(msg_pred)
     uid, time, content = bch.convert_data_to_uid(bf, dat)
 
-    return uid, time, content, msg_pred, score
+    return uid, time, content, msg_pred, score, bf
 
 
 @torch.no_grad()
