@@ -1,6 +1,8 @@
 # -- coding: utf-8 --
 import math
 import random
+
+from kornia.augmentation import RandomMixUp
 from kornia.filters import motion_blur
 import torch
 from torchvision import transforms
@@ -52,16 +54,16 @@ def non_spatial_trans(img, scales):
     此处主要实现大多数情况下共同包含的变换，多为非空间变换
     todo 加入反光变换
     """
+    # 反光 todo 待定
+    if scales["reflection_trans"] != 0:
+        img = RandomMixUp(p=scales["reflection_trans"], lambda_val=(0., 0.05))(img)[0]
     # 色彩
     if scales["brightness_trans"] + scales["contrast_trans"] + scales["saturation_trans"] + scales["hue_trans"] != 0:
         img = transforms.ColorJitter(brightness=scales["brightness_trans"], contrast=scales["contrast_trans"],
                                      saturation=scales["saturation_trans"], hue=scales["hue_trans"])(img)
     # 运动模糊
-    if scales['motion_blur'] >= 1:
-        k = id(img)
-        # img = Motion_Blur(img, angler=random.uniform(0, 180),
-        #                   kernel_size=2 * random.randint(1, round(scale["motion_blur"])) + 1).motion_blur()
-        img = motion_blur(img, kernel_size=2 * random.randint(1, round(scales["motion_blur"])) + 1,
+    if scales["motion_blur"] > random.uniform(0, 1):
+        img = motion_blur(img, kernel_size=2 * random.randint(1, 2) + 1,
                           angle=random.uniform(0, 180), direction=random.uniform(-1, 1))
     # 随机噪声
     if scales["noise_trans"] != 0:
