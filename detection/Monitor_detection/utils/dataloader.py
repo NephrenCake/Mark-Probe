@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 from PIL import Image
 from torch.utils.data.dataset import Dataset
-from utils.utils import preprocess_input, cvtColor
-import Generate_Dataset
+from detection.Monitor_detection.utils.utils import preprocess_input, cvtColor
+import detection.Monitor_detection.Generate_Dataset
 import sys
 
 supported = [".jpg", ".JPG", ".png", ".PNG", ".bmp", ".BMP"]  # 支持的文件后缀类型

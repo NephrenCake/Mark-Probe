@@ -8,7 +8,9 @@ import cv2
 import numpy as np
 from PIL import Image
 
+
 from deeplab import DeeplabV3
+from detection.Monitor_detection.utils import Mask_seg, box, Monitor_detect
 
 if __name__ == "__main__":
     #-------------------------------------------------------------------------#
@@ -22,7 +24,7 @@ if __name__ == "__main__":
     #   'fps'表示测试fps，使用的图片是img里面的street.jpg，详情查看下方注释。
     #   'dir_predict'表示遍历文件夹进行检测并保存。默认遍历img文件夹，保存img_out文件夹，详情查看下方注释。
     #----------------------------------------------------------------------------------------------------------#
-    mode = "dir_predict"
+    mode = "video"
     #----------------------------------------------------------------------------------------------------------#
     #   video_path用于指定视频的路径，当video_path=0时表示检测摄像头
     #   想要检测视频，则设置如video_path = "xxx.mp4"即可，代表读取出根目录下的xxx.mp4文件。
@@ -32,8 +34,8 @@ if __name__ == "__main__":
     #   video_path、video_save_path和video_fps仅在mode='video'时有效
     #   保存视频时需要ctrl+c退出或者运行到最后一帧才会完成完整的保存步骤。
     #----------------------------------------------------------------------------------------------------------#
-    video_path      = 0
-    video_save_path = ""
+    video_path      = './video/VID_20220307_7.mp4'
+    video_save_path = "./video_save/8.mp4"
     video_fps       = 25.0
     #-------------------------------------------------------------------------#
     #   test_interval用于指定测量fps的时候，图片检测的次数
@@ -45,9 +47,9 @@ if __name__ == "__main__":
     #   dir_save_path指定了检测完图片的保存路径
     #   dir_origin_path和dir_save_path仅在mode='dir_predict'时有效
     #-------------------------------------------------------------------------#
-    dir_origin_path = "./detection/img"
-    dir_save_path   = "./detection//img_out/"
-    single_img_save_path = "./detection/img_single/"
+    dir_origin_path = "./img"
+    dir_save_path   = "./img_out/"
+    single_img_save_path = "./img_single/"
 
     if mode == "predict":
         '''
@@ -94,19 +96,27 @@ if __name__ == "__main__":
                 break
             # 格式转变，BGRtoRGB
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            origin_img = frame.copy()
             # 转变成Image
             frame = Image.fromarray(np.uint8(frame))
+
             # 进行检测
-            frame = np.array(deeplab.detect_image(frame))
+            single_image,image = deeplab.detect_image(frame)
+            single_image = np.array(single_image)
+            image = np.array(image)
+            image = Mask_seg.mask_cut(image,single_image)
+            image_box = box.yuchuli(image)
+            image_box_ = Monitor_detect.paper_find(origin_img,image_box)
+            frame = np.array(image_box_)
             # RGBtoBGR满足opencv显示格式
             frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
-            
+
             fps  = ( fps + (1./(time.time()-t1)) ) / 2
             print("fps= %.2f"%(fps))
             frame = cv2.putText(frame, "fps= %.2f"%(fps), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
+
             cv2.imshow("video",frame)
-            c= cv2.waitKey(1) & 0xff 
+            c= cv2.waitKey(1) & 0xff
             if video_save_path!="":
                 out.write(frame)
 
@@ -120,10 +130,10 @@ if __name__ == "__main__":
             out.release()
         cv2.destroyAllWindows()
 
-    elif mode == "fps":
-        img = Image.open('img/street.jpg')
-        tact_time = deeplab.get_FPS(img, test_interval)
-        print(str(tact_time) + ' seconds, ' + str(1/tact_time) + 'FPS, @batch_size 1')
+    # elif mode == "fps":
+    #     img = Image.open('img/street.jpg')
+    #     tact_time = deeplab.get_FPS(img, test_interval)
+    #     print(str(tact_time) + ' seconds, ' + str(1/tact_time) + 'FPS, @batch_size 1')
         
     elif mode == "dir_predict":
         import os
