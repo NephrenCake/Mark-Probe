@@ -1,18 +1,15 @@
 import cv2
 import numpy as np
-import img_process
 from detection.Paper_detection import utlis
 
 
-def paper_find(old_img,img, thresold_value=150):
+def Monitor_find(old_img, img, thresold_value=150):
     # old_img = cv2.resize(old_img,(448, 448))
     # img = cv2.resize(img, (448, 448))
     # widthImg = img.shape[1]
     # heightImg = img.shape[0]
 
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-
 
     imgThreshold = cv2.Canny(imgGray, 200, 200)
     kernel = np.ones((2, 2))
@@ -23,8 +20,9 @@ def paper_find(old_img,img, thresold_value=150):
     biggest, maxArea = utlis.biggestContour(contours)  # FIND THE BIGGEST CONTOUR
     if biggest.size != 0:
         biggest = utlis.reorder(biggest)
-        cv2.drawContours(old_img, biggest, -1, (0, 255, 0), 20)  # DRAW THE BIGGEST CONTOUR
+        cv2.drawContours(old_img, biggest, -1, (0, 255, 0), 6)  # DRAW THE BIGGEST CONTOUR
         imgBigContour = utlis.drawRectangle(old_img, biggest, 2)
-        return imgBigContour
+        return imgBigContour, biggest
     else:
-        return old_img
+        point = "null"
+        return old_img,point

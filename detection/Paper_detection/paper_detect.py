@@ -25,7 +25,10 @@ def paper_find(img, thresold_value=150):
         pts2 = np.float32([[0, 0], [widthImg, 0], [0, heightImg], [widthImg, heightImg]])  # PREPARE POINTS FOR WARP
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
         imgWarpColored = cv2.warpPerspective(img, matrix, (widthImg, heightImg))
-        return imgWarpColored
+        return imgWarpColored,biggest
+    else:
+        point = "null"
+        return img,point
 
 
 
