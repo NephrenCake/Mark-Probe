@@ -1,5 +1,6 @@
 from typing import Union, List
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
@@ -56,11 +57,13 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
 
 @torch.no_grad()
 def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
-           target: str = "screen") -> List[List]:
-    deeplab = DeeplabV3()
+           model: DeeplabV3,
+           target: str = "screen",
+           ) -> List[List]:
+
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
-        final_img, point = predict(img,deeplab)
+        final_img, point = predict(img,model)
         return [final_img, point]
         # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
     else:
@@ -70,3 +73,4 @@ def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
             return [paper_img, point1]
         else:
             return [img_on_paper, point2]
+

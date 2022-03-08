@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-import utlis
+
+from detection.Paper_detection import utlis
 
 
 def paper_find(img, thresold_value=150):

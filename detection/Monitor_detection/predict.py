@@ -2,13 +2,14 @@ import cv2
 import numpy as np
 from PIL import Image
 from detection.Monitor_detection.utils import Mask_seg, box, Monitor_detect
-from deeplab import DeeplabV3
+
 
 
 def predict(img,model):
     # -------------------------------------------------------------------------#
     #   如果想要修改对应种类的颜色，到generate函数里修改self.colors即可
     # -------------------------------------------------------------------------#
+    model = model()
     if isinstance(img,Image.Image):
         img = np.array(img)
 
