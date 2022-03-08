@@ -9,7 +9,7 @@ from torchvision.transforms import transforms
 from steganography.models.MPNet import MPEncoder, MPDecoder
 
 
-def model_import(model_path, model_name, device, msg_size=96, img_size=448):
+def model_import(model_path, model_name, device, msg_size=96, img_size=448, warmup=True):
     """
     import encoder or decoder
     """
@@ -23,6 +23,15 @@ def model_import(model_path, model_name, device, msg_size=96, img_size=448):
     checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint[model_name])
     model.eval()
+
+    if warmup:  # 预热模型以提升后续推理速度
+        if model_name == "Encoder":
+            model({
+                "img": torch.zeros((1, 3, img_size, img_size), dtype=torch.float32, device=device),
+                "msg": torch.zeros((1, msg_size), dtype=torch.float32, device=device)
+            })
+        else:
+            model(torch.zeros((1, 3, img_size, img_size), dtype=torch.float32, device=device))
 
     return model
 

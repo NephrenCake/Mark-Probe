@@ -1,7 +1,13 @@
 import cv2
 import numpy as np
 
-from detection.Paper_detection import utlis
+import os
+import sys
+
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(__dir__))
+
+import utlis
 
 
 def paper_find(img, thresold_value=150):

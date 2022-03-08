@@ -6,7 +6,7 @@ class Http {
   constructor() {
     this.http = axios.create({
       baseURL: BASE_URL,
-      timeout: 1000
+      timeout: 30000
     });
   }
 

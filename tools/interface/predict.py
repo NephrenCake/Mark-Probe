@@ -22,6 +22,10 @@ def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
            bch: BCHHelper,
            device,
            img_size=(448, 448)) -> (torch.Tensor, torch.Tensor):
+    """
+    你可以输入一个 cv2、PIL、三维或四维Tensor
+    返回原图像大小的编码图
+    """
     img = convert_img_type(img).to(device)
 
     img_low = transforms.Resize(img_size)(img)
