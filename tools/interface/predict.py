@@ -6,6 +6,9 @@ from PIL import Image
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as F
 
+from detection.Monitor_detection.deeplab import DeeplabV3
+from detection.Paper_detection import paper_detect
+from detection.Monitor_detection.predict import predict
 from steganography.models.MPNet import MPEncoder, MPDecoder
 from tools.interface.bch import BCHHelper
 from tools.interface.utils import convert_img_type
@@ -53,12 +56,17 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
 
 @torch.no_grad()
 def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
-           model,
-           device,
            target: str = "screen") -> List[List]:
+    deeplab = DeeplabV3()
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
-    img = convert_img_type(img).to(device)
-
-    # todo fill the detect process
-
-    return [[], [], [], []]
+    if target == "screen":
+        final_img, point = predict(img,deeplab)
+        return [final_img, point]
+        # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
+    else:
+        paper_img, point1 = paper_detect.paper_find(img)
+        img_on_paper, point2 = paper_detect.paper_find(paper_img)
+        if point2 == "null":
+            return [paper_img, point1]
+        else:
+            return [img_on_paper, point2]
