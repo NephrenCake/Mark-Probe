@@ -61,7 +61,7 @@ def main(args):
         encoded_img = tensor_2_cvImage(encoded_img)
 
         timer += t2 - t1
-        cv2.putText(img=encoded_img, text=f"FPS {float('%.2f' % (counter / t2 - t1))}", org=(50, 50),
+        cv2.putText(img=encoded_img, text=f"FPS {float('%.2f' % (counter / timer))}", org=(50, 50),
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3)
         cv2.imshow('frame', encoded_img)
         ret, img = cap.read()
