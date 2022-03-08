@@ -115,10 +115,17 @@
       title="查询结果"
       :visible.sync="dialogVisibleT"
       width="45%"
-      top="7vh"
       :before-close="handleCloseT">
+
+      <div class="extraInfo">
+        <span>原生解码内容: </span>{{infoContent}}
+      </div>
+      <div class="extraInfo">
+        <span>置信度: </span>{{infoScore}}
+      </div>
+
       <div>
-        <el-table stripe :data="infoList" class="table" height=475>
+        <el-table stripe :data="infoList" class="table" height=200>
           <el-table-column prop="id" label="ID" width="150" fixed></el-table-column>
           <el-table-column prop="timeStamp" label="时间" width="auto"></el-table-column>
           <el-table-column prop="ip" label="信息" width="auto"></el-table-column>
@@ -163,6 +170,8 @@ export default {
 
       // 查库结果显示
       infoList: [],
+      infoContent: null,
+      infoScore: null,
 
       rules: {
         type: [{ required: true, message: '请确认图片类型!', trigger: 'blur' }]
@@ -180,6 +189,8 @@ export default {
       this.form.type = null;
       this.positionList = [];
       this.infoList = [];
+      this.infoContent = null;
+      this.infoScore = null;
     },
     // 图片转 blob(url) 再转为 base64
     imgSaveToUrl(event) {
@@ -234,6 +245,8 @@ export default {
             this.delAllMarks();
 
             this.infoList = data.data;
+            this.infoContent = data.content;
+            this.infoScore = data.score;
             this.fixedUrl = this.$func.createDownloadFileUrl("decodedPic.jpg", data.fixedImg);
 
             this.dialogVisibleT = true;
@@ -482,6 +495,15 @@ export default {
 }
 #dialog-table {
   text-align: center;
+}
+
+.extraInfo {
+  margin-bottom: 15px;
+  font-size: 15px;
+
+  span {
+    font-weight: 600;
+  }
 }
 </style>
 

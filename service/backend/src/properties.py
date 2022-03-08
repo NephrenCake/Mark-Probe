@@ -22,3 +22,10 @@ SQLITE_LOCATION = os.path.join(BASE_DIR, SQLITE_FILE_NAME)
 
 # 图像解码后，查询数据库时，设定的分钟误差
 DELTA = 60
+
+# 权重相对路径
+WEIGHT_PATH = "weight/latest-0.pth"
+
+# CPU or GPU
+# 'cpu' or 'cuda'
+DEVICE = "cuda"

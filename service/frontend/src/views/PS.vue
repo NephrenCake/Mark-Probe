@@ -62,6 +62,7 @@
                   </div>
                 </el-image>
 
+                <el-button type="primary" v-if="showDownload" class="img-btn" style="margin-right: 30px;" @click="resetPic">重置参数</el-button>
                 <el-button type="primary" v-if="showDownload" class="img-btn" style="margin-right: 30px;">
                   <a :href="fixedUrl" download>下载处理图</a>
                 </el-button>
@@ -101,12 +102,19 @@
                 </div>                
               </div>
 
-              <div class="switch-panel">
-                <span class="switch-label">高斯模糊&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <div class="switch">
-                  <el-switch v-model="form.GBlur" active-text="是" inactive-text="否" @change="processButtonClick" :disabled="notAllowOp"></el-switch>
+              <div class="slider-panel">
+                <span class="slider-label">运动模糊&nbsp;&nbsp;</span>
+                <div class="slider">
+                  <el-slider v-model="form.MBlur" :max="2" :min="0" @change="processButtonClick" :disabled="notAllowOp" :marks="marks.MBlur"></el-slider>
                 </div>                
               </div>
+
+              <!-- <div class="switch-panel">
+                <span class="switch-label">高斯模糊&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <div class="switch">
+                  <el-switch v-model="form.MBlur" active-text="是" inactive-text="否" @change="processButtonClick" :disabled="notAllowOp"></el-switch>
+                </div>                
+              </div> -->
 
               <div class="slider-panel">
                 <span class="slider-label">随机噪声&nbsp;&nbsp;</span>
@@ -155,6 +163,8 @@ export default {
       localUrl: null,
       fixedUrl: null,
 
+      fixedImgBase64: null,
+
       // 标记
       marks: {
         brightness: {
@@ -176,6 +186,11 @@ export default {
           0: '0',
           50: '0.05',
           100: '0.1'
+        },
+        MBlur: {
+          0: '0',
+          1: '1',
+          2: '2'
         },
         randomNoise: {
           0: '0',
@@ -203,8 +218,8 @@ export default {
         saturation: null,
         // 色相: 0-0.1
         hue: null,
-        // 高斯模糊: true/false
-        GBlur: null,
+        // 运动模糊: 0 (disabled), 1, 2
+        MBlur: 0,
         // 随机噪声: 0-0.02
         randomNoise: null,
         // 灰度: true/false
@@ -225,8 +240,11 @@ export default {
       this.isShowUpload = true;
       this.localUrl = null;
       this.fixedUrl = null;
+      this.fixedImgBase64 = null;
 
       this.$func.clearObj(this.form);
+
+      this.resetPs();
     },
     // 图片转 blob(url) 再转为 base64
     imgSaveToUrl(event) {
@@ -250,7 +268,7 @@ export default {
         contrast: this.form.contrast / 1000,
         saturation: this.form.saturation / 100,
         hue: this.form.hue / 1000,
-        GBlur: this.form.GBlur,
+        MBlur: this.form.MBlur,
         randomNoise: this.form.randomNoise / 10000,
         grayscale: this.form.grayscale,
         randomCover: this.form.randomCover / 1000,
@@ -266,6 +284,7 @@ export default {
             showClose: true
           });
 
+          this.fixedImgBase64 = data.fixedImg;
           this.fixedUrl = this.$func.createDownloadFileUrl("PSPic.jpg", data.fixedImg);
         }
       }).catch(err => {
@@ -279,8 +298,25 @@ export default {
     },
     // 解码处理图
     goDecoding() {
-      this.$store.commit('setPsPicToDecode', this.form.fileBase64);
+      this.$store.commit('setPsPicToDecode', this.fixedImgBase64);
       this.$router.push('/decoder/pic');
+    },
+    // 重置图像攻击参数
+    resetPs() {
+      this.form.brightness = 0;
+      this.form.contrast = 0;
+      this.form.saturation = 100;
+      this.form.hue = 0;
+      this.form.MBlur = 0;
+      this.form.randomNoise = 0;
+      this.form.grayscale = false;
+      this.form.randomCover = 0;
+      this.form.JpegZip = 0;
+    },
+    // 重置图像
+    resetPic() {
+      this.resetPs();
+      this.processButtonClick();
     },
 
     // 格式化处理 100 系数

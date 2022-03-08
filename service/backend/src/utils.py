@@ -9,7 +9,7 @@ import numpy as np
 from enum import Enum
 from flask import jsonify
 
-from tools.interface.attack import *
+from tools.interface.attack_class_rewrite import *
 
 # HTTP 状态枚举类
 class CodeEnum(Enum):
@@ -92,12 +92,12 @@ def selectLog(db:str, timeStamp:int, uid:str, delta:int) -> list:
     return listDict
 
 # base64 转 cv2
-def base64ToCv2Img(baseStr:str):
+def base64ToCv2Img(baseStr:str) -> np.ndarray:
     imgString = base64.b64decode(baseStr)
     nparr = np.fromstring(imgString, np.uint8)  
     image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # 返回的是一个 cv2 图片对象
+    # 返回的是一个 np.ndarray
     return image
 
 # cv2 转 base64
@@ -139,16 +139,27 @@ def psPic(img, requestDict: dict):
     contrast = requestDict["contrast"]
     saturation = requestDict["saturation"]
     hue = requestDict["hue"]
-    GBlur = requestDict["GBlur"]
+    MBlur = requestDict["MBlur"]
     randomNoise = requestDict["randomNoise"]
     grayscale = requestDict["grayscale"]
     randomCover = requestDict["randomCover"]
     JpegZip = requestDict["JpegZip"]
     
+    brightness_trans = Brightness_trans()
+    contrast_trans = Contrast_trans()
+    saturation_trans = Saturation_trans()
+    hue_trans = Hue_trans()
+    motion_blur = Motion_blur()
+    rand_noise = Rand_noise()
+    rand_erase = Rand_erase()
+    grayscale_trans = Grayscale_trans()
+    jpeg_trans = Jpeg_trans()
+    
     if (brightness != 0):
         img = brightness_trans(img=img, brightness=brightness)
     
-    # img = contrast_trans(img=img, contrast_factor=contrast)
+    if (contrast != 0):
+        img = contrast_trans(img=img, contrast_factor=contrast)
     
     if (saturation != 1):
         img = saturation_trans(img=img, saturation_factor=saturation)
@@ -156,19 +167,27 @@ def psPic(img, requestDict: dict):
     if (hue != 0):
         img = hue_trans(img=img, hue_factor=hue)
         
-    if (GBlur):
-        img = gaussian_blur(img=img)
+    if (MBlur != 0):
+        img = motion_blur(img=img, kernel_size=MBlur)
     
     if (randomNoise != 0):
         img = rand_noise(img=img, std=randomNoise)
     
     if (grayscale):
-        img = grayscale_trans(img=img)
+        img = grayscale_trans(img=img, flag=True)
         
     if (randomCover != 0):
         img = rand_erase(img=img, _cover_rate=randomCover)
         
-    # if (JpegZip != 0):
-    #     img = jpeg_trans(img=img, factor=JpegZip)
+    if (JpegZip != 0):
+        img = jpeg_trans(img=img, factor=JpegZip)
     
     return img
+
+# 格式化时间转时间戳
+def str_to_timestamp(str_time=None, format='%Y-%m-%d %H:%M:%S'):
+    if str_time:
+        time_tuple = time.strptime(str_time, format)  # 把格式化好的时间转换成元组
+        result = time.mktime(time_tuple)  # 把时间元组转换成时间戳
+        return int(result)
+    return int(time.time())

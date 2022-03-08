@@ -1,17 +1,26 @@
 # encoding: utf-8
 # 拉流，处理，推流
 
+import os
+import sys
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '../../../..')))
+
 import queue
 import threading
-import cv2 as cv
+import cv2
 import subprocess as sp
 
-import properties
-import utils
+from service.backend.src import properties, utils
+from service.backend.src.model import coder
+
+from tools.interface.bch import BCHHelper
+from tools.interface.utils import model_import, get_device, tensor_2_cvImage, convert_img_type
+from tools.interface.predict import encode
 
 class Live(object):
     def __init__(self, src:str, dst:str, uid:str, uip:str):
-        self.frame_queue = queue.Queue()
+        self.frame_queue = queue.Queue(maxsize=90)
         self.command = ""
         
         # 管道
@@ -34,15 +43,21 @@ class Live(object):
         self.last_src_frame = None
         # 上一处理后帧
         self.last_encoded_frame = None
+        
+        # 实例化一个模型
+        self.device = get_device(properties.DEVICE)
+        self.bch = BCHHelper()
+        self.encoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Encoder", device=self.device)
+        
 
     # 读取流
     def read_frame(self):
-        self.cap = cv.VideoCapture(self.camera_path)
+        self.cap = cv2.VideoCapture(self.camera_path)
 
         # 获取 帧率，长，宽
-        fps = int(self.cap.get(cv.CAP_PROP_FPS))
-        width = int(self.cap.get(cv.CAP_PROP_FRAME_WIDTH))
-        height = int(self.cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+        fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         # FFmpeg 指令
         self.command = ['ffmpeg',
@@ -106,6 +121,10 @@ class Live(object):
                 # else:
                 #     frame = self.last_encoded_frame
                 
+                frame = convert_img_type(frame).to(self.device)
+                encoded_frame, res_frame = encode(img=frame, uid=self.uid, model=self.encoderModel, bch=self.bch, device=self.device)
+                encoded_frame = tensor_2_cvImage(encoded_frame)
+                
                 # 写数据库
                 present_minute = utils.getMinutesTs()
                 if (present_minute - self.last_minute >= 1):
@@ -113,7 +132,7 @@ class Live(object):
                     self.last_minute = present_minute
                 
                 # 写入管道
-                self.pipe.stdin.write(frame.tobytes())
+                self.pipe.stdin.write(encoded_frame.tobytes())
                 
     def run(self):
         threads = [
