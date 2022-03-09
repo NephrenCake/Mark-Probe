@@ -6,7 +6,7 @@ import cv2
 from cv2 import CV_8U
 
 
-def yuchuli(img):
+def yuchuli(img,thresold_value=80):
     # img = cv2.resize(img, (512,512))
     # I = img.copy()
     # # 图像归一化
@@ -18,7 +18,7 @@ def yuchuli(img):
 
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     imgBlank = np.zeros((img.shape[0], img.shape[1], 3), np.uint8)
-    ret, dst = cv2.threshold(imgGray, 38, 255, cv2.THRESH_BINARY)
+    ret, dst = cv2.threshold(imgGray, thresold_value, 255, cv2.THRESH_BINARY)
     # cv2.imshow('s', dst)
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
@@ -34,8 +34,9 @@ def yuchuli(img):
     length = len(hull)
     for i in range(len(hull)):
         cv2.line(imgBlank, tuple(hull[i][0]), tuple(hull[(i + 1) % length][0]), (0, 255, 0), 2)
+        cv2.line(img, tuple(hull[i][0]), tuple(hull[(i + 1) % length][0]), (0, 255, 0), 2)
     # cv2.imshow('s', img)
-    return imgBlank
+    return imgBlank,img
 
 
 # I = img.copy()

@@ -67,17 +67,27 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
 
 @torch.no_grad()
 def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
-           target: str = "screen") -> List[List]:
-    deeplab = DeeplabV3()
+           model: DeeplabV3,
+           target: str = "screen",
+           thresold_1=80,
+           thresold_2=150,
+           thresold_3=150
+           ) -> List[List]:
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
-        final_img, point = predict(img, deeplab)
+        final_img, point = predict(img, model, thresold_value=thresold_1)
         return [final_img, point]
         # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
     else:
-        paper_img, point1 = paper_detect.paper_find(img)
-        img_on_paper, point2 = paper_detect.paper_find(paper_img)
+        '''
+        1.当照片场景较大时，需要分别进行两次检测才能完成，第一次检测是检测打印纸所在位置，第二此是检测打印纸上的图片
+        第一次检测返回角度矫正好的打印纸图片和它在原图上的坐标，第二次检测返回打印纸上角度矫正好的图片和它在原图上的坐标
+        2.当照片拍摄距离很近时，那么一次检测就够，返回角度矫正好的图片和它在原图上的坐标
+        
+        '''
+        paper, point1 = paper_detect.paper_find(img, thresold_value=thresold_2)
+        img_on_paper, point2 = paper_detect.paper_find(paper, thresold_value=thresold_3)
         if point2 == "null":
-            return [paper_img, point1]
+            return [paper, point1]
         else:
             return [img_on_paper, point2]
