@@ -3,18 +3,17 @@ import os
 import sys
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-
-import torch
-from torch.backends import cudnn
-
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
 import time
 import cv2
 import argparse
+import torch
+
+from torch.backends import cudnn
 
 from tools.interface.bch import BCHHelper
-from tools.interface.utils import model_import, get_device, check_dir, tensor_2_cvImage, convert_img_type
+from tools.interface.utils import model_import, get_device, tensor_2_cvImage, convert_img_type
 from tools.interface.predict import encode
 
 
