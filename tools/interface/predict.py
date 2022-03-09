@@ -20,17 +20,24 @@ def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
            model: MPEncoder,
            bch: BCHHelper,
            device,
-           img_size=(448, 448)) -> (torch.Tensor, torch.Tensor):
+           img_size=(448, 448),
+           direct_msg: torch.Tensor = None) -> (torch.Tensor, torch.Tensor):
     """
     你可以输入一个 cv2、PIL、三维或四维Tensor
     返回原图像大小的编码图
+
+    现在可以同时输入一个原生 msg 以提高速度，原生 msg 可以一直保存在后端（uid+登陆时间 为定值，不需要在推理中重复构造）
+        但实际提升效果不是很明显（其实不太花时间）
     """
     img = convert_img_type(img).to(device)
 
-    img_low = transforms.Resize(img_size)(img)
-    dat, now, key = bch.convert_uid_to_data(uid)
-    packet = torch.tensor(bch.encode_data(dat), dtype=torch.float32, device=device).unsqueeze(0)  # 数据段+校验段
+    if direct_msg is None:
+        dat, _, _ = bch.convert_uid_to_data(uid)
+        packet = torch.tensor(bch.encode_data(dat), dtype=torch.float32, device=device).unsqueeze(0)
+    else:
+        packet = direct_msg
 
+    img_low = F.resize(img, img_size)
     res_low = model({"img": img_low, "msg": packet})
     res_high = F.resize(res_low, img.shape[-2:])
     encoded_img = torch.clamp(res_high + img, 0., 1.)
@@ -64,7 +71,7 @@ def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
     deeplab = DeeplabV3()
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
-        final_img, point = predict(img,deeplab)
+        final_img, point = predict(img, deeplab)
         return [final_img, point]
         # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
     else:

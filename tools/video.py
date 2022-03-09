@@ -4,6 +4,7 @@ import sys
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
+import torch
 from torch.backends import cudnn
 
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
@@ -39,6 +40,9 @@ def main(args):
     encoder = model_import(args.decoder_model_path, model_name="Encoder", device=device)
     bch = BCHHelper()
 
+    packet = torch.tensor(bch.encode_data(bch.convert_uid_to_data(114514)[0]),
+                          dtype=torch.float32, device=device).unsqueeze(0)
+
     # ==============
     cap = cv2.VideoCapture(args.video_path)
     counter = 0  # 设置一个counter 来计算平均帧率
@@ -55,7 +59,8 @@ def main(args):
                                 uid=114514,
                                 model=encoder,
                                 bch=bch,
-                                device=device)
+                                device=device,
+                                direct_msg=packet)
         counter += 1
         t2 = time.time()
         encoded_img = tensor_2_cvImage(encoded_img)
