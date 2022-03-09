@@ -7,6 +7,7 @@ import torch.utils.model_zoo as model_zoo
 
 BatchNorm2d = nn.BatchNorm2d
 
+
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
@@ -14,12 +15,14 @@ def conv_bn(inp, oup, stride):
         nn.ReLU6(inplace=True)
     )
 
+
 def conv_1x1_bn(inp, oup):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
         BatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
+
 
 class InvertedResidual(nn.Module):
     def __init__(self, inp, oup, stride, expand_ratio):
@@ -32,35 +35,35 @@ class InvertedResidual(nn.Module):
 
         if expand_ratio == 1:
             self.conv = nn.Sequential(
-                #--------------------------------------------#
+                # --------------------------------------------#
                 #   进行3x3的逐层卷积，进行跨特征点的特征提取
-                #--------------------------------------------#
+                # --------------------------------------------#
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
                 BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
-                #-----------------------------------#
+                # -----------------------------------#
                 #   利用1x1卷积进行通道数的调整
-                #-----------------------------------#
+                # -----------------------------------#
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 BatchNorm2d(oup),
             )
         else:
             self.conv = nn.Sequential(
-                #-----------------------------------#
+                # -----------------------------------#
                 #   利用1x1卷积进行通道数的上升
-                #-----------------------------------#
+                # -----------------------------------#
                 nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
                 BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
-                #--------------------------------------------#
+                # --------------------------------------------#
                 #   进行3x3的逐层卷积，进行跨特征点的特征提取
-                #--------------------------------------------#
+                # --------------------------------------------#
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
                 BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
-                #-----------------------------------#
+                # -----------------------------------#
                 #   利用1x1卷积进行通道数的下降
-                #-----------------------------------#
+                # -----------------------------------#
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 BatchNorm2d(oup),
             )
@@ -71,6 +74,7 @@ class InvertedResidual(nn.Module):
         else:
             return self.conv(x)
 
+
 class MobileNetV2(nn.Module):
     def __init__(self, n_class=1000, input_size=224, width_mult=1.):
         super(MobileNetV2, self).__init__()
@@ -79,13 +83,13 @@ class MobileNetV2(nn.Module):
         last_channel = 1280
         interverted_residual_setting = [
             # t, c, n, s
-            [1, 16, 1, 1], # 256, 256, 32 -> 256, 256, 16
-            [6, 24, 2, 2], # 256, 256, 16 -> 128, 128, 24   2
-            [6, 32, 3, 2], # 128, 128, 24 -> 64, 64, 32     4
-            [6, 64, 4, 2], # 64, 64, 32 -> 32, 32, 64       7
-            [6, 96, 3, 1], # 32, 32, 64 -> 32, 32, 96
-            [6, 160, 3, 2], # 32, 32, 96 -> 16, 16, 160     14
-            [6, 320, 1, 1], # 16, 16, 160 -> 16, 16, 320
+            [1, 16, 1, 1],  # 256, 256, 32 -> 256, 256, 16
+            [6, 24, 2, 2],  # 256, 256, 16 -> 128, 128, 24   2
+            [6, 32, 3, 2],  # 128, 128, 24 -> 64, 64, 32     4
+            [6, 64, 4, 2],  # 64, 64, 32 -> 32, 32, 64       7
+            [6, 96, 3, 1],  # 32, 32, 64 -> 32, 32, 96
+            [6, 160, 3, 2],  # 32, 32, 96 -> 16, 16, 160     14
+            [6, 320, 1, 1],  # 16, 16, 160 -> 16, 16, 320
         ]
 
         assert input_size % 32 == 0
@@ -143,13 +147,17 @@ def load_url(url, model_dir='./model_data', map_location=None):
     if os.path.exists(cached_file):
         return torch.load(cached_file, map_location=map_location)
     else:
-        return model_zoo.load_url(url,model_dir=model_dir)
+        return model_zoo.load_url(url, model_dir=model_dir)
+
 
 def mobilenetv2(pretrained=False, **kwargs):
     model = MobileNetV2(n_class=1000, **kwargs)
     if pretrained:
-        model.load_state_dict(load_url('https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'), strict=False)
+        model.load_state_dict(load_url(
+            'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar'),
+                              strict=False)
     return model
+
 
 if __name__ == "__main__":
     model = mobilenetv2()

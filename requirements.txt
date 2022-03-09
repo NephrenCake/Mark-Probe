@@ -4,9 +4,12 @@ kornia==0.6.1
 bchlib==0.14.0
 six==1.16.0
 opencv_python==4.5.2.54
+tqdm==4.62.2
+matplotlib==3.3.3
 numpy==1.19.3
 Flask==2.0.1
 lpips==0.1.4
+scipy==1.5.4
 flask_cors==3.0.10
 Pillow==9.0.1
-tensorboardX==2.4.1
+tensorboardX==2.5

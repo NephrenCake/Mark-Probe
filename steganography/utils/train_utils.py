@@ -1,5 +1,4 @@
 # -- coding: utf-8 --
-import random
 import time
 
 import torch
@@ -26,7 +25,6 @@ def process_forward(Encoder,
 
     # img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
-
     # Encoder
     res = Encoder({"img": img, "msg": msg})  # res_image (448,448)  the encoder_module start forward
     # res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
@@ -167,6 +165,10 @@ def train_one_epoch(Encoder,
         # ------------------更新lr
         optimizer.zero_grad()
         scheduler.step()
+
+        # ------------------可能的手操stn卷积层权重，但不建议
+        # for i in Decoder.stn.localization.parameters():
+        #     i.data = torch.clamp(i, -0.25, 0.25)
 
     return
 

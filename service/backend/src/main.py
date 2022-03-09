@@ -5,6 +5,7 @@ from flask import Flask, request
 from flask_cors import CORS
 
 import properties
+from model.coder import *
 from model.encoderLive import Live
 from utils import *
 
@@ -69,8 +70,8 @@ def pullStream():
     global custom_id, custom_info, is_live, live
     try:
         if (is_live == False):
-            sql_id = custom_id if (custom_id is None) else properties.UID
-            sql_info = custom_info if (custom_info is None) else properties.UIP
+            sql_id = properties.UID if custom_id is None else custom_id
+            sql_info = properties.UIP if custom_info is None else custom_info
                 
             live = Live(src=properties.SRC_RTMP_URL, dst=properties.DST_RTMP_URL, uid=sql_id, uip=sql_info)
             
@@ -104,32 +105,31 @@ def upload():
     
     img = base64ToCv2Img(fileBase64)
     
+    decodedInfo = {}
+    
     if (auto == 1):
         if (len(points) != 0):
             img = perspectiveTrans(img, points)
     # elif (auto == 2):
     #     img = autoPerspectiveTrans(img)
         
-    # if (imgType == 1):
-    #     # 若是截图，免 STN
-    #     # decodedInfo = decoder(img)
-    # elif (imgType is 2):
-    #     # 若是照片，进 STN
-    #     # decodedInfo = decoder_with_stn(img)
+    if (imgType == 1):
+        # 若是截图，免 STN
+        decodedInfo = decoder(img=img, use_stn=False)
+    elif (imgType == 2):
+        # 若是照片，进 STN
+        decodedInfo = decoder(img=img, use_stn=True)
     
-    # 解码后信息
-    # decodedInfo = decoder(img)
-    
-    # cv2.imshow('', img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-        
-    fake_info = {"ts_min": 27384770, "uid": "123"}
-    resList = selectLog(properties.SQLITE_LOCATION, fake_info["ts_min"], fake_info["uid"], 3)
+    # fake_info = {"ts_min": 27384770, "uid": "123"}
+    resList = selectLog(properties.SQLITE_LOCATION, decodedInfo["ts"] / 60, decodedInfo["uid"], 0)
     outDict = {"data": resList}
     
     # 返回变换后图像 base64
     outDict["fixedImg"] = cv2ImgToBase64(img)
+    
+    # 返回解码得到的原信息和置信度
+    outDict["content"] = decodedInfo["content"]
+    outDict["score"] = decodedInfo["score"]
 
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
@@ -143,7 +143,7 @@ def ps():
     # contrast = data["contrast"]
     # saturation = data["saturation"]
     # hue = data["hue"]
-    # GBlur = data["GBlur"]
+    # MBlur = data["MBlur"]
     # randomNoise = data["randomNoise"]
     # grayscale = data["grayscale"]
     # randomCover = data["randomCover"]
@@ -167,12 +167,13 @@ def uploadEn():
     
     img = base64ToCv2Img(fileBase64)
     
-    # 编码后图片
-    # img = encoder(img)
+    # 编码
+    sql_id = properties.UID if custom_id is None else custom_id
+    img = encoder(img, sql_id)
     
-    sql_id = custom_id if (custom_id is None) else properties.UID
-    sql_info = custom_info if (custom_info is None) else properties.UIP
-    
+    # 写数据库
+    # sql_id = properties.UID if custom_id is None else custom_id
+    sql_info = properties.UIP if custom_info is None else custom_info
     insertLog(properties.SQLITE_LOCATION, getMinutesTs(), sql_id, sql_info)
     
     # 返回变换后图像 base64
@@ -181,4 +182,4 @@ def uploadEn():
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
 if __name__ == "__main__":
-    app.run(host = "127.0.0.1", port = 5000, threaded = True)
+    app.run(host="127.0.0.1", port=5000, threaded=True)

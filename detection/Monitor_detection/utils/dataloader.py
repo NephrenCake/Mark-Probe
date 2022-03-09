@@ -4,8 +4,13 @@ import cv2
 import numpy as np
 from PIL import Image
 from torch.utils.data.dataset import Dataset
-from utils.utils import preprocess_input, cvtColor
-import Generate_Dataset
+from detection.Monitor_detection.utils.utils import preprocess_input, cvtColor
+import detection.Monitor_detection.Generate_Dataset
+import sys
+
+supported = [".jpg", ".JPG", ".png", ".PNG", ".bmp", ".BMP"]  # 支持的文件后缀类型
+img_list_1 = [i for i in os.listdir('训练集的路径') if os.path.splitext(i)[-1] in supported]
+img_list_2 = [i for i in os.listdir('测试集的路径') if os.path.splitext(i)[-1] in supported]
 
 
 class DeeplabDataset(Dataset):
@@ -22,9 +27,16 @@ class DeeplabDataset(Dataset):
         return self.length
 
     def __getitem__(self, index):
-        supported = [".jpg", ".JPG", ".png", ".PNG", ".bmp", ".BMP"]  # 支持的文件后缀类型
-        img_list = [i for i in os.listdir(self.dataset_path) if os.path.splitext(i)[-1] in supported][index]
-        name = img_list.split()[0]
+
+        if self.dataset_path == '训练集的路径':
+            img_list_ = img_list_1[index]
+            name = img_list_.split()[0]
+        elif self.dataset_path == '测试集的路径':
+            img_list_ = img_list_2[index]
+            name = img_list_.split()[0]
+        else:
+            print('数据集路径错误')
+            sys.exit(0)
 
         # -------------------------------#
         #   从文件中读取图像
