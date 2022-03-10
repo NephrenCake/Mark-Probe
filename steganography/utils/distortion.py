@@ -52,9 +52,8 @@ def rand_crop(img, scale, change_pos=False):
 def non_spatial_trans(img, scales):
     """
     此处主要实现大多数情况下共同包含的变换，多为非空间变换
-    todo 加入反光变换
     """
-    # 反光 todo 待定
+    # 反光 不使用
     if scales["reflection_trans"] != 0:
         img = RandomMixUp(p=scales["reflection_trans"], lambda_val=(0., 0.05))(img)[0]
     # 色彩
