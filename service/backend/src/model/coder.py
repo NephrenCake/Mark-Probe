@@ -8,23 +8,16 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '../../../..')))
 
 import numpy as np
 
-from service.backend.src import properties
 from service.backend.src.utils import str_to_timestamp
-from tools.interface.bch import BCHHelper
-from tools.interface.utils import model_import, get_device, tensor_2_cvImage, convert_img_type
+from tools.interface.utils import model_import, tensor_2_cvImage, convert_img_type
 from tools.interface.predict import encode, decode
 
-device = get_device(properties.DEVICE)
-bch = BCHHelper()
-
 # 编码器
-def encoder(img: np.ndarray, info: str) -> np.ndarray:
-    global device, bch
+def encoder(img: np.ndarray, info: str, model, bch, device) -> np.ndarray:
     
     img = convert_img_type(img).to(device)
-    encoder = model_import(model_path=properties.WEIGHT_PATH, model_name="Encoder", device=device)
 
-    encoded_img, res_img = encode(img=img, uid=info, model=encoder, bch=bch, device=device)
+    encoded_img, res_img = encode(img=img, uid=info, model=model, bch=bch, device=device)
     
     encoded_img = tensor_2_cvImage(encoded_img)
     
@@ -32,11 +25,9 @@ def encoder(img: np.ndarray, info: str) -> np.ndarray:
 
 
 # 解码器
-def decoder(img: np.ndarray, use_stn: bool) -> dict:
-    global device, bch
-    decoder = model_import(model_path=properties.WEIGHT_PATH, model_name="Decoder", device=device)
+def decoder(img: np.ndarray, use_stn: bool, model, bch, device) -> dict:
     
-    uid, time, content, msg_pred, score, bf = decode(img=img, bch=bch, model=decoder, device=device, use_stn=use_stn)
+    uid, time, content, msg_pred, score, bf = decode(img=img, bch=bch, model=model, device=device, use_stn=use_stn)
     
     # print("水印指向用户: ", uid)
     # print("水印指向时间: ", time) # time 为格式化时间 yyyy-MM-dd HH:mm:ss
@@ -46,3 +37,7 @@ def decoder(img: np.ndarray, use_stn: bool) -> dict:
     # print("水印纠正位: ", bf)
     
     return {"ts": str_to_timestamp(time), "uid": uid, "content": content, "score": score}
+
+# 获取模型
+def get_model(model_path:str, model_name:str, device:str, warmup:bool = True):
+    return model_import(model_path=model_path, model_name=model_name, device=device, warmup=warmup)
