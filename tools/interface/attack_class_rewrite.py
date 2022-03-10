@@ -163,3 +163,8 @@ class Motion_blur(object):
         else:
             out = (out.squeeze(0) * 255.).permute(1, 2, 0).byte().numpy()
         return out
+class MixUp(object):
+    def __call__(self, img:np.ndarray,img_added:np.ndarray, added_factor):
+        # added_factor 是被添加参数的权重 建议0~1 float
+        return cv2.addWeighted(img,1,img_added,added_factor,gamma=0);
+        pass

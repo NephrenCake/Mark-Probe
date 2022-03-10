@@ -38,7 +38,7 @@ def process_forward(Encoder,
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
     photo_img = make_trans_for_photo(trans_img, scales)
     crop_img = make_trans_for_crop(trans_img, scales)
-    del trans_img
+    # del trans_img
 
     # Decoder  for the BalanceDataParallel Decoder is safe
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)

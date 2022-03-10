@@ -52,7 +52,7 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 15  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 10  # 一个批次的图片数量 # batch_size 会有影响
+        self.batch_size = 13  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 12  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
@@ -76,23 +76,25 @@ class TrainConfig(BaseConfig):
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
         self.jpeg_trans_max = 30  # 这里表示压缩强度。而图像质量是   上调 <= 70
-        self.jpeg_trans_grow = (0.9, 1)
-        self.motion_blur_max = 0.1  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
-        self.motion_blur_grow = (0.9, 1)
+        self.jpeg_trans_grow = (1.5, 2)
+        self.motion_blur_max = 0  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
+        self.motion_blur_grow = (1.5, 2)
+        self.blur_trans_max = 0.2
+        self.blur_trans_grow = (1.5, 2)
 
         self.perspective_trans_max = 0.05  # 透视变换
-        self.perspective_trans_grow = (0.4, 1)
+        self.perspective_trans_grow = (0.5, 1)
         self.angle_trans_max = 30  # 观察图片的视角，指与法线的夹角，入射角
-        self.angle_trans_grow = (0.4, 1)
-        self.cut_trans_max = 0.3  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
-        self.cut_trans_grow = (0.4, 1)
+        self.angle_trans_grow = (0.4, 0.5)
+        self.cut_trans_max = 0.5  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
+        self.cut_trans_grow = (0.4, 0.5)
 
         self.reflection_trans_max = 0.00  # 反光的概率
-        self.reflection_trans_grow = (0.3, 0.4)
+        self.reflection_trans_grow = (0.2, 0.3)
         self.grayscale_trans_max = 0.05
-        self.grayscale_trans_grow = (0.3, 0.4)
+        self.grayscale_trans_grow = (0.2, 0.3)
         self.erasing_trans_max = 0.1  # 随机遮挡
-        self.erasing_trans_grow = (0.3, 0.4)
+        self.erasing_trans_grow = (0.2, 0.3)
 
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
@@ -110,9 +112,9 @@ class TrainConfig(BaseConfig):
         self.rgb_loss_max = 1
         self.rgb_loss_grow = (0.5, 1)
         self.hsv_loss_max = 1
-        self.hsv_loss_grow = (0.5, 1)
+        self.hsv_loss_grow = None
         self.yuv_loss_max = 1
-        self.yuv_loss_grow = None
+        self.yuv_loss_grow = (0.5, 1)
         self.lpips_loss_max = 1
         self.lpips_loss_grow = (0.5, 1)
         # other

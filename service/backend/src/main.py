@@ -1,17 +1,25 @@
 # encoding: utf-8
 # 主函数
 
+import os
+import sys
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '../../..')))
+
 from flask import Flask, request
 from flask_cors import CORS
 
-import properties
-from model.coder import *
-from model.encoderLive import Live
-from utils import *
+import service.backend.src.properties as properties
+from service.backend.src.model.coder import encoder, decoder
+from service.backend.src.model.encoderLive import Live
+from service.backend.src.utils import *
+from tools.interface.bch import BCHHelper
+from tools.interface.utils import model_import, get_device
 
 app = Flask(__name__)
 
-app.debug = True
+# debug 模式会占用两倍显存：初始化了两次模型
+app.debug = False
 
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///db.sqlite3"
 
@@ -43,6 +51,12 @@ custom_info = None
 live = None
 is_live = False
 
+# 模型引入
+bch = BCHHelper()
+device = get_device(properties.DEVICE)
+encoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Encoder", device=device, warmup=True)
+decoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Decoder", device=device, warmup=True)
+
 # API
 # 自定义 ID
 @app.route("/custom", methods = ["POST"])
@@ -67,13 +81,13 @@ def customID():
 # 推流（包含拉流过程，先拉后推）
 @app.route("/pull", methods = ["GET"])
 def pullStream():
-    global custom_id, custom_info, is_live, live
+    global custom_id, custom_info, is_live, live, encoderModel, bch, device
     try:
         if (is_live == False):
             sql_id = properties.UID if custom_id is None else custom_id
             sql_info = properties.UIP if custom_info is None else custom_info
                 
-            live = Live(src=properties.SRC_RTMP_URL, dst=properties.DST_RTMP_URL, uid=sql_id, uip=sql_info)
+            live = Live(src=properties.SRC_RTMP_URL, dst=properties.DST_RTMP_URL, uid=sql_id, uip=sql_info, model=encoderModel, bch=bch, device=device)
             
             is_live = True
             live.run()
@@ -88,8 +102,8 @@ def pullStream():
 def stopStream():
     global is_live, live
     try:
-        live.stop()
         is_live = False
+        live.stop()
         return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.STOP_STREAM_OK)
     except:
         return reponseJson(code=CodeEnum.HTTP_SERVER_ERROR, msg=MsgEnum.STOP_STREAM_FAIL)
@@ -97,6 +111,8 @@ def stopStream():
 # decoder 上传图片
 @app.route('/upload', methods=['POST'])
 def upload():
+    global decoderModel, bch, device
+    
     data = request.get_json()
     fileBase64 = data["fileBase64"]
     points = data["positions"]
@@ -115,10 +131,10 @@ def upload():
         
     if (imgType == 1):
         # 若是截图，免 STN
-        decodedInfo = decoder(img=img, use_stn=False)
+        decodedInfo = decoder(img=img, use_stn=False, model=decoderModel, bch=bch, device=device)
     elif (imgType == 2):
         # 若是照片，进 STN
-        decodedInfo = decoder(img=img, use_stn=True)
+        decodedInfo = decoder(img=img, use_stn=True, model=decoderModel, bch=bch, device=device)
     
     # fake_info = {"ts_min": 27384770, "uid": "123"}
     resList = selectLog(properties.SQLITE_LOCATION, decodedInfo["ts"] / 60, decodedInfo["uid"], 0)
@@ -160,7 +176,7 @@ def ps():
 # encoder 上传图片
 @app.route('/uploaden', methods=['POST'])
 def uploadEn():
-    global custom_id, custom_info
+    global custom_id, custom_info, encoderModel, bch, device
     
     data = request.get_json()
     fileBase64 = data["fileBase64"]
@@ -169,7 +185,7 @@ def uploadEn():
     
     # 编码
     sql_id = properties.UID if custom_id is None else custom_id
-    img = encoder(img, sql_id)
+    img = encoder(img=img, info=sql_id, model=encoderModel, bch=bch, device=device)
     
     # 写数据库
     # sql_id = properties.UID if custom_id is None else custom_id
@@ -182,4 +198,4 @@ def uploadEn():
     return reponseJson(code=CodeEnum.HTTP_OK, msg=MsgEnum.UPLOAD_OK, out_dict=outDict)
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, threaded=True)
+    app.run(host="127.0.0.1", port=5000, threaded=False)
