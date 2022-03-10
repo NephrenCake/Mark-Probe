@@ -18,6 +18,16 @@ def jpeg_trans(img, p):
     return F.resize(DiffJPEG(height=img.shape[-2], width=img.shape[-1], differentiable=True,
                              quality=random.randint(100 - int(p), 99)).to(img.device).eval()(img), [h, w])
 
+def rand_blur(img, p):
+    if p > random.uniform(0, 1):
+        return img
+    kernel_size = random.randint(1, 3) * 2 + 1
+    t = transforms.RandomChoice([
+        transforms.GaussianBlur(kernel_size=kernel_size, sigma=(0.1, 2.0)),
+        transforms.GaussianBlur(kernel_size=(kernel_size, 1), sigma=(0.1, 2.0)),
+        transforms.GaussianBlur(kernel_size=(1, kernel_size), sigma=(0.1, 2.0)), ])
+    return t(img)
+
 
 def rand_noise(img, rnd_noise):
     """
@@ -61,9 +71,12 @@ def non_spatial_trans(img, scales):
         img = transforms.ColorJitter(brightness=scales["brightness_trans"], contrast=scales["contrast_trans"],
                                      saturation=scales["saturation_trans"], hue=scales["hue_trans"])(img)
     # 运动模糊
-    if scales["motion_blur"] > random.uniform(0, 1):
-        img = motion_blur(img, kernel_size=2 * random.randint(1, 2) + 1,
-                          angle=random.uniform(0, 180), direction=random.uniform(-1, 1))
+    # if scales["motion_blur"] > random.uniform(0, 1):
+    #     img = motion_blur(img, kernel_size=2 * random.randint(1, 2) + 1,
+    #                       angle=random.uniform(0, 180), direction=random.uniform(-1, 1))
+
+    if scales["blur_trans"] != 0:
+        img = rand_blur(img, scales["blur_trans"])
     # 随机噪声
     if scales["noise_trans"] != 0:
         img = rand_noise(img, scales["noise_trans"])
@@ -75,20 +88,21 @@ def non_spatial_trans(img, scales):
                              quality=random.randint(100 - int(scales["jpeg_trans"]), 99)).to(img.device).eval()(img)
     # 灰度变换
     if scales["grayscale_trans"] != 0:
-        img = transforms.RandomGrayscale(p=scales["grayscale_trans"])(img)
+        img = transforms.RandomGrayscale(p=scales["grayscale_trans"])(img) #.to(img.device)
 
     return img
 
 
-def rand_erase(_img, _cover_rate, block_size=20):
+def rand_erase(img, _cover_rate, block_size=20):
     """
     img: torch.Tensor
     cover_rate: [0.~ 1.0)
     block_size: 遮挡块的大小 建议 0~20 pixel 规定遮挡块 是正方形
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
     """
+    # 在这里需要对原图进行clone操作 为啥以前不用？ md 我不理解啊！！
     # more than one element of the written-to tensor refers to a single memory location. Please clone() the tensor before performing the operation.
-    # _img = img.clone()
+    _img = img.clone()
     cover_rate = random.uniform(0, _cover_rate)
     b, c, h, w = _img.shape
     block_num = [int(h * w * cover_rate) // (block_size * block_size)]
