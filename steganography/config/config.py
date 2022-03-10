@@ -75,27 +75,27 @@ class TrainConfig(BaseConfig):
 
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
-        self.perspective_trans_max = 0.1  # 透视变换
-        self.perspective_trans_grow = (0.5, 3)
+        self.jpeg_trans_max = 30  # 这里表示压缩强度。而图像质量是   上调 <= 70
+        self.jpeg_trans_grow = (0.9, 1)
+        self.motion_blur_max = 0.1  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
+        self.motion_blur_grow = (0.9, 1)
+
+        self.perspective_trans_max = 0.05  # 透视变换
+        self.perspective_trans_grow = (0.4, 1)
         self.angle_trans_max = 30  # 观察图片的视角，指与法线的夹角，入射角
-        self.angle_trans_grow = (0.5, 3)
+        self.angle_trans_grow = (0.4, 1)
         self.cut_trans_max = 0.3  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
-        self.cut_trans_grow = (0.5, 3)
+        self.cut_trans_grow = (0.4, 1)
 
-        self.reflection_trans_max = 0.00  # 反光的概率 # todo 待定
-        self.reflection_trans_grow = (0.4, 0.5)
-        self.grayscale_trans_max = 0.00  # todo 待定
-        self.grayscale_trans_grow = (0.4, 0.5)
+        self.reflection_trans_max = 0.00  # 反光的概率
+        self.reflection_trans_grow = (0.3, 0.4)
+        self.grayscale_trans_max = 0.05
+        self.grayscale_trans_grow = (0.3, 0.4)
         self.erasing_trans_max = 0.1  # 随机遮挡
-        self.erasing_trans_grow = (0.4, 0.5)
-
-        self.jpeg_trans_max = 40  # 这里表示压缩强度。而图像质量是   上调 <= 70
-        self.jpeg_trans_grow = (0.3, 0.4)
+        self.erasing_trans_grow = (0.3, 0.4)
 
         self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.2, 0.3)
-        self.motion_blur_max = 0.2  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
-        self.motion_blur_grow = (0.2, 0.3)
 
         self.brightness_trans_max = 0.3  # 亮度变换
         self.brightness_trans_grow = (0.1, 0.2)
