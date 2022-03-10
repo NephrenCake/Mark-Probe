@@ -37,7 +37,3 @@ def decoder(img: np.ndarray, use_stn: bool, model, bch, device) -> dict:
     # print("水印纠正位: ", bf)
     
     return {"ts": str_to_timestamp(time), "uid": uid, "content": content, "score": score}
-
-# 获取模型
-def get_model(model_path:str, model_name:str, device:str, warmup:bool = True):
-    return model_import(model_path=model_path, model_name=model_name, device=device, warmup=warmup)

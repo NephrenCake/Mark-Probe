@@ -10,7 +10,7 @@ from flask import Flask, request
 from flask_cors import CORS
 
 import service.backend.src.properties as properties
-from service.backend.src.model.coder import encoder, decoder, get_model
+from service.backend.src.model.coder import encoder, decoder
 from service.backend.src.model.encoderLive import Live
 from service.backend.src.utils import *
 from tools.interface.bch import BCHHelper
@@ -54,7 +54,7 @@ is_live = False
 # 模型引入
 bch = BCHHelper()
 device = get_device(properties.DEVICE)
-encoderModel = get_model(model_path=properties.WEIGHT_PATH, model_name="Encoder", device=device, warmup=True)
+encoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Encoder", device=device, warmup=True)
 decoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Decoder", device=device, warmup=True)
 
 # API
