@@ -151,8 +151,6 @@ class SwinDecoder(nn.Module):
             nn.Sigmoid()
         )
 
-        initialize_weights(self)
-
     def forward(self, x):
         return self.decoder(x)
 
@@ -217,9 +215,7 @@ class STN(nn.Module):
         )
         # 3 * 2 affine矩阵的回归量
         self.fc_loc = nn.Sequential(
-            nn.Dropout(0.4),
             nn.Linear(self.fc_loc_num, 128),
-            nn.Dropout(0.2),
             nn.ReLU(True),
             nn.Linear(128, 3 * 2)
         )
