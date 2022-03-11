@@ -217,15 +217,17 @@ class STN(nn.Module):
         )
         # 3 * 2 affine矩阵的回归量
         self.fc_loc = nn.Sequential(
+            nn.Dropout(0.4),
             nn.Linear(self.fc_loc_num, 128),
+            nn.Dropout(0.2),
             nn.ReLU(True),
             nn.Linear(128, 3 * 2)
         )
 
         initialize_weights(self)
         # 使用身份转换初始化权重/偏差
-        self.fc_loc[2].weight.data.zero_()
-        self.fc_loc[2].bias.data.copy_(torch.tensor([1., 0., 0., 0., 1., 0.]))
+        self.fc_loc[-1].weight.data.zero_()
+        self.fc_loc[-1].bias.data.copy_(torch.tensor([1., 0., 0., 0., 1., 0.]))
 
     def forward(self, x):
         # 空间变换器网络转发功能

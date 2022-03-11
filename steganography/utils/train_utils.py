@@ -12,7 +12,7 @@ from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
 from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
 
-
+# 超分没必要了。md
 def process_forward(Encoder,
                     Decoder,
                     lpips,
@@ -23,22 +23,22 @@ def process_forward(Encoder,
     msg = data["msg"].to(cfg.device)
     mask = data["mask"].to(cfg.device)
 
-    img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
+    # img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    res_low = Encoder({"img": img_low, "msg": msg})  # res_image (448,448)  the encoder_module start forward
-    res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
-    encoded_img = torch.clamp(img + res_high, 0., 1.)
-    del res_high
+    res = Encoder({"img": img, "msg": msg})  # res_image (448,448)  the encoder_module start forward
+    # res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
+    encoded_img = torch.clamp(img + res, 0., 1.)
+    # del res_high
 
     # transform
-    trans_img = transforms_F.resize(encoded_img, cfg.img_size)
+    # trans_img = transforms_F.resize(encoded_img, cfg.img_size)
     # ----------------------非空间变换
-    trans_img = non_spatial_trans(trans_img, scales)
+    trans_img = non_spatial_trans(encoded_img, scales)
     # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
     photo_img = make_trans_for_photo(trans_img, scales)
     crop_img = make_trans_for_crop(trans_img, scales)
-    del trans_img
+    # del trans_img
 
     # Decoder  for the BalanceDataParallel Decoder is safe
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
@@ -75,7 +75,7 @@ def process_forward(Encoder,
     str_acc = (photo_str_acc + crop_str_acc) / 2
     right_str_acc = (photo_right_str_acc + crop_right_str_acc) / 2
 
-    vis_img = {"res_low": res_low.data, "encoded_img": encoded_img.data,
+    vis_img = {"res_low": res.data, "encoded_img": encoded_img.data,
                "photo_img": photo_img.data, "crop_img": crop_img.data,
                "stn_img": stn_img.data, }
     metric_result = {

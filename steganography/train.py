@@ -32,7 +32,7 @@ def main():
     logger.info(f'Using dataloader workers: {cfg.num_workers}')
 
     train_loader, val_loader = get_dataloader(img_set_list=cfg.img_set_list,
-                                              img_size=(1080, 1920),
+                                              img_size=(448, 448),
                                               msg_size=cfg.msg_size,
                                               val_rate=cfg.val_rate,
                                               batch_size=cfg.batch_size,
