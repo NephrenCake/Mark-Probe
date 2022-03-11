@@ -151,8 +151,6 @@ class SwinDecoder(nn.Module):
             nn.Sigmoid()
         )
 
-        initialize_weights(self)
-
     def forward(self, x):
         return self.decoder(x)
 

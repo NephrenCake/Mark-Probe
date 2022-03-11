@@ -85,9 +85,17 @@ def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
         2.当照片拍摄距离很近时，那么一次检测就够，返回角度矫正好的图片和它在原图上的坐标
         
         '''
-        paper, point1 = paper_detect.paper_find(img, thresold_value=thresold_2)
-        img_on_paper, point2 = paper_detect.paper_find(paper, thresold_value=thresold_3)
+        paper, contour1, point1 = paper_detect.paper_find(img)
+        img_on_paper, contour2, point2 = paper_detect.paper_find(paper)
         if point2 == "null":
-            return [paper, point1]
+            return [paper, contour1, point1]
         else:
-            return [img_on_paper, point2]
+            return [img_on_paper, contour1, point2]
+
+
+if __name__ == "__main__":
+    img = cv2.imread('img_1.png')
+    img1, point = detect(img, DeeplabV3(), target="screen", thresold_2=50)
+    print(point)
+    cv2.imshow('ss', img1)
+    cv2.waitKey(0)

@@ -30,7 +30,7 @@ class DeeplabV3(object):
         #   训练好后logs文件夹下存在多个权值文件，选择验证集损失较低的即可。
         #   验证集损失较低不代表miou较高，仅代表该权值在验证集上泛化性能较好。
         # -------------------------------------------------------------------#
-        "model_path": "./logs/ep048-loss0.065-val_loss0.095.pth",
+        "model_path": "D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth",
         # ----------------------------------------#
         #   所需要区分的类的个数+1
         # ----------------------------------------#
@@ -178,7 +178,7 @@ class DeeplabV3(object):
         if self.blend:
             image = Image.blend(old_img, image, 0.7)
 
-        return image, single_img
+        return  single_img,image
 
     def get_FPS(self, image, test_interval):
         # ---------------------------------------------------------#

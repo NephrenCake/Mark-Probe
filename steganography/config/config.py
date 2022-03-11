@@ -77,17 +77,17 @@ class TrainConfig(BaseConfig):
         # transform scale
         self.jpeg_trans_max = 30  # 这里表示压缩强度。而图像质量是   上调 <= 70
         self.jpeg_trans_grow = (1.5, 2)
-        self.motion_blur_max = 0  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
-        self.motion_blur_grow = (1.5, 2)
+        # self.motion_blur_max = 0  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
+        # self.motion_blur_grow = (1.5, 2)
         self.blur_trans_max = 0.2
         self.blur_trans_grow = (1.5, 2)
 
         self.perspective_trans_max = 0.05  # 透视变换
-        self.perspective_trans_grow = (0.5, 1)
+        self.perspective_trans_grow = (0.4, 1)
         self.angle_trans_max = 30  # 观察图片的视角，指与法线的夹角，入射角
-        self.angle_trans_grow = (0.4, 0.5)
+        self.angle_trans_grow = (0.4, 1)
         self.cut_trans_max = 0.5  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
-        self.cut_trans_grow = (0.4, 0.5)
+        self.cut_trans_grow = (0.4, 1)
 
         self.reflection_trans_max = 0.00  # 反光的概率
         self.reflection_trans_grow = (0.2, 0.3)

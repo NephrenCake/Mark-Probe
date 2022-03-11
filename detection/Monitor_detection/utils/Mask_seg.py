@@ -65,6 +65,7 @@ def mask_cut(img, mask):
     gray_mask = np.array(gray_mask)
     # 与运算
     res = cv2.bitwise_and(origin_img, origin_img, mask=gray_mask)
+
     return res
 
 
