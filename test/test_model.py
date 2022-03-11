@@ -4,8 +4,12 @@ import sys
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
 import torch
+import torchvision
 import torch.nn.functional as F
+from torchvision.transforms import transforms
+from PIL import Image
 
+from test_distortion import show_result
 from steganography.models.MPNet import MPEncoder, STN, MPDecoder
 
 img_size = 448
@@ -29,13 +33,22 @@ def test_encoder_model():
 
 
 def test_stn():
-    img = torch.randn((batch_size, 3, img_size, img_size)).to(device)
+    """
+    检测
+    """
+    img_path = "out/grayscale_trans.jpg"
+    img = transforms.Compose([
+        torchvision.transforms.Resize((448, 448)),
+        torchvision.transforms.ToTensor()
+    ])(Image.open(img_path).convert("RGB")).unsqueeze(0).to(device)
+    # img = torch.randn((batch_size, 3, img_size, img_size)).to(device)
 
     net = STN().to(device)
     output = net(img)
 
     print(output.size())
     print(sum(p.numel() for p in net.parameters()))
+    show_result(output)
 
 
 def test_decoder_model():

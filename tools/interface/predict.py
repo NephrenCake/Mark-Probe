@@ -42,7 +42,7 @@ def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
     res_high = F.resize(res_low, img.shape[-2:])
     encoded_img = torch.clamp(res_high + img, 0., 1.)
 
-    return encoded_img.squeeze(0).cpu(), res_low.squeeze(0).cpu()
+    return encoded_img.squeeze(0), res_low.squeeze(0)
 
 
 @torch.no_grad()
