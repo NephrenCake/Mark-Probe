@@ -32,17 +32,18 @@ def main(args):
     decoder = model_import(args.model_path, "Decoder", device=device)
 
     # 调用 api
-    uid, time, content, msg_pred, score = decode(img=img,
-                                                 bch=bch,
-                                                 device=device,
-                                                 model=decoder,
-                                                 use_stn=True)
+    uid, time, content, msg_pred, score, bf = decode(img=img,
+                                                     bch=bch,
+                                                     device=device,
+                                                     model=decoder,
+                                                     use_stn=True)
 
     print("水印指向用户: ", uid)
     print("水印指向时间: ", time)
     print("水印原生内容: ", content)
     # print("水印正确率: ", )
     print("水印置信度: ", score)
+    print("校验码纠正位数: ", bf)
 
 
 if __name__ == '__main__':

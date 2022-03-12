@@ -46,7 +46,7 @@ def convert_img_type(img: Union[np.ndarray, Image.Image, torch.Tensor]) -> torch
     todo 支持批量推理
     """
     if isinstance(img, np.ndarray):
-        img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        img = transforms.ToTensor()(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     if isinstance(img, Image.Image):
         img = transforms.ToTensor()(img)
     if isinstance(img, torch.Tensor):
@@ -63,11 +63,13 @@ def check_dir(path):
         os.makedirs(path)
 
 
-def tensor_2_cvImage(tensor_img: torch.Tensor)->np.ndarray:
-    '''
+def tensor_2_cvImage(tensor_img: torch.Tensor) -> np.ndarray:
+    """
     param: tensor_img 一定要是 从 pil img转过来的图片  也就是RGB图
     return: cv2 图像 BGR 格式 维度信息为 (H,W,C)
-    '''
-    if len(tensor_img.shape)==4:
+    """
+    tensor_img *= 255
+    if len(tensor_img.shape) == 4:
         tensor_img = tensor_img.squeeze(0)
-    return cv2.cvtColor(np.asarray(transforms.ToPILImage()(tensor_img)),cv2.COLOR_RGB2BGR)
+    return cv2.cvtColor(np.uint8(tensor_img.cpu().numpy()).transpose(1, 2, 0),
+                        cv2.COLOR_RGB2BGR)
