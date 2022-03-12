@@ -14,7 +14,7 @@ def hsv_range(frame):
 
     white_lower = np.array([0, 0, 150], np.uint8)
 
-    white_upper = np.array([180, 40, 255], np.uint8)
+    white_upper = np.array([180, 36, 255], np.uint8)
 
     white = cv2.inRange(img, white_lower, white_upper)
 
@@ -34,5 +34,4 @@ def monitor_hsv(img):
     black_upper = np.array([180, 255, 46], np.uint8)
 
     black = cv2.inRange(img, black_lower, black_upper)
-    cv2.imshow('black', black)
     return black

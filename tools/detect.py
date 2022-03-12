@@ -9,17 +9,20 @@ from detection.Monitor_detection.deeplab import DeeplabV3
 from tools.interface.predict import detect
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
+
+from tools.test import hsv_range
+
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--predict_way', help='1.monitor 2.picture 3.monitor_video 4.picture_video',
-                        default=4)
+                        default=3)
     parser.add_argument('--video_path', help='path of the video file',
-                        default="test/test_source/test1.mp4")
+                        default="test/test_source/test.mp4")
     parser.add_argument('--video_save_path', help='folder path of the video',
-                        default="")
+                        default="out/save_video/monitor1.mp4")
     parser.add_argument('--video_fps', help='the fps of save_video',
                         default=25)
 
@@ -38,6 +41,7 @@ def main(args):
             raise ValueError("未能正确读取视频，请注意是否正确填写视频路径。")
         # 读取视频
         fps = 0.0
+        deeplab = DeeplabV3()
         while (True):
             t1 = time.time()
             # 读取某一帧
@@ -49,7 +53,7 @@ def main(args):
 
             # 转变成Image
             frame = Image.fromarray(np.uint8(frame))
-            deeplab = DeeplabV3()
+
             # 进行检测
             res = detect(frame, deeplab, target="screen", thresold_1=55)  # res[0]为图片，res[1]为坐标
 
@@ -93,7 +97,9 @@ def main(args):
             if not ref:
                 break
             # 格式转变，BGRtoRGB
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
             res = detect(frame, model=None, target="paper")
             # RGBtoBGR满足opencv显示格式
             frame = cv2.cvtColor(res[1], cv2.COLOR_RGB2BGR)

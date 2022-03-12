@@ -3,7 +3,7 @@ import numpy as np
 from detection.Paper_detection import utlis
 
 
-def Monitor_find(old_img, img, thresold_value=150):
+def Monitor_find(old_img, img):
     # old_img = cv2.resize(old_img,(448, 448))
     # img = cv2.resize(img, (448, 448))
     # widthImg = img.shape[1]
@@ -20,7 +20,7 @@ def Monitor_find(old_img, img, thresold_value=150):
     biggest, maxArea = utlis.biggestContour(contours)  # FIND THE BIGGEST CONTOUR
     if biggest.size != 0:
         biggest = utlis.reorder(biggest)
-        cv2.drawContours(old_img, biggest, -1, (0, 255, 0), 6)  # DRAW THE BIGGEST CONTOUR
+        cv2.drawContours(old_img, biggest, -1, (0, 255, 0), 14)  # DRAW THE BIGGEST CONTOUR
         imgBigContour = utlis.drawRectangle(old_img, biggest, 2)
         return imgBigContour, biggest
     else:
