@@ -97,3 +97,12 @@ def valTrackbars():
     Threshold2 = cv2.getTrackbarPos("Threshold2", "Trackbars")
     src = Threshold1, Threshold2
     return src
+
+
+def max_contour_idx(contours):
+    area = []
+    for k in range(len(contours)):
+        area.append(cv2.contourArea(contours[k]))
+    max_idx = np.argmax(np.array(area))
+    return max_idx
+

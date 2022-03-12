@@ -5,7 +5,9 @@ import cv2
 # img = cv2.imread('img/seg4.png')
 from cv2 import CV_8U
 
-from tools.test import monitor_hsv
+
+
+from detection.Monitor_detection.utils.hsv_mask import monitor_hsv
 
 
 def yuchuli(original_img,img,thresold_value=55):

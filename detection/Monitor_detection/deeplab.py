@@ -23,14 +23,14 @@ from detection.Monitor_detection.utils.utils import cvtColor, preprocess_input, 
 #   model_path、backbone和num_classes都需要修改！
 #   如果出现shape不匹配，一定要注意训练时的model_path、backbone和num_classes的修改
 # -----------------------------------------------------------------------------------#
-class DeeplabV3(object):
+class DeeplabV3():
     _defaults = {
         # -------------------------------------------------------------------#
         #   model_path指向logs文件夹下的权值文件
         #   训练好后logs文件夹下存在多个权值文件，选择验证集损失较低的即可。
         #   验证集损失较低不代表miou较高，仅代表该权值在验证集上泛化性能较好。
         # -------------------------------------------------------------------#
-        "model_path": "D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth",
+        # "model_path": "D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth",
         # ----------------------------------------#
         #   所需要区分的类的个数+1
         # ----------------------------------------#
@@ -63,8 +63,9 @@ class DeeplabV3(object):
     # ---------------------------------------------------#
     #   初始化Deeplab
     # ---------------------------------------------------#
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.__dict__.update(self._defaults)
+        self.model_path = args[0]
         for name, value in kwargs.items():
             setattr(self, name, value)
         # ---------------------------------------------------#
@@ -178,7 +179,7 @@ class DeeplabV3(object):
         if self.blend:
             image = Image.blend(old_img, image, 0.7)
 
-        return  single_img,image
+        return single_img, image
 
     def get_FPS(self, image, test_interval):
         # ---------------------------------------------------------#
