@@ -20,7 +20,6 @@ def paper_find1(img):
     img2 = img.copy()
     img1 = img.copy()
     mask1 = hsv_range(img1)
-    cv2.imshow('pic', mask1)
 
     # ret, dst = cv2.threshold(imgGray, thresold_value, 255, cv2.THRESH_BINARY)
     # dst = imgGray
@@ -42,7 +41,6 @@ def paper_find1(img):
     paper = cv2.add(img1, 255 - imgBlank)
     mask1 = cv2.merge([mask1, mask1, mask1])
     paper = cv2.add(paper, mask1)
-    cv2.imshow('paper', paper)
     imgwarp, imgBigContour = paper_find2(paper, img2)
 
     return imgwarp, imgBigContour, 'null'
@@ -58,7 +56,7 @@ def paper_find2(img, old_img):
     ret2, th2 = cv2.threshold(imgGray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     contours, hierarchy = cv2.findContours(255 - th2, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
-    max_idx = utils.max_contour_idx(contours) # 返回最大轮廓的index
+    max_idx = utils.max_contour_idx(contours)  # 返回最大轮廓的index
 
     for factor in range(2, 20, 1):
         factor = factor / 100  # 0.002 ~ 0.2
@@ -74,6 +72,7 @@ def paper_find2(img, old_img):
             imgWarpColored = cv2.warpPerspective(old_img, matrix, (widthImg, heightImg))
             return imgWarpColored, imgBigContour
     return img, img
+
 
 def quadrangular_fitting():
     pass
