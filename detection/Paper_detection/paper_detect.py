@@ -10,7 +10,7 @@ from detection.Monitor_detection.utils.hsv_mask import hsv_range
 
 sys.path.append(os.path.abspath(__dir__))
 
-import utils
+import detection.Paper_detection.utils as utils
 
 
 def paper_find1(img):
@@ -41,9 +41,11 @@ def paper_find1(img):
     paper = cv2.add(img1, 255 - imgBlank)
     mask1 = cv2.merge([mask1, mask1, mask1])
     paper = cv2.add(paper, mask1)
-    imgwarp, imgBigContour = paper_find2(paper, img2)
+    '''
+    imgwarp是透视变换后的图,imgBigContour是在原图上画完轮廓后的图,point是检测到的四个点'''
+    imgwarp, imgBigContour, point = paper_find2(paper, img2)
 
-    return imgwarp, imgBigContour, 'null'
+    return point, imgwarp, imgBigContour
 
 
 def paper_find2(img, old_img):
@@ -70,8 +72,8 @@ def paper_find2(img, old_img):
             pts2 = np.float32([[0, 0], [widthImg, 0], [0, heightImg], [widthImg, heightImg]])  # PREPARE POINTS FOR WARP
             matrix = cv2.getPerspectiveTransform(pts1, pts2)
             imgWarpColored = cv2.warpPerspective(old_img, matrix, (widthImg, heightImg))
-            return imgWarpColored, imgBigContour
-    return img, img
+            return imgWarpColored, imgBigContour, biggest
+    return img, img, 'null'
 
 
 def quadrangular_fitting():

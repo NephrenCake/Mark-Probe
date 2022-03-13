@@ -1,5 +1,6 @@
 from typing import Union, List
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
@@ -73,8 +74,18 @@ def detect(img: np.ndarray,
            ) -> List[List]:
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
-        final_img, point = predict(img, model, thresold_value=thresold_1)
-        return [final_img, point]
+        contour_img, point = predict(img, model, thresold_value=thresold_1)
+        point1 = point[0][0]
+        point2 = point[1][0]
+        point3 = point[2][0]
+        point4 = point[3][0]
+        '''
+            返回一个列表，列表里有四个点的坐标一个一个标好轮廓的图片
+            假设返回一个列表名为res的列表，要取四个点则写成res[0],res[1],res[2],res[3]
+            要取标好轮廓的图片则写成res[4]
+        '''
+
+        return [point1, point2, point3, point4, contour_img]
         # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
     else:
         '''
@@ -83,12 +94,15 @@ def detect(img: np.ndarray,
         2.当照片拍摄距离很近时，那么一次检测就够，返回角度矫正好的图片和它在原图上的坐标
         
         '''
-        paper, contour1, point1 = paper_detect.paper_find1(img)
-        # img_on_paper, contour2, point2 = paper_detect.paper_find2(paper)
-        # if point2 == "null":
-        #     return [paper, contour1, point1]
-        # else:
-        #     return [img_on_paper, contour1, point2]
-        return [paper, contour1, point1]    # paper为透视变换后的图,contour为在原图上加上轮廓,point1为返回的点的坐标
+        point, paper, contour_img, = paper_detect.paper_find1(img)
+        point1 = point[0][0]
+        point2 = point[1][0]
+        point3 = point[2][0]
+        point4 = point[3][0]
+        '''
+            返回一个列表，列表里有四个点的坐标一个一个标好轮廓的图片
+            假设返回一个列表名为res的列表，要取四个点则写成res[0],res[1],res[2],res[3]
+            要取标好轮廓的图片则写成res[4]
+        '''
 
-
+        return [point1, point2, point3, point4, contour_img]
