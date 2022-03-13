@@ -70,7 +70,7 @@ def main():
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
-        {'params': Encoder.parameters()},
+        {'params': Encoder.parameters(), 'weight_decay': 1e-5},
         {'params': Decoder.parameters()},
     ], lr=cfg.lr_base, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
     if cfg.use_warmup:
