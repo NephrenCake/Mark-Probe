@@ -42,7 +42,7 @@ def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
     res_high = F.resize(res_low, img.shape[-2:])
     encoded_img = torch.clamp(res_high + img, 0., 1.)
 
-    return encoded_img.squeeze(0).cpu(), res_low.squeeze(0).cpu()
+    return encoded_img.squeeze(0), res_low.squeeze(0)
 
 
 @torch.no_grad()
@@ -66,12 +66,10 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
 
 
 @torch.no_grad()
-def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
+def detect(img: np.ndarray,
            model: DeeplabV3,
            target: str = "screen",
-           thresold_1=80,
-           thresold_2=150,
-           thresold_3=150
+           thresold_1=55,
            ) -> List[List]:
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
@@ -85,17 +83,12 @@ def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
         2.当照片拍摄距离很近时，那么一次检测就够，返回角度矫正好的图片和它在原图上的坐标
         
         '''
-        paper, contour1, point1 = paper_detect.paper_find(img)
-        img_on_paper, contour2, point2 = paper_detect.paper_find(paper)
-        if point2 == "null":
-            return [paper, contour1, point1]
-        else:
-            return [img_on_paper, contour1, point2]
+        paper, contour1, point1 = paper_detect.paper_find1(img)
+        # img_on_paper, contour2, point2 = paper_detect.paper_find2(paper)
+        # if point2 == "null":
+        #     return [paper, contour1, point1]
+        # else:
+        #     return [img_on_paper, contour1, point2]
+        return [paper, contour1, point1]    # paper为透视变换后的图,contour为在原图上加上轮廓,point1为返回的点的坐标
 
 
-if __name__ == "__main__":
-    img = cv2.imread('img_1.png')
-    img1, point = detect(img, DeeplabV3(), target="screen", thresold_2=50)
-    print(point)
-    cv2.imshow('ss', img1)
-    cv2.waitKey(0)

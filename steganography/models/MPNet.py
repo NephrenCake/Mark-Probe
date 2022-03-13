@@ -202,13 +202,21 @@ class STN(nn.Module):
 
     def __init__(self, img_size=448):
         super(STN, self).__init__()
-        self.fc_loc_num = int(img_size * img_size / (16 * 16) * 128)
+        down_sample = 32
+        final_linear = 128
+        self.fc_loc_num = int((img_size / down_sample) ** 2 * final_linear)
 
         # 空间变换器定位 - 网络
         self.localization = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
             nn.LeakyReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=(3, 3), padding=(1, 1)),
+            nn.LeakyReLU(inplace=True),
             nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
+            nn.LeakyReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=(3, 3), padding=(1, 1)),
+            nn.LeakyReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
             nn.LeakyReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
             nn.LeakyReLU(inplace=True),

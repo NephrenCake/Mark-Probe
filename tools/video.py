@@ -52,8 +52,8 @@ def main(args):
     assert ret, "Can't receive any frame!"
     while ret and cv2.waitKey(1) != ord('q'):
         # 调用 api
-        img = convert_img_type(img).to(device)
         t1 = time.time()
+        img = convert_img_type(img).to(device)
         encoded_img, _ = encode(img=img,
                                 uid=114514,
                                 model=encoder,
@@ -61,14 +61,14 @@ def main(args):
                                 device=device,
                                 direct_msg=packet)
         counter += 1
-        t2 = time.time()
         encoded_img = tensor_2_cvImage(encoded_img)
+        t2 = time.time()
 
         timer += t2 - t1
         cv2.putText(img=encoded_img, text=f"FPS {float('%.2f' % (counter / timer))}", org=(50, 50),
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3)
         cv2.imshow('frame', encoded_img)
-        ret, img = cap.read()
+        # ret, img = cap.read()
 
     cap.release()
     cv2.destroyAllWindows()
