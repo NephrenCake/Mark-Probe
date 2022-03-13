@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from detection.Paper_detection import utlis
+from detection.Paper_detection import utils
 
 
 def Monitor_find(old_img, img):
@@ -17,11 +17,11 @@ def Monitor_find(old_img, img):
     contours, hierarchy = cv2.findContours(imgDial, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
     # FIND THE BIGGEST COUNTOUR
-    biggest, maxArea = utlis.biggestContour(contours)  # FIND THE BIGGEST CONTOUR
+    biggest, maxArea = utils.biggestContour(contours)  # FIND THE BIGGEST CONTOUR
     if biggest.size != 0:
-        biggest = utlis.reorder(biggest)
+        biggest = utils.reorder(biggest)
         cv2.drawContours(old_img, biggest, -1, (0, 255, 0), 14)  # DRAW THE BIGGEST CONTOUR
-        imgBigContour = utlis.drawRectangle(old_img, biggest, 2)
+        imgBigContour = utils.drawRectangle(old_img, biggest, 2)
         return imgBigContour, biggest
     else:
         point = "null"

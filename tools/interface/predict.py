@@ -66,12 +66,10 @@ def decode(img: Union[np.ndarray, Image.Image, torch.Tensor],
 
 
 @torch.no_grad()
-def detect(img: Union[np.ndarray, Image.Image, torch.Tensor],
+def detect(img: np.ndarray,
            model: DeeplabV3,
            target: str = "screen",
            thresold_1=55,
-           thresold_2=150,
-           thresold_3=150
            ) -> List[List]:
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":

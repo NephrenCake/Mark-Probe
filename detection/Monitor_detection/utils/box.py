@@ -5,7 +5,9 @@ import cv2
 # img = cv2.imread('img/seg4.png')
 from cv2 import CV_8U
 
-from tools.test import monitor_hsv
+
+
+from detection.Monitor_detection.utils.hsv_mask import monitor_hsv
 
 
 def yuchuli(original_img,img,thresold_value=55):
@@ -28,14 +30,11 @@ def yuchuli(original_img,img,thresold_value=55):
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
 
     res = cv2.bitwise_and(img, img, mask=dst)
-    cv2.imshow('img', res)
     res = cv2.cvtColor(res,cv2.COLOR_BGR2GRAY)
     ret, dst = cv2.threshold(res, thresold_value, 255, cv2.THRESH_BINARY)
     # dst = cv2.erode(dst, kernel)
     k = np.ones((3, 3), np.uint8)
     dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, k)
-
-    cv2.imshow('dst', dst)
     # cv2.imshow('res',dst)
     contours, hierarchy = cv2.findContours(dst, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     area = []
