@@ -71,7 +71,7 @@ def detect(img: np.ndarray,
            model: DeeplabV3,
            target: str = "screen",
            thresold_1=55,
-           ) -> List[List]:
+           ):
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
         contour_img, point = predict(img, model, thresold_value=thresold_1)
@@ -84,8 +84,13 @@ def detect(img: np.ndarray,
             假设返回一个列表名为res的列表，要取四个点则写成res[0],res[1],res[2],res[3]
             要取标好轮廓的图片则写成res[4]
         '''
-
-        return [point1, point2, point3, point4, contour_img]
+        res = [{'id': 1, 'x': point1[0], 'y': point1[1]},
+               {'id': 2, 'x': point2[0], 'y': point2[1]},
+               {'id': 3, 'x': point3[0], 'y': point3[1]},
+               {'id': 4, 'x': point4[0], 'y': point4[1]},
+               {'img': contour_img}
+               ]
+        return res
         # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
     else:
         '''
@@ -104,5 +109,10 @@ def detect(img: np.ndarray,
             假设返回一个列表名为res的列表，要取四个点则写成res[0],res[1],res[2],res[3]
             要取标好轮廓的图片则写成res[4]
         '''
-
-        return [point1, point2, point3, point4, contour_img]
+        res = [{'id': 1, 'x': point1[0], 'y': point1[1]},
+               {'id': 2, 'x': point2[0], 'y': point2[1]},
+               {'id': 3, 'x': point3[0], 'y': point3[1]},
+               {'id': 4, 'x': point4[0], 'y': point4[1]},
+               {'img': contour_img}
+               ]
+        return res
