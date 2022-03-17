@@ -3,15 +3,43 @@ import random
 
 import cv2
 import numpy as np
+import steganography.config.config as cfg
 from kornia.utils import tensor_to_image
 from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 from tools.interface.utils import convert_img_type
 from tools.interface.utils import tensor_2_cvImage
 from kornia.filters import motion_blur
+from steganography.utils.distortion import rand_crop
 
+
+
+"""
+声明： 在transforms的ColorJiff中 即下述 contrast  brightness  saturation 
+    这三个函数中 范围是 [1-value,1+value] 即 1 就是不变; 1>即减弱效果; 1<增强效果
+    而 hue  范围是[0-value,0+value] 即 0 保持不变;
+    
+    config中对这几个变量的最大值定义为  
+    contrast : 0.5      -对应训练中的范围-> [0.5,1.5]       接口中现在的状态：默认为 1+value 也就是只能增强亮度  没有“减弱”效果
+    brightness : 0.3    -对应训练中的范围-> [0.7,1.3]       接口中现在的状态：默认为 1+value 也就是只能增强亮度  没有“减弱”效果
+    saturation : 1      -对应训练中的范围-> [0,2]           接口中现在的状态：默认为 1+value                  没有“减弱”效果
+    hue : 0.1           -对应训练中的范围-> [-0.1,0.1]      接口中现在的状态：默认是只有正float吧 建议范围 [-0.1,0.1]  没有“减弱”效果
+
+对于 jpeg压缩函数：
+    quality 参数 表示当前压缩的质量 [1,99]  参数越低质量越差
+对于motion blur 模型对于运动模糊可适应   测试： 【唯一添加 MotionBlur ;kernel 5; correct_rate 81/100,85/100】
+对于反光变换
+
+    
+"""
 
 class Brightness_trans(object):
+    '''
+    建议范围： 0(不做改变)~0.3(变亮)  【和训练过程同步】  【
+    如果想要上调参数范围>0.3  会使得模型准确率降低
+    大概 brightness 参数为 1 时  “steganography/train_log/CI-test-训练模型改-3 修改stn_2022-03-11-22-30-31/latest-15.pth”
+    模型的准确率会降至  1/2 (左右)  【可能还要高一点吧 】】
+    '''
     def __call__(self, img: np.ndarray, brightness: float, gamma=0):
         im = img.astype(np.float32) * (brightness + 1)
         im = im.clip(min=0, max=255)
@@ -35,8 +63,8 @@ class Contrast_trans(object):
 class Saturation_trans(object):
     def __call__(self, img: np.ndarray, saturation_factor: float) -> np.ndarray:
         """
-            饱和度变换
-            """
+        饱和度变换
+        """
         im = img.astype(np.float32)
         degenerate = cv2.cvtColor(cv2.cvtColor(im, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
         im = (1 - saturation_factor) * degenerate + saturation_factor * im
@@ -163,8 +191,17 @@ class Motion_blur(object):
         else:
             out = (out.squeeze(0) * 255.).permute(1, 2, 0).byte().numpy()
         return out
+
+
 class MixUp(object):
-    def __call__(self, img:np.ndarray,img_added:np.ndarray, added_factor):
+    def __call__(self, img:np.ndarray,img_added:np.ndarray, added_factor)->np.ndarray:
         # added_factor 是被添加参数的权重 建议0~1 float
+        if img.shape != img_added.shape:
+            img_added = cv2.resize(img_added,(img.shape[1],img.shape[0]))
         return cv2.addWeighted(img,1,img_added,added_factor,gamma=0);
-        pass
+
+
+class Crop(object):
+    def __call__(self, img:np.ndarray,cut_trans_max,angle_trans_max,change_pos:bool)->np.ndarray:
+        return rand_crop(transforms.ToTensor()(img),scale={"angle_trans":angle_trans_max,"cut_trans":cut_trans_max},change_pos=change_pos).mul(255.).byte().numpy().transpose(1,2,0)
+

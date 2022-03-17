@@ -26,7 +26,8 @@ def process_forward(Encoder,
     # img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    res = Encoder({"img": img, "msg": msg})  # res_image (448,448)  the encoder_module start forward
+    res = torch.clamp(Encoder({"img": img, "msg": msg}),-0.5,0.5)   # res_image (448,448)  the encoder_module start forward
+
     # res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
     encoded_img = torch.clamp(img + res, 0., 1.)
     # del res_high
