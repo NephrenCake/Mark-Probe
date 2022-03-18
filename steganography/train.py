@@ -70,13 +70,15 @@ def main():
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
-        {'params': Encoder.parameters(), 'weight_decay': 1e-5},
+        {'params': Encoder.parameters(), 'weight_decay': 1e-4},
         {'params': Decoder.parameters()},
     ], lr=cfg.lr_base, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
     if cfg.use_warmup:
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=cfg.get_warmup_cos_lambda())
     else:
-        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: cfg.lr_min)
+        # 动态调整学习率
+        # scheduler = lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: 1)
 
     # 如果存在预训练权重则载入
     epoch = 0
@@ -103,6 +105,8 @@ def main():
         logger.info("init weights.")
 
     best_loss = 2 ^ 16
+    pre_photo_msg_loss = 2 ^ 16
+    pre_img_loss = 2 ^ 16
     for epoch in range(epoch, cfg.max_epoch):
         # train
         train_one_epoch(Encoder=Encoder,
@@ -134,8 +138,16 @@ def main():
                     f"str_acc:{round(val_result['str_acc'], 2)} "
                     f"right_str_acc:{round(val_result['right_str_acc'], 2)}")
         # save weights
-        if val_result["loss"] < best_loss and epoch >= cfg.start_save_best:  # todo 不合理
+        # 鉴于多次的实验 photo acc 的失真变换场景明显复杂于crop的失真场景 并且我们追求的是高的图片质量
+        # 和前一次对比 如果当前存储的loss 均小于 最新出来的loss 那么就存储best model
+        if val_result["photo_msg_loss"]< pre_photo_msg_loss and val_result["img_loss"]< pre_img_loss \
+                and epoch > cfg.start_save_best:
+            pre_photo_msg_loss = val_result["photo_msg_loss"]
+            pre_img_loss = val_result["img_loss"]
             save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, "best.pth")
+
+        # if val_result["loss"] < best_loss and epoch >= cfg.start_save_best:  # todo 不合理  1、修改了一下
+        #     save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, "best.pth")
         save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, f"latest-{epoch}.pth")
 
 

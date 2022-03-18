@@ -35,7 +35,7 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "CI-test"  # 实验名
+        self.exp_name = "CI-test-训练模型改-3_添加_loss_正则化mul10_修改学习率_修改bestmodel保存策略_ResClamp"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
@@ -49,16 +49,16 @@ class TrainConfig(BaseConfig):
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 15  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
+        self.max_epoch = 30  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 13  # 一个批次的图片数量 # batch_size 会有影响
+        self.batch_size = 14  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 12  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
-        self.lr_base = 0.001  # 基础学习率
-        self.lr_max = 0.5  # 最高学习率倍率
-        self.lr_min = 0.1  # 最低学习率倍率
+        self.lr_base = 0.0001  # 基础学习率
+        self.lr_max = 5  # 最高学习率倍率
+        self.lr_min = 1  # 最低学习率倍率
 
         # ============== module
         self.img_size = (448, 448)  # 输入网络的图片大小  注意，只能正方形
@@ -81,6 +81,7 @@ class TrainConfig(BaseConfig):
         # self.motion_blur_grow = (1.5, 2)
         self.blur_trans_max = 0.2
         self.blur_trans_grow = (1.5, 2)
+
 
         self.perspective_trans_max = 0.05  # 透视变换
         self.perspective_trans_grow = (0.4, 1)
@@ -119,11 +120,11 @@ class TrainConfig(BaseConfig):
         self.lpips_loss_grow = (0.5, 1)
         # other
         self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
-        self.stn_loss_grow = (0.3, 0.3)  # 不能施加太大的loss
+        self.stn_loss_grow = (0.3, 0.3)  # 不能施
 
         # ============== runtime
         self.iter_per_epoch = None
-        self.start_save_best = 0  # 直到grow停止时才保存最优模型
+        self.start_save_best = 3  # 直到grow停止时才保存最优模型
         self.scale_name_list = [name.split("_grow")[0] for name in vars(self).keys() if "_grow" in name]
 
     def check_cfg(self):
