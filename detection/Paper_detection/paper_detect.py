@@ -6,6 +6,8 @@ import sys
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
+
+
 from detection.Monitor_detection.utils.hsv_mask import hsv_range
 
 sys.path.append(os.path.abspath(__dir__))
@@ -13,7 +15,7 @@ sys.path.append(os.path.abspath(__dir__))
 import detection.Paper_detection.utils as utils
 
 
-def paper_find1(img):
+def paper_find(img):
     widthImg = img.shape[1]
     heightImg = img.shape[0]
 
@@ -43,12 +45,12 @@ def paper_find1(img):
     paper = cv2.add(paper, mask1)
     '''
     imgwarp是透视变换后的图,imgBigContour是在原图上画完轮廓后的图,point是检测到的四个点'''
-    imgwarp, imgBigContour, point = paper_find2(paper, img2)
+    imgwarp, imgBigContour, point = img_find(paper, img2)
 
     return point, imgwarp, imgBigContour
 
 
-def paper_find2(img, old_img):
+def img_find(img, old_img):
     widthImg = img.shape[1]
     heightImg = img.shape[0]
     imgBigContour = old_img.copy()
@@ -73,7 +75,7 @@ def paper_find2(img, old_img):
             matrix = cv2.getPerspectiveTransform(pts1, pts2)
             imgWarpColored = cv2.warpPerspective(old_img, matrix, (widthImg, heightImg))
             return imgWarpColored, imgBigContour, biggest
-    return img, img, 'null'
+    return None, img, None
 
 
 def quadrangular_fitting():

@@ -75,6 +75,8 @@ def detect(img: np.ndarray,
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
         contour_img, point = predict(img, model, thresold_value=thresold_1)
+        if point is None:
+            return None
         point1 = point[0][0]
         point2 = point[1][0]
         point3 = point[2][0]
@@ -90,6 +92,7 @@ def detect(img: np.ndarray,
                {'id': 4, 'x': point4[0], 'y': point4[1]},
                {'img': contour_img}
                ]
+        print(point1[0])
         return res
         # 返回标注好点的图片以及四个点的坐标,取四个点的坐标时可写为point[0][0],point[0][1],point[0][2],point[0][3]
     else:
@@ -99,7 +102,9 @@ def detect(img: np.ndarray,
         2.当照片拍摄距离很近时，那么一次检测就够，返回角度矫正好的图片和它在原图上的坐标
         
         '''
-        point, paper, contour_img, = paper_detect.paper_find1(img)
+        point, paper, contour_img, = paper_detect.paper_find(img)
+        if point is None:
+            return None
         point1 = point[0][0]
         point2 = point[1][0]
         point3 = point[2][0]
@@ -115,4 +120,5 @@ def detect(img: np.ndarray,
                {'id': 4, 'x': point4[0], 'y': point4[1]},
                {'img': contour_img}
                ]
+
         return res

@@ -10,8 +10,6 @@ from tools.interface.predict import detect
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-
-
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
 
@@ -41,7 +39,7 @@ def main(args):
             raise ValueError("未能正确读取视频，请注意是否正确填写视频路径。")
         # 读取视频
         fps = 0.0
-        model_path='D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth'
+        model_path = 'D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth'
         deeplab = DeeplabV3(model_path)
         while (True):
             t1 = time.time()
@@ -59,7 +57,7 @@ def main(args):
             res = detect(frame, deeplab, target="screen", thresold_1=55)  # res[0]为图片，res[1]为坐标
 
             # RGBtoBGR满足opencv显示格式
-            frame = cv2.cvtColor(res[0], cv2.COLOR_RGB2BGR)
+            frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
 
             fps = (fps + (1. / (time.time() - t1))) / 2
             print("fps= %.2f" % (fps))
@@ -103,7 +101,7 @@ def main(args):
 
             res = detect(frame, model=None, target="paper")
             # RGBtoBGR满足opencv显示格式
-            frame = cv2.cvtColor(res[1], cv2.COLOR_RGB2BGR)
+            frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
             fps = (fps + (1. / (time.time() - t1))) / 2
             print("fps= %.2f" % (fps))
             frame = cv2.putText(frame, "fps= %.2f" % (fps), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
