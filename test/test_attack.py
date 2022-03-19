@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
+import torch
 from tools.interface.attack import *
 from tools.interface.attack_class_rewrite import *
 
@@ -63,6 +64,7 @@ def test_rand_noise(img, std, mean):
     return _img
 
 
+@torch.no_grad()
 def test_jpeg_trans(img, factor):
     _img = trans_Jpeg(img, factor)
     # _img = jpeg_trans(img, factor)
@@ -70,6 +72,7 @@ def test_jpeg_trans(img, factor):
     return _img
 
 
+@torch.no_grad()
 def test_rand_erase(img, cover_rate):
     _img = trans_RandErase(img, cover_rate)
     cv_show(_img, "rand_erase")
@@ -89,10 +92,10 @@ def test_motion_blur(img, kernel_size):
 
 
 if __name__ == "__main__":
-    img_path = "test_source/COCO_train2014_000000001497.jpg"
+    img_path = "test_source/COCO_val2014_000000005037.jpg"
     image = cv2.imread(img_path)
-    image = cv2.resize(image, (800, 448))
-    #
+    image = cv2.resize(image, (448, 448))
+
     image_1 = test_brightness_trans(image, 0.3)
     image = test_contrast_trans(image, 0.5)
     image = test_saturation_trans(image, 1)

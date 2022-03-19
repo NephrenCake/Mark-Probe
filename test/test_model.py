@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 import torch
 import torchvision
 import torch.nn.functional as F
+from lpips import LPIPS
 from torchvision.transforms import transforms
 from PIL import Image
 
@@ -65,7 +66,25 @@ def test_decoder_model():
     print(sum(p.numel() for p in net.parameters()))
 
 
+def test_lpips():
+    img_path = "test_source/COCO_val2014_000000005037.jpg"
+    encoded_img_path = "../out/encoded.jpg"
+    img = transforms.Compose([
+        torchvision.transforms.Resize((448, 448)),
+        torchvision.transforms.ToTensor()
+    ])(Image.open(img_path).convert("RGB")).unsqueeze(0).to(device)
+    encoded_img = transforms.Compose([
+        torchvision.transforms.Resize((448, 448)),
+        torchvision.transforms.ToTensor()
+    ])(Image.open(encoded_img_path).convert("RGB")).unsqueeze(0).to(device)
+
+    lpips_module = LPIPS(net="alex").to(device)
+    lpips_loss = lpips_module(img, encoded_img).mean()
+    print(lpips_loss)
+
+
 if __name__ == '__main__':
     test_encoder_model()
     test_stn()
     test_decoder_model()
+    test_lpips()

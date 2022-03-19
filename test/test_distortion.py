@@ -1,5 +1,4 @@
 import os
-import random
 import sys
 
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
@@ -11,12 +10,12 @@ from torchvision import transforms
 from torchvision.transforms import functional as F
 from steganography.utils.distortion import rand_crop
 
-img_path = "out/grayscale_trans.jpg"
+img_path = "out/jpeg_trans.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {
     "angle_trans": 30,
-    "cut_trans": 0.5,
+    "cut_trans": 0.7,
     "perspective_trans": 0.1,
 }
 
@@ -48,7 +47,7 @@ def show_result(img0: torch.Tensor, save_img=None, show_img=True):
 def test_crop():
     global img
     img_ = img.clone().detach()
-
+    # img_ = transforms.RandomSizedCrop((224, 224))(img_)
     img_ = rand_crop(img_, scale, change_pos=False)
     show_result(img_, "out/crop.jpg")
 
@@ -88,4 +87,4 @@ def test_perspective():
 
 if __name__ == '__main__':
     test_crop()
-    # test_perspective()
+    test_perspective()
