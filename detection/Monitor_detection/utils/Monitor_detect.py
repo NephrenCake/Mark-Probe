@@ -4,11 +4,6 @@ from detection.Paper_detection import utils
 
 
 def Monitor_find(old_img, img):
-    # old_img = cv2.resize(old_img,(448, 448))
-    # img = cv2.resize(img, (448, 448))
-    # widthImg = img.shape[1]
-    # heightImg = img.shape[0]
-
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     imgThreshold = cv2.Canny(imgGray, 200, 200)
@@ -25,4 +20,4 @@ def Monitor_find(old_img, img):
         return imgBigContour, biggest
     else:
         point = "null"
-        return old_img,point
+        return old_img, point

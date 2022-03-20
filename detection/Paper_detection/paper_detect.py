@@ -6,8 +6,6 @@ import sys
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-
-
 from detection.Monitor_detection.utils.hsv_mask import hsv_range
 
 sys.path.append(os.path.abspath(__dir__))
@@ -22,13 +20,6 @@ def paper_find(img):
     img2 = img.copy()
     img1 = img.copy()
     mask1 = hsv_range(img1)
-
-    # ret, dst = cv2.threshold(imgGray, thresold_value, 255, cv2.THRESH_BINARY)
-    # dst = imgGray
-    # ret2, th2 = cv2.threshold(imgGray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # cv2.imshow('da', th2)
-    # imgBlur = cv2.GaussianBlur(th2, (5, 5), 1)
-    # imgThreshold = cv2.Canny(imgBlur, 125, 250)
 
     contours, hierarchy = cv2.findContours(mask1, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
