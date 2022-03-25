@@ -34,11 +34,29 @@ def paper_find(img):
     paper = cv2.add(img1, 255 - imgBlank)
     mask1 = cv2.merge([mask1, mask1, mask1])
     paper = cv2.add(paper, mask1)
+
     '''
     imgwarp是透视变换后的图,imgBigContour是在原图上画完轮廓后的图,point是检测到的四个点'''
     imgwarp, imgBigContour, point = img_find(paper, img2)
 
-    return point, imgwarp, imgBigContour
+    if type(point) != int:
+        point1 = point[0][0]
+        point2 = point[1][0]
+        point3 = point[2][0]
+        point4 = point[3][0]
+        return point1, point2, point3, point4, imgBigContour
+    else:
+        img_threshold = utils.pre_treat(img)
+        contours, hierarchy = cv2.findContours(img_threshold, cv2.RETR_EXTERNAL,
+                                               cv2.CHAIN_APPROX_SIMPLE)
+        img_blank = np.zeros((heightImg, widthImg, 3), np.uint8)
+        cv2.drawContours(img_blank, contours, -1, (0, 255, 0), 4)
+        imgwarp, imgBigContour, four_point = utils.canny_find(img_blank)
+        point1 = point[0][0]
+        point2 = point[1][0]
+        point3 = point[2][0]
+        point4 = point[3][0]
+        return point1, point2, point3, point4, imgBigContour
 
 
 def img_find(img, old_img):
@@ -68,6 +86,3 @@ def img_find(img, old_img):
             return imgWarpColored, imgBigContour, biggest
     return None, img, None
 
-
-def quadrangular_fitting():
-    pass

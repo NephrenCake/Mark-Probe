@@ -16,9 +16,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--predict_way', help='1.monitor 2.picture 3.monitor_video 4.picture_video',
-                        default=3)
+                        default=4)
     parser.add_argument('--video_path', help='path of the video file',
-                        default="test/test_source/test.mp4")
+                        default="test/test_source/test1.mp4")
     parser.add_argument('--video_save_path', help='folder path of the video',
                         default="")
     parser.add_argument('--video_fps', help='the fps of save_video',
@@ -97,11 +97,14 @@ def main(args):
                 break
             # 格式转变，BGRtoRGB
 
-            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             res = detect(frame, model=None, target="paper")
             # RGBtoBGR满足opencv显示格式
-            frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
+            if res != -1:
+                frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
+            else:
+                frame = frame
             fps = (fps + (1. / (time.time() - t1))) / 2
             print("fps= %.2f" % (fps))
             frame = cv2.putText(frame, "fps= %.2f" % (fps), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
