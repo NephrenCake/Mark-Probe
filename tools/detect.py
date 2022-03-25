@@ -5,12 +5,11 @@ import time
 import numpy as np
 import cv2
 from PIL import Image
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from detection.Monitor_detection.deeplab import DeeplabV3
 from tools.interface.predict import detect
-
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-
-sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
 
 def parse_args():
@@ -27,6 +26,9 @@ def parse_args():
     return parser.parse_args()
 
 
+model_path = 'detection/Monitor_detection/logs/ep048-loss0.065-val_loss0.095.pth'
+
+
 def main(args):
     if args.predict_way == 3:
         capture = cv2.VideoCapture(args.video_path)
@@ -39,7 +41,6 @@ def main(args):
             raise ValueError("未能正确读取视频，请注意是否正确填写视频路径。")
         # 读取视频
         fps = 0.0
-        model_path = 'D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth'
         deeplab = DeeplabV3(model_path)
         while (True):
             t1 = time.time()

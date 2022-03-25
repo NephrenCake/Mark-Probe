@@ -38,6 +38,7 @@ def paper_find(img):
     '''
     imgwarp是透视变换后的图,imgBigContour是在原图上画完轮廓后的图,point是检测到的四个点'''
     imgwarp, imgBigContour, point = img_find(paper, img2)
+    print(point)
 
     if type(point) != int:
         point1 = point[0][0]
@@ -71,8 +72,8 @@ def img_find(img, old_img):
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
     max_idx = utils.max_contour_idx(contours)  # 返回最大轮廓的index
 
-    for factor in range(2, 20, 1):
-        factor = factor / 100  # 0.002 ~ 0.2
+    for factor in range(1, 1000, 1):
+        factor = factor / 1000  # 0.001 ~ 1
         peri = cv2.arcLength(contours[max_idx], True) * factor
         approx = cv2.approxPolyDP(contours[max_idx], peri, True)
         if len(approx) == 4:
