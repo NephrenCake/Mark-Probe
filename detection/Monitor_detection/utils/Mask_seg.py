@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 
+
 def mask_cut(img, mask):
     origin_img = img.copy()
     # 定义 kernel

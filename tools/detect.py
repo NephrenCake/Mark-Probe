@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--predict_way', help='1.monitor 2.picture 3.monitor_video 4.picture_video',
                         default=4)
     parser.add_argument('--video_path', help='path of the video file',
-                        default="test/test_source/test1.mp4")
+                        default="test/test_source/test2.mp4")
     parser.add_argument('--video_save_path', help='folder path of the video',
                         default="")
     parser.add_argument('--video_fps', help='the fps of save_video',
