@@ -101,13 +101,13 @@ def img_find(img):
     ret2, th2 = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     contours, hierarchy = cv2.findContours(255 - th2, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
-    max_idx = max_contour_idx(contours)  # 返回最大轮廓的index
-    biggest = quadrangular_fitting(contours[max_idx])
+    # max_idx = max_contour_idx(contours)  # 返回最大轮廓的index
+    biggest = quadrangular_fit(contours)
     return biggest
 
 
 def quadrangular_fitting(max_contour):
-    for factor in range(2, 20, 1):
+    for factor in range(1, 20, 1):
         factor = factor / 100  # 0.002 ~ 0.2
         peri = cv2.arcLength(max_contour, True) * factor
         approx = cv2.approxPolyDP(max_contour, peri, True)
@@ -118,12 +118,25 @@ def quadrangular_fitting(max_contour):
             return -1
 
 
+def quadrangular_fit(contour):
+    contours = sorted(contour, key=cv2.contourArea, reverse=True)[:2]
+    for c in contours:
+        for factor in range(1, 20, 1):
+            factor = factor / 100  # 0.002 ~ 0.2
+            peri = cv2.arcLength(c, True) * factor
+            approx = cv2.approxPolyDP(c, peri, True)
+            if len(approx) == 4:
+                biggest = reorder(approx)
+                return biggest
+    return -1
+
+
 def canny_find(img_gray):
-    contours, hierarchy = cv2.findContours(img_gray, cv2.RETR_EXTERNAL,
+    contours, hierarchy = cv2.findContours(img_gray, cv2.RETR_LIST,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
     cv2.drawContours(img_gray, contours, -1, (255, 255, 0), 4)  # DRAW ALL DETECTED CONTOURS
-    max_idx = max_contour_idx(contours)  # 返回最大轮廓的index
-    biggest = quadrangular_fitting(contours[max_idx])
+    # max_idx = max_contour_idx(contours)  # 返回最大轮廓的index
+    biggest = quadrangular_fit(contours)
     return biggest
 
 
@@ -138,7 +151,7 @@ def perspective_correction(biggest, img):
 def pre_treat(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # CONVERT IMAGE TO GRAY SCALE
     img_blur = cv2.GaussianBlur(img_gray, (5, 5), 1)  # ADD GAUSSIAN BLUR
-    img_threshold = cv2.Canny(img_blur, 100, 160)  # APPLY CANNY BLUR
+    img_threshold = cv2.Canny(img_blur, 200, 200)  # APPLY CANNY BLUR
     kernel = np.ones((2, 2))
     img_dilate = cv2.dilate(img_threshold, kernel, iterations=2)  # APPLY DILATION
     img_threshold = cv2.erode(img_dilate, kernel, iterations=1)  # APPLY EROSION

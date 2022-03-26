@@ -15,9 +15,9 @@ from tools.interface.predict import detect
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--predict_way', help='1.monitor 2.picture 3.monitor_video 4.picture_video',
-                        default=4)
+                        default=3)
     parser.add_argument('--video_path', help='path of the video file',
-                        default="test/test_source/test2.mp4")
+                        default="test/test_source/test.mp4")
     parser.add_argument('--video_save_path', help='folder path of the video',
                         default="")
     parser.add_argument('--video_fps', help='the fps of save_video',
@@ -42,7 +42,7 @@ def main(args):
         # 读取视频
         fps = 0.0
         deeplab = DeeplabV3(model_path)
-        while (True):
+        while True:
             t1 = time.time()
             # 读取某一帧
             ref, frame = capture.read()

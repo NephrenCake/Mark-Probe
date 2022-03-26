@@ -4,7 +4,7 @@ import numpy as np
 import os
 import sys
 
-from detection.Monitor_detection.utils.hsv_mask import hsv_range
+from detection.Monitor_detection.utils.hsv_mask import paper_range
 
 import detection.Paper_detection.utils as utils
 
@@ -13,7 +13,7 @@ def find_point(img):
     width_img = img.shape[1]
     height_img = img.shape[0]
 
-    mask = hsv_range(img)
+    mask = paper_range(img)
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
     img_blank = np.zeros((height_img, width_img, 3), np.uint8)
@@ -22,7 +22,6 @@ def find_point(img):
     paper = cv2.add(img, 255 - img_blank)
     mask = cv2.merge([mask, mask, mask])
     paper = cv2.add(paper, mask)
-
     point = utils.img_find(paper)
     if type(point) != int:
         point1 = point[0][0]
