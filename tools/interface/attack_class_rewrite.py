@@ -38,10 +38,6 @@ from PIL import Image
         jpeg 注意 千万不要给0 最少给1  越大 jpeg 质量越差
         rand_noise 保持不变就ok
     
-对于 jpeg压缩函数：
-    quality 参数 表示当前压缩的质量 [1,99]  参数越低质量越差
-对于motion blur 模型对于运动模糊可适应   测试： 【唯一添加 MotionBlur ;kernel 5; correct_rate 81/100,85/100】
-对于反光变换
 
     
 """
