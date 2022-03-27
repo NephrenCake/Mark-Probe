@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 
-def hsv_range(frame):
+def paper_range(frame):
     # img = cv2.GaussianBlur(frame, (5, 5), 0)
 
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -12,7 +12,7 @@ def hsv_range(frame):
 
     cv2.merge(channels, img)
 
-    white_lower = np.array([0, 0, 150], np.uint8)
+    white_lower = np.array([0, 0, 182], np.uint8)
 
     white_upper = np.array([180, 36, 255], np.uint8)
 

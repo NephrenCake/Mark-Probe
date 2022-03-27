@@ -5,14 +5,11 @@ import time
 import numpy as np
 import cv2
 from PIL import Image
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from detection.Monitor_detection.deeplab import DeeplabV3
 from tools.interface.predict import detect
-
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-
-
-
-sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '..')))
 
 
 def parse_args():
@@ -29,6 +26,9 @@ def parse_args():
     return parser.parse_args()
 
 
+model_path = 'detection/Monitor_detection/logs/ep048-loss0.065-val_loss0.095.pth'
+
+
 def main(args):
     if args.predict_way == 3:
         capture = cv2.VideoCapture(args.video_path)
@@ -41,9 +41,8 @@ def main(args):
             raise ValueError("未能正确读取视频，请注意是否正确填写视频路径。")
         # 读取视频
         fps = 0.0
-        model_path='D:\Program data\pythonProject\Mark-Probe\detection\Monitor_detection\logs\ep048-loss0.065-val_loss0.095.pth'
         deeplab = DeeplabV3(model_path)
-        while (True):
+        while True:
             t1 = time.time()
             # 读取某一帧
             ref, frame = capture.read()
@@ -59,7 +58,7 @@ def main(args):
             res = detect(frame, deeplab, target="screen", thresold_1=55)  # res[0]为图片，res[1]为坐标
 
             # RGBtoBGR满足opencv显示格式
-            frame = cv2.cvtColor(res[0], cv2.COLOR_RGB2BGR)
+            frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
 
             fps = (fps + (1. / (time.time() - t1))) / 2
             print("fps= %.2f" % (fps))
@@ -99,11 +98,14 @@ def main(args):
                 break
             # 格式转变，BGRtoRGB
 
-            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             res = detect(frame, model=None, target="paper")
             # RGBtoBGR满足opencv显示格式
-            frame = cv2.cvtColor(res[1], cv2.COLOR_RGB2BGR)
+            if res != -1:
+                frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
+            else:
+                frame = frame
             fps = (fps + (1. / (time.time() - t1))) / 2
             print("fps= %.2f" % (fps))
             frame = cv2.putText(frame, "fps= %.2f" % (fps), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)

@@ -48,14 +48,3 @@ def yuchuli(original_img,img,thresold_value=55):
         cv2.line(o_img, tuple(hull[i][0]), tuple(hull[(i + 1) % length][0]), (0, 255, 0), 2)
 
     return imgBlank,o_img
-
-
-# I = img.copy()
-# # 图像归一化
-# fI = I / 255.0
-# # 伽马变化
-# gamma = 1.5
-# O = np.power(fI, gamma)
-# yuchuli(img)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
