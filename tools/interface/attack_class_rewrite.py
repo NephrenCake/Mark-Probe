@@ -11,7 +11,7 @@ from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
 from kornia.filters import motion_blur
 import torchvision.transforms.functional as F
-from tools.interface.utils import tensor_2_cvImage
+from tools.interface.utils import tensor_2_cvImage,convert_img_type
 from steganography.utils.distortion import rand_crop
 from PIL import Image
 
@@ -29,7 +29,7 @@ from PIL import Image
     saturation : 1      -对应训练中的范围-> [0,2]           接口中现在的状态：默认为 1+value                  没有“减弱”效果
     hue : 0.1           -对应训练中的范围-> [-0.1,0.1]      接口中现在的状态：默认是只有正float吧 建议范围 [-0.1,0.1]  没有“减弱”效果
     gaussian_blur: bool -对应训练中的范围-> [True or False]
-    motion_blur:        -对应训练中的范围-> [3,5,7] # 注这个暂时被舍弃了 但是模型依旧有抵抗能力
+    motion_blur:        -对应训练中的范围-> [0,3,5,7] # 注这个暂时被舍弃了 但是模型依旧有抵抗能力
     Rand_erase: 0.1     -对应训练中的范围-> [0,0.1]
     jpeg                -对应训练中的范围-> [1,30]          表示的减少的质量 实际上是 100-v [70, 99]
 对于 jpeg压缩函数：
