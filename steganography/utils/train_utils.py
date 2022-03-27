@@ -12,6 +12,7 @@ from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
 from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
 
+
 # 超分没必要了。md
 def process_forward(Encoder,
                     Decoder,
@@ -26,8 +27,10 @@ def process_forward(Encoder,
     # img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    res = torch.clamp(Encoder({"img": img, "msg": msg}), -0.4, 0.4)   # res_image (448,448)  the encoder_module start forward
-
+    limit = 0.5 - scales['clamp_limit']
+    # res = torch.clamp(Encoder({"img": img, "msg": msg}), -limit,
+    #                   limit)  # res_image (448,448)  the encoder_module start forward
+    res = Encoder({"img": img, "msg": msg})
     # res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
     encoded_img = torch.clamp(img + res, 0., 1.)
     # del res_high
@@ -85,6 +88,10 @@ def process_forward(Encoder,
         "photo_msg_loss": photo_msg_loss, "crop_msg_loss": crop_msg_loss,
         "photo_bit_acc": photo_bit_acc, "photo_str_acc": photo_str_acc, "photo_right_str_acc": photo_right_str_acc,
         "crop_bit_acc": crop_bit_acc, "crop_str_acc": crop_str_acc, "crop_right_str_acc": crop_right_str_acc,
+        "lpips_loss": torch.tensor(0) if scales["lpips_loss"] == 0 else lpips_loss,
+        "rgb_loss": torch.tensor(0) if scales["rgb_loss"] == 0 else rgb_loss,
+        "hsv_loss": torch.tensor(0) if scales["hsv_loss"] == 0 else hsv_loss,
+        "yuv_loss": torch.tensor(0) if scales["yuv_loss"] == 0 else yuv_loss,
     }
     return metric_result, vis_img
 
@@ -92,7 +99,8 @@ def process_forward(Encoder,
 METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_acc",
                "photo_msg_loss", "crop_msg_loss",
                "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
-               "crop_bit_acc", "crop_str_acc", "crop_right_str_acc"]
+               "crop_bit_acc", "crop_str_acc", "crop_right_str_acc",
+               "lpips_loss", "rgb_loss", "hsv_loss", "yuv_loss"]
 
 
 def make_null_metric_dict():

@@ -52,14 +52,14 @@ def main():
         # 多卡并行模型  why the gpu0 is gaining its size?
         gpu0_bsz = 0
         batch_chunk = 1  # gpu0_bsz==2 batch_chunk==2  4 devices the batch_size is 14 -> batch_distribution [1,9,9,9]
-        encoder_module = MPEncoder(msg_size=cfg.msg_size,img_size=cfg.img_size[0]).to(cfg.device)
-        decoder_module = MPDecoder(msg_size=cfg.msg_size,img_size=cfg.img_size[0],decoder_type="conv").to(cfg.device)
+        encoder_module = MPEncoder(msg_size=cfg.msg_size, img_size=cfg.img_size[0]).to(cfg.device)
+        decoder_module = MPDecoder(msg_size=cfg.msg_size, img_size=cfg.img_size[0], decoder_type="conv").to(cfg.device)
         lpips_module = LPIPS(net="alex").to(cfg.device)
-        Encoder = BalancedDataParallel(gpu0_bsz // batch_chunk,encoder_module,dim=0).to(cfg.device)
-        Decoder = BalancedDataParallel(gpu0_bsz // batch_chunk,decoder_module,dim=0).to(cfg.device)
-        lpips_metric = BalancedDataParallel(gpu0_bsz // batch_chunk,lpips_module,dim=0).to(cfg.device)
+        Encoder = BalancedDataParallel(gpu0_bsz // batch_chunk, encoder_module, dim=0).to(cfg.device)
+        Decoder = BalancedDataParallel(gpu0_bsz // batch_chunk, decoder_module, dim=0).to(cfg.device)
+        lpips_metric = BalancedDataParallel(gpu0_bsz // batch_chunk, lpips_module, dim=0).to(cfg.device)
 
-        #==============================================
+        # ==============================================
 
         # Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
         #                                      img_size=cfg.img_size[0])).to(cfg.device)
@@ -70,7 +70,7 @@ def main():
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
-        {'params': Encoder.parameters(), 'weight_decay': 1e-3, "lr":cfg.lr_base*0.1},
+        {'params': Encoder.parameters(), 'weight_decay': 1e-5, "lr": cfg.lr_base*0.2},  # ,
         {'params': Decoder.parameters()},
     ], lr=cfg.lr_base, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
     if cfg.use_warmup:
@@ -78,12 +78,29 @@ def main():
     else:
         # 动态调整学习率
         # scheduler = lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
-        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: 1)
+        # lambda1 = lambda e: 0.5**(e//cfg.iter_per_epoch)
+        lambda1 = lambda e: 0.004
+
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda1, lambda x: 1])
+        # scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: 1)
 
     # 如果存在预训练权重则载入
     epoch = 0
+    # tensorboard 写入模型结构
+    # with torch.no_grad():
+    #     # 绘制 encoder
+    #     fake_data = next(iter(val_loader))
+    #     tb_writer.add_graph(Encoder,{"img":fake_data["img"].to(cfg.device),"msg":fake_data["msg"].to(cfg.device)})
+    #     # 绘制 decoder
+    #     # tb_writer.add_graph(Decoder,fake_data["img"].to(cfg.device))
+    #     del fake_data
+
+    # print(os.path.exists("/root/src/project3/steganography/train_log/CI-test_2022-02-12-20-20-05/latest-0.pth"))
+    # print(cfg.resume)
+    # print(os.path.exists(cfg.resume))
     if os.path.exists(cfg.resume) or os.path.exists(cfg.pretrained):
         if os.path.exists(cfg.resume):
+            print("start_resume")
             checkpoint = torch.load(cfg.resume, map_location=cfg.device)
             logger.info(f"resume from {cfg.resume}")
             optimizer.load_state_dict(checkpoint['optimizer'])
@@ -128,6 +145,7 @@ def main():
                                         cfg=cfg)
 
         # tensorboard
+
         for k, v in val_result.items():
             tb_writer.add_scalars(f"data/{k}", {"val": v}, global_step=(epoch + 1) * cfg.iter_per_epoch)
         logger.info(f"validation: current epoch:[{epoch}/{cfg.max_epoch - 1}] - "
@@ -140,7 +158,7 @@ def main():
         # save weights
         # 鉴于多次的实验 photo acc 的失真变换场景明显复杂于crop的失真场景 并且我们追求的是高的图片质量
         # 和前一次对比 如果当前存储的loss 均小于 最新出来的loss 那么就存储best model
-        if val_result["photo_msg_loss"]< pre_photo_msg_loss and val_result["img_loss"]< pre_img_loss \
+        if val_result["photo_msg_loss"] < pre_photo_msg_loss and val_result["img_loss"] < pre_img_loss \
                 and epoch > cfg.start_save_best:
             pre_photo_msg_loss = val_result["photo_msg_loss"]
             pre_img_loss = val_result["img_loss"]
