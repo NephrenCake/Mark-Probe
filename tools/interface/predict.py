@@ -74,30 +74,27 @@ def detect(img: np.ndarray,
            ):
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
-        contour_img, point = predict(img, model, thresold_value=thresold_1)
-        point1 = point[0][0]
-        point2 = point[1][0]
-        point3 = point[2][0]
-        point4 = point[3][0]
-        res = [{'id': 1, 'x': point1[0], 'y': point1[1]},
-               {'id': 2, 'x': point2[0], 'y': point2[1]},
-               {'id': 3, 'x': point3[0], 'y': point3[1]},
-               {'id': 4, 'x': point4[0], 'y': point4[1]},
-               {'img': contour_img}
-               ]
-
-        return res
+        res = predict(img, model, thresold_value=thresold_1)
+        if type(res) != int:
+            res = [{'id': 1, 'x': res[0][0], 'y': res[0][1]},
+                   {'id': 2, 'x': res[1][0], 'y': res[1][1]},
+                   {'id': 3, 'x': res[2][0], 'y': res[2][1]},
+                   {'id': 4, 'x': res[3][0], 'y': res[3][1]},
+                   {'img': res[4]}
+                   ]
+            return res
+        else:
+            return res
     else:
-        point1, point2, point3, point4, img = paper_det.find_point(img)
+        res = paper_det.find_point(img)
+        if type(res) != int:
+            res = [{'id': 1, 'x': res[0][0], 'y': res[0][1]},
+                   {'id': 2, 'x': res[1][0], 'y': res[1][1]},
+                   {'id': 3, 'x': res[2][0], 'y': res[2][1]},
+                   {'id': 4, 'x': res[3][0], 'y': res[3][1]},
+                   {'img': res[4]}
+                   ]
 
-        res = [{'id': 1, 'x': point1[0], 'y': point1[1]},
-               {'id': 2, 'x': point2[0], 'y': point2[1]},
-               {'id': 3, 'x': point3[0], 'y': point3[1]},
-               {'id': 4, 'x': point4[0], 'y': point4[1]},
-               {'img':  img}
-               ]
-
-        return res
-
-
-
+            return res
+        else:
+            return res

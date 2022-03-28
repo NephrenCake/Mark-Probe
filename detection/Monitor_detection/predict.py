@@ -26,9 +26,18 @@ def predict(img, model, thresold_value=38):
     image = Mask_seg.mask_cut(origin_img, single_image)  # 此处image是分割完后的图
     image_box, mark_img = box.yuchuli(origin_img, image, thresold_value=thresold_value)
     image_box_, point = Monitor_detect.Monitor_find(origin_img, image_box)
-    if point is None:
+    if type(point) == int:
         image_box_ = mark_img
+        frame = np.array(image_box_)
+        # RGBtoBGR满足opencv显示格式
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        return -1
+
     frame = np.array(image_box_)
     # RGBtoBGR满足opencv显示格式
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-    return frame, point
+    point1 = point[0][0]
+    point2 = point[1][0]
+    point3 = point[2][0]
+    point4 = point[3][0]
+    return [point1, point2, point3, point4, frame]

@@ -19,5 +19,5 @@ def Monitor_find(old_img, img):
         imgBigContour = utils.drawRectangle(old_img, biggest, 2)
         return imgBigContour, biggest
     else:
-        point = "null"
+        point = -1
         return old_img, point

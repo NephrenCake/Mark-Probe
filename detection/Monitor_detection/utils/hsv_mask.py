@@ -12,7 +12,7 @@ def paper_range(frame):
 
     cv2.merge(channels, img)
 
-    white_lower = np.array([0, 0, 182], np.uint8)
+    white_lower = np.array([0, 0, 120], np.uint8)
 
     white_upper = np.array([180, 36, 255], np.uint8)
 

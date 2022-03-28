@@ -30,7 +30,7 @@ def find_point(img):
         point4 = point[3][0]
         final_img = cv2.drawContours(img, point, -1, (0, 255, 0), 20)  # DRAW THE BIGGEST CONTOUR
         final_img = utils.drawRectangle(final_img, point, 2)
-        return point1, point2, point3, point4, final_img
+        return [point1, point2, point3, point4, final_img]
     else:
         img_threshold = utils.pre_treat(img)
         point = utils.canny_find(img_threshold)
@@ -42,5 +42,7 @@ def find_point(img):
             point2 = point[1][0]
             point3 = point[2][0]
             point4 = point[3][0]
-            return point1, point2, point3, point4, final_img
+            return [point1, point2, point3, point4, final_img]
+        else:
+            return -1
 
