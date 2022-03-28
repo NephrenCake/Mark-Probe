@@ -35,7 +35,7 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "CI-test-训练模型改-3_添加_loss_正则化mul10_修改学习率_修改bestmodel保存策略_ResClamp"  # 实验名
+        self.exp_name = "CI-test-训练模型改-3_添加_loss_正则化e_3_batchsize20_调整clamp_0.3"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = ""  # 使用预训练权重
@@ -44,6 +44,7 @@ class TrainConfig(BaseConfig):
         self.img_set_list = {
             "/root/src/COCO2014/train2014": 1,
             "/root/src/COCO2014/val2014": 1,
+            "/root/src/COCO2014/test2014":1,
             # "D:\learning\COCOTrain+Val\\val2014":0.001
         }
         self.val_rate: float = 0.05  # 用于验证的比例
@@ -52,7 +53,7 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 30  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 14  # 一个批次的图片数量 # batch_size 会有影响
+        self.batch_size = 20  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 12  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 

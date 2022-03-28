@@ -1,16 +1,20 @@
 import copy
+import math
 import random
+from typing import Union
 
+import PIL
 import cv2
 import numpy as np
-import steganography.config.config as cfg
-from kornia.utils import tensor_to_image
+import torch
 from torchvision import transforms
 from steganography.utils.DiffJPEG.DiffJPEG import DiffJPEG
-from tools.interface.utils import convert_img_type
-from tools.interface.utils import tensor_2_cvImage
 from kornia.filters import motion_blur
+import torchvision.transforms.functional as F
+from tools.interface.utils import tensor_2_cvImage,convert_img_type
 from steganography.utils.distortion import rand_crop
+from PIL import Image
+
 
 
 
@@ -20,15 +24,20 @@ from steganography.utils.distortion import rand_crop
     而 hue  范围是[0-value,0+value] 即 0 保持不变;
     
     config中对这几个变量的最大值定义为  
-    contrast : 0.5      -对应训练中的范围-> [0.5,1.5]       接口中现在的状态：默认为 1+value 也就是只能增强亮度  没有“减弱”效果
-    brightness : 0.3    -对应训练中的范围-> [0.7,1.3]       接口中现在的状态：默认为 1+value 也就是只能增强亮度  没有“减弱”效果
-    saturation : 1      -对应训练中的范围-> [0,2]           接口中现在的状态：默认为 1+value                  没有“减弱”效果
-    hue : 0.1           -对应训练中的范围-> [-0.1,0.1]      接口中现在的状态：默认是只有正float吧 建议范围 [-0.1,0.1]  没有“减弱”效果
-
-对于 jpeg压缩函数：
-    quality 参数 表示当前压缩的质量 [1,99]  参数越低质量越差
-对于motion blur 模型对于运动模糊可适应   测试： 【唯一添加 MotionBlur ;kernel 5; correct_rate 81/100,85/100】
-对于反光变换
+    contrast : 0.5      -对应训练中的范围-> [0.5,1.5]       
+    brightness : 0.3    -对应训练中的范围-> [0.7,1.3]       
+    saturation : 1      -对应训练中的范围-> [0,2]           
+    hue : 0.1           -对应训练中的范围-> [-0.1,0.1]      
+    gaussian_blur: bool -对应训练中的范围-> [True or False]
+    motion_blur:        -对应训练中的范围-> [0,1,2,3]               # 注这个暂时被舍弃了 但是模型依旧有抵抗能力
+    Rand_erase: 0.1     -对应训练中的范围-> [0,0.1]
+    jpeg                -对应训练中的范围-> [1,30]                  # 表示的减少的质量 实际上是 100-v [70, 99]
+    
+    !!! 附加说明 contrast  brightness saturation  当值为1 时候是原图 也就是不变状态
+        hue motion_blur rand_erase 当值为0 的时候不变
+        jpeg 注意 千万不要给0 最少给1  越大 jpeg 质量越差
+        rand_noise 保持不变就ok
+    
 
     
 """
@@ -41,7 +50,7 @@ class Brightness_trans(object):
     模型的准确率会降至  1/2 (左右)  【可能还要高一点吧 】】
     '''
     def __call__(self, img: np.ndarray, brightness: float, gamma=0):
-        im = img.astype(np.float32) * (brightness + 1)
+        im = img.astype(np.float32) * (brightness)
         im = im.clip(min=0, max=255)
         return im.astype(img.dtype)
 
@@ -52,7 +61,6 @@ class Contrast_trans(object):
             实现对比度的增强
             使用 线性变换 y=ax+b
             """
-        contrast_factor = contrast_factor + 1
         im = img.astype(np.float32)
         mean = round(cv2.cvtColor(im, cv2.COLOR_RGB2GRAY).mean())
         im = (1 - contrast_factor) * mean + contrast_factor * im
@@ -112,7 +120,7 @@ class Jpeg_trans(object):
             img_tensor = transforms.Resize([(h_o // 16 + 1) * 16, (w_o // 16 + 1) * 16])(img_tensor)
         b, c, h, w = img_tensor.shape
         _img = DiffJPEG(height=h, width=w, differentiable=True,
-                        quality=factor)(img_tensor).squeeze(0)
+                        quality=100 - factor)(img_tensor).squeeze(0)
         # 将一个 chw 的tensor 转换成一个 hwc的图片
 
         mat = tensor_2_cvImage(_img)
@@ -204,4 +212,5 @@ class MixUp(object):
 class Crop(object):
     def __call__(self, img:np.ndarray,cut_trans_max,angle_trans_max,change_pos:bool)->np.ndarray:
         return rand_crop(transforms.ToTensor()(img),scale={"angle_trans":angle_trans_max,"cut_trans":cut_trans_max},change_pos=change_pos).mul(255.).byte().numpy().transpose(1,2,0)
+
 

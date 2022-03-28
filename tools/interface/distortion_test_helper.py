@@ -18,23 +18,39 @@ class DistortionTestHelper(object):
 
     def __init__(self):
         self.trans = SubTrans()
+        self.info = {
+            "total":0,
+            "right":0,
+            "Hue_trans": {"total":0,"right":0,"acceptable_max":0},
+            "Brightness_trans": {"total":0,"right":0,"acceptable_max":0},
+            "Contrast_trans": {"total":0,"right":0,"acceptable_max":0},
+            "Saturation_trans": {"total":0,"right":0,"acceptable_max":0},
+            "Gaussian_blur": {"total":0,"right":0,"acceptable_max":0},  # bool
+            "Rand_noise": {"total":0,"right":0,"acceptable_max":0},
+            "Jpeg_trans": {"total":0,"right":0,"acceptable_max":100},  # int
+            "Grayscale_trans": {"total":0,"right":0,"acceptable_max":0},  # bool
+            "Rand_erase": {"total":0,"right":0,"acceptable_max":0},
+            "Motion_blur": {"total":0,"right":0,"acceptable_max":0},
+            "Crop": {"total":0,"right":0,"acceptable_max":0},# int
+        }
         self.trans_Ops_list = [
             "Hue_trans", "Brightness_trans", "Contrast_trans",
             "Saturation_trans",  "Rand_noise",
-            "Jpeg_trans", "Grayscale_trans", "Rand_erase", "Motion_blur"
+            "Jpeg_trans", "Grayscale_trans", "Rand_erase", "Motion_blur","Crop"
         ] # "Gaussian_blur",
 
         self.ops_range_dict = {
-            "Hue_trans": np.linspace(0, 0.1, 10),
+            "Hue_trans": np.linspace(0, 0.3, 10),
             "Brightness_trans": np.linspace(0, 0.3, 10),
             "Contrast_trans": np.linspace(0, 0.5, 10),
             "Saturation_trans": np.linspace(0, 1, 10),
-            # "Gaussian_blur": [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],  # bool
-            "Rand_noise": np.linspace(0, 0.02, 10),
-            "Jpeg_trans": np.linspace(50, 99, 10),  # int
+            "Gaussian_blur": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],  # bool
+            "Rand_noise": np.linspace(0, 0.1, 10),
+            "Jpeg_trans": np.linspace(10, 99, 10),  # int
             "Grayscale_trans": [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],  # bool
             "Rand_erase": np.linspace(0, 0.1, 10),
-            "Motion_blur": np.linspace(0, 10, 10)  # int
+            "Motion_blur": [i*2+1 for i in range(1,11)],
+            "Crop":np.linspace(0,0.5,10)# int
         }
 
     def _check_img(self, img: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
@@ -70,7 +86,7 @@ class DistortionTestHelper(object):
             img_contrast = copy.deepcopy(img)
         for idx in idxs:
             ops = self.trans_Ops_list[idx]
-            factor = self.ops_range_dict[ops][random.randint(0, 9)]
+            factor = self.ops_range_dict[ops][random.randint(0, 10)]
             img_trans_order[ops] = factor
             img = self.trans(img, ops, factor)
         if _show_result_img:
@@ -80,6 +96,32 @@ class DistortionTestHelper(object):
 
         return img, img_trans_order
 
+    def summarize(self, img_trans_order, flag):
+        self.info["total"] += 1
+        if flag:
+            self.info["right"] += 1
+            for tag in img_trans_order:
+                self.info[tag] += 1
+
+    def summarize_single_trans(self,op_name,op_factor,flag):
+        self.info[op_name]["total"]+=1
+        self.info["total"]+=1
+        if flag:
+            self.info[op_name]["right"]+=1
+            self.info["right"]+=1
+            if op_name is "Jpeg_trans":
+                self.info[op_name]["acceptable_max"] = min(self.info[op_name]["acceptable_max"],op_factor)
+            else:
+                self.info[op_name]["acceptable_max"] = max(self.info[op_name]["acceptable_max"],op_factor)
+    def show_info(self):
+        for tag in self.info:
+            print(tag)
+            print(self.info[tag])
+        pass
+    def clear_info(self):
+        for tag in self.info:
+            self.info[tag] = 0;
+
 
 class SubTrans(object):
     def __init__(self):
@@ -88,12 +130,13 @@ class SubTrans(object):
             "Brightness_trans": Brightness_trans(),
             "Contrast_trans": Contrast_trans(),
             "Saturation_trans": Saturation_trans(),
-            # "Gaussian_blur": Gaussian_blur(),
+            "Gaussian_blur": Gaussian_blur(),
             "Rand_noise": Rand_noise(),
             "Jpeg_trans": Jpeg_trans(),
             "Grayscale_trans": Grayscale_trans(),
             "Rand_erase": Rand_erase(),
-            "Motion_blur": Motion_blur()
+            "Motion_blur": Motion_blur(),
+            "Crop":Crop(),
         }
 
     def __call__(self, img, ops_name, ops_factor) -> np.ndarray:

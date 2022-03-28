@@ -180,8 +180,8 @@ def make_trans_for_photo(img, scale):
     该部分专门训练整体识别
     """
     # 随机块遮挡
-    if scale['erasing_trans'] != 0:
-        img = rand_erase(img, scale['erasing_trans'], block_size=random.randint(10, 30))
+    # if scale['erasing_trans'] != 0:
+    #     img = rand_erase(img, scale['erasing_trans'], block_size=random.randint(10, 30))
     # 透视变换
     if scale['perspective_trans'] != 0:
         startpoints, endpoints = get_perspective_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])

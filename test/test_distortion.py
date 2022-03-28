@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
@@ -9,13 +10,15 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.transforms import functional as F
 from steganography.utils.distortion import rand_crop
+from kornia.enhance import normalize_min_max, AdjustGamma
+from kornia.filters import laplacian
 
-img_path = "out/jpeg_trans.jpg"
+img_path = "D:\learning\pythonProjects\HiddenWatermark1\\test\\test_source\COCO_test2014_000000000001.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {
     "angle_trans": 30,
-    "cut_trans": 0.7,
+    "cut_trans": 0.5,
     "perspective_trans": 0.1,
 }
 
@@ -47,7 +50,7 @@ def show_result(img0: torch.Tensor, save_img=None, show_img=True):
 def test_crop():
     global img
     img_ = img.clone().detach()
-    # img_ = transforms.RandomSizedCrop((224, 224))(img_)
+
     img_ = rand_crop(img_, scale, change_pos=False)
     show_result(img_, "out/crop.jpg")
 
@@ -84,7 +87,36 @@ def test_perspective():
     img_ = F.perspective(img_, startpoints, endpoints)
     show_result(img_, "out/perspective.jpg")
 
+def test_brightness():
+    # _img = transforms.ColorJitter(brightness=1)(img)
+    _img = F.adjust_brightness(img,brightness_factor=0.5)
+    show_result(_img)
+    pass
+
+def test_contrast():
+    # _img = transforms.ColorJitter(contrast=6)(img)
+    _img = F.adjust_contrast(img,1.5)
+    show_result(_img)
+def test_hue():
+    _img = F.adjust_hue(img,0.1)
+    show_result(_img)
+
+def test_saturation():
+    _img = F.adjust_saturation(img,2)
+    show_result(_img)
+
+def test_mask():
+    adjustGamma = AdjustGamma(10., 1.)
+    mask = 1-torch.abs(laplacian(img, 3))  # low weight in high frequency
+    mask = adjustGamma(normalize_min_max(mask)).squeeze(0)
+    show_result(mask)
 
 if __name__ == '__main__':
-    test_crop()
-    test_perspective()
+    # test_crop()
+    # test_perspective()
+    # test_brightness()
+    # test_contrast()
+    test_hue()
+
+    # test_saturation()
+    # test_mask()

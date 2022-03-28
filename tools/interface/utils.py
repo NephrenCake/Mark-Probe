@@ -71,5 +71,5 @@ def tensor_2_cvImage(tensor_img: torch.Tensor) -> np.ndarray:
     tensor_img *= 255
     if len(tensor_img.shape) == 4:
         tensor_img = tensor_img.squeeze(0)
-    return cv2.cvtColor(np.uint8(tensor_img.cpu().numpy()).transpose(1, 2, 0),
+    return cv2.cvtColor(np.uint8(tensor_img.cpu().detach().numpy()).transpose(1, 2, 0),
                         cv2.COLOR_RGB2BGR)
