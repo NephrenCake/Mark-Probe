@@ -13,8 +13,12 @@ import service.backend.src.properties as properties
 from service.backend.src.model.coder import encoder, decoder
 from service.backend.src.model.encoderLive import Live
 from service.backend.src.utils import *
+
 from tools.interface.bch import BCHHelper
+from tools.interface.predict import detect
 from tools.interface.utils import model_import, get_device
+
+from detection.Monitor_detection.deeplab import DeeplabV3
 
 app = Flask(__name__)
 
@@ -54,8 +58,11 @@ is_live = False
 # 模型引入
 bch = BCHHelper()
 device = get_device(properties.DEVICE)
-encoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Encoder", device=device, warmup=True)
-decoderModel = model_import(model_path=properties.WEIGHT_PATH, model_name="Decoder", device=device, warmup=True)
+encoderModel = model_import(model_path=properties.CODER_WEIGHT_PATH, model_name="Encoder", device=device, warmup=True)
+decoderModel = model_import(model_path=properties.CODER_WEIGHT_PATH, model_name="Decoder", device=device, warmup=True)
+
+# 检测引入
+detectModel = DeeplabV3(properties.DETECT_WEIGHT_PATH)
 
 # API
 # 自定义 ID
@@ -111,11 +118,12 @@ def stopStream():
 # decoder 上传图片
 @app.route('/upload', methods=['POST'])
 def upload():
-    global decoderModel, bch, device
+    global decoderModel, bch, device, detectModel
     
     data = request.get_json()
     fileBase64 = data["fileBase64"]
     points = data["positions"]
+    print(points)
     auto = data["auto"]
     imgType = data["type"]
     
@@ -123,11 +131,27 @@ def upload():
     
     decodedInfo = {}
     
-    if (auto == 1):
-        if (len(points) != 0):
-            img = perspectiveTrans(img, points)
-    # elif (auto == 2):
-    #     img = autoPerspectiveTrans(img)
+    try:
+        if (auto == 1):
+            if (len(points) != 0):
+                img = perspectiveTrans(img, points, 1)
+        elif (auto == 2):
+            target = 'screen' if imgType == 1 else 'paper'
+            detect_res = detect(img=img, model=detectModel, target=target, thresold_1=38)
+            
+            print(detect_res)
+            
+            # 检测给出的点的顺序是 正 Z 字形，从左上角开始！
+            # detect_points = [
+            #     {'id': 1, 'x': detect_res["1"], 'y': detect_res[0][0][0][1]},
+            #     {'id': 2, 'x': detect_res[0][2][0][0], 'y': detect_res[0][2][0][1]},
+            #     {'id': 3, 'x': detect_res[0][3][0][0], 'y': detect_res[0][3][0][1]},
+            #     {'id': 4, 'x': detect_res[0][1][0][0], 'y': detect_res[0][1][0][1]}
+            # ]
+            img = perspectiveTrans(img, detect_res, 2)
+    except:
+        return reponseJson(code=CodeEnum.HTTP_SERVER_ERROR, msg=MsgEnum.PERSPECTIVETRANS_FAILURE)
+    
         
     if (imgType == 1):
         # 若是截图，免 STN

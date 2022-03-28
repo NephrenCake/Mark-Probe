@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, '../../../..')))
 import numpy as np
 
 from service.backend.src.utils import str_to_timestamp
-from tools.interface.utils import model_import, tensor_2_cvImage, convert_img_type
+from tools.interface.utils import tensor_2_cvImage, convert_img_type
 from tools.interface.predict import encode, decode
 
 # 编码器

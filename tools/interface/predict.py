@@ -8,7 +8,7 @@ from torchvision.transforms import transforms
 import torchvision.transforms.functional as F
 
 from detection.Monitor_detection.deeplab import DeeplabV3
-from detection.Paper_detection import paper_detect, paper_det
+from detection.Paper_detection import paper_det
 from detection.Monitor_detection.predict import predict
 from steganography.models.MPNet import MPEncoder, MPDecoder
 from tools.interface.bch import BCHHelper
