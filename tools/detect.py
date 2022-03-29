@@ -15,11 +15,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--predict_way', help='1.monitor 2.picture 3.monitor_video 4.picture_video',
-                        default=3)
+                        default=4)
     parser.add_argument('--video_path', help='path of the video file',
-                        default="test/test_source/test5.mp4")
+                        default="test/test_source/paper_test15.mp4")
     parser.add_argument('--video_save_path', help='folder path of the video',
-                        default="")
+                        default="out/save_video/paper_test15.mp4")
     parser.add_argument('--video_fps', help='the fps of save_video',
                         default=25)
 
@@ -104,10 +104,11 @@ def main(args):
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            res = detect(frame, model=None, target="paper")
+            res = detect(frame, model=None, target="paper",num=2)
             # RGBtoBGR满足opencv显示格式
             if type(res) != int:
-                frame = cv2.cvtColor(res[4]['img'], cv2.COLOR_RGB2BGR)
+                print(res)
+                frame = cv2.cvtColor(res[1][4]['img'], cv2.COLOR_RGB2BGR)
             else:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             fps = (fps + (1. / (time.time() - t1))) / 2
