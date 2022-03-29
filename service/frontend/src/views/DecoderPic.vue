@@ -250,6 +250,13 @@ export default {
             this.fixedUrl = this.$func.createDownloadFileUrl("decodedPic.jpg", data.fixedImg);
 
             this.dialogVisibleT = true;
+            
+          } else if (data.code === 500) {
+            this.$message({
+                message: data.msg,
+                type: 'warning',
+                showClose: true
+            });
           }
         }).catch(err => {
           this.$message({

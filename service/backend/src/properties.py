@@ -2,6 +2,7 @@
 # 设置
 
 import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 来源 rtmp 流
 SRC_RTMP_URL = "rtmp://127.0.0.1:2935/live/test"
@@ -17,14 +18,14 @@ UIP = "127.0.0.2"
 
 # sqlite3 数据库位置
 SQLITE_FILE_NAME = "db.sqlite3"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_LOCATION = os.path.join(BASE_DIR, SQLITE_FILE_NAME)
 
 # 图像解码后，查询数据库时，设定的分钟误差
 DELTA = 60
 
 # 权重相对路径
-WEIGHT_PATH = "weight/latest-0.pth"
+CODER_WEIGHT_PATH = "weight/latest-6.pth"
+DETECT_WEIGHT_PATH = "weight/detection-ep048-loss0.065-val_loss0.095.pth"
 
 # CPU or GPU
 # 'cpu' or 'cuda'
