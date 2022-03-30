@@ -19,9 +19,12 @@ def parse_args():
     parser.add_argument('--video_path', help='path of the video file',
                         default="test/test_source/paper_test15.mp4")
     parser.add_argument('--video_save_path', help='folder path of the video',
-                        default="out/save_video/paper_test15.mp4")
+                        default="")
     parser.add_argument('--video_fps', help='the fps of save_video',
                         default=25)
+    parser.add_argument('--paper_num', help='the number of paper',
+                        default=2)
+
 
     return parser.parse_args()
 
@@ -104,11 +107,11 @@ def main(args):
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            res = detect(frame, model=None, target="paper",num=2)
+            res = detect(frame, model=None, target="paper",num=args.paper_num)
             # RGBtoBGR满足opencv显示格式
             if type(res) != int:
-                print(res)
-                frame = cv2.cvtColor(res[1][4]['img'], cv2.COLOR_RGB2BGR)
+
+                frame = cv2.cvtColor(res[args.paper_num-1][4]['img'], cv2.COLOR_RGB2BGR)
             else:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             fps = (fps + (1. / (time.time() - t1))) / 2
