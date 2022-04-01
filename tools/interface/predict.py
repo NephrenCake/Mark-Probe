@@ -10,6 +10,7 @@ import torchvision.transforms.functional as F
 from detection.Monitor_detection.deeplab import DeeplabV3
 from detection.Paper_detection import paper_det
 from detection.Monitor_detection.predict import predict
+from detection.Paper_detection.utils import data_package
 from steganography.models.MPNet import MPEncoder, MPDecoder
 from tools.interface.bch import BCHHelper
 from tools.interface.utils import convert_img_type
@@ -71,30 +72,27 @@ def detect(img: np.ndarray,
            model: DeeplabV3,
            target: str = "screen",
            thresold_1=55,
+           num=1
            ):
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
         res = predict(img, model, thresold_value=thresold_1)
         if type(res) != int:
-            res = [{'id': 1, 'x': res[0][0], 'y': res[0][1]},
-                   {'id': 2, 'x': res[1][0], 'y': res[1][1]},
-                   {'id': 3, 'x': res[2][0], 'y': res[2][1]},
-                   {'id': 4, 'x': res[3][0], 'y': res[3][1]},
-                   {'img': res[4]}
-                   ]
             return res
         else:
             return res
     else:
-        res = paper_det.find_point(img)
+        res = paper_det.find_point(img, num)
         if type(res) != int:
-            res = [{'id': 1, 'x': res[0][0], 'y': res[0][1]},
-                   {'id': 2, 'x': res[1][0], 'y': res[1][1]},
-                   {'id': 3, 'x': res[2][0], 'y': res[2][1]},
-                   {'id': 4, 'x': res[3][0], 'y': res[3][1]},
-                   {'img': res[4]}
-                   ]
+            # print(res)
+            res = data_package(res, num)
 
             return res
         else:
             return res
+
+
+# if __name__ == "__main__":
+#     img = cv2.imread('D:\Program data\pythonProject\Mark-Probe\\test\\test_img\\img_1.png')
+#     res = detect(img, None, 'paper', num=1)
+#     print(res)

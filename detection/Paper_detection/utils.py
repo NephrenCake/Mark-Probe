@@ -96,6 +96,11 @@ def max_contour_idx(contours):
     return max_idx
 
 
+def max_contour_order(contours, num):
+    big_contour = sorted(contours, key=cv2.contourArea, reverse=True)[:num]
+    return big_contour
+
+
 def img_find(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret2, th2 = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -156,3 +161,22 @@ def pre_treat(img):
     img_dilate = cv2.dilate(img_threshold, kernel, iterations=2)  # APPLY DILATION
     img_threshold = cv2.erode(img_dilate, kernel, iterations=1)  # APPLY EROSION
     return img_threshold
+
+
+def data_package(data_list, num):
+    res_list = []
+
+    for i in range(num):
+        point1 = data_list[i][0][0][0]
+        point2 = data_list[i][0][1][0]
+        point3 = data_list[i][0][2][0]
+        point4 = data_list[i][0][3][0]
+        point = [{'id': 1, 'x': point1[0], 'y': point1[1]},
+                 {'id': 2, 'x': point2[0], 'y': point2[1]},
+                 {'id': 3, 'x': point3[0], 'y': point3[1]},
+                 {'id': 4, 'x': point4[0], 'y': point4[1]},
+                 {'img': data_list[i][1]}
+                 ]
+        # data_list[i][1]
+        res_list.append(point)
+    return res_list
