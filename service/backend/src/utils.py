@@ -37,6 +37,8 @@ class MsgEnum(Enum):
     STOP_STREAM_OK = "编码视频流停止成功!"
     STOP_STREAM_FAIL = "编码视频流停止失败!"
     
+    PERSPECTIVETRANS_FAILURE = "透视变换失败!"
+    
     UPLOAD_OK = "上传成功!"
 
 # 格式化消息
@@ -107,16 +109,17 @@ def cv2ImgToBase64(image) -> str:
     return base64_str
 
 # CV2 透视变换（坐标顺序：↖，↙，↘，↗（逆时针顺序））
-def perspectiveTrans(img, ratioPos:list):
+def perspectiveTrans(img, ratioPos:list, auto:int):
     width = img.shape[1]
     height = img.shape[0]
     
     # 强制指定图片变换到 400 × 400
     # width = height = 400
     
-    for ele in ratioPos:
-        ele["x"] = (ele["x"] * width)
-        ele["y"] = (ele["y"] * height)
+    if auto == 1:
+        for ele in ratioPos:
+            ele["x"] = (ele["x"] * width)
+            ele["y"] = (ele["y"] * height)
     
     # 变换前的四个角点坐标
     former = np.float32([[ratioPos[0]["x"], ratioPos[0]["y"]],
@@ -155,10 +158,10 @@ def psPic(img, requestDict: dict):
     grayscale_trans = Grayscale_trans()
     jpeg_trans = Jpeg_trans()
     
-    if (brightness != 0):
+    if (brightness != 1):
         img = brightness_trans(img=img, brightness=brightness)
     
-    if (contrast != 0):
+    if (contrast != 1):
         img = contrast_trans(img=img, contrast_factor=contrast)
     
     if (saturation != 1):
@@ -180,7 +183,8 @@ def psPic(img, requestDict: dict):
         img = rand_erase(img=img, _cover_rate=randomCover)
         
     if (JpegZip != 0):
-        img = jpeg_trans(img=img, factor=JpegZip)
+        # 1 < JpegZip < 100
+        img = jpeg_trans(img=img, factor=(100 - JpegZip))
     
     return img
 

@@ -77,35 +77,35 @@
               <div class="slider-panel">
                 <span class="slider-label">亮度&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <div class="slider">
-                  <el-slider v-model="form.brightness" :max="300" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.brightness"></el-slider>
+                  <el-slider v-model="form.brightness" :min="700" :max="1300" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.brightness"></el-slider>
                 </div>
               </div>
 
               <div class="slider-panel">
                 <span class="slider-label">对比度&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <div class="slider">
-                  <el-slider v-model="form.contrast" :max="500" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.contrast"></el-slider>
+                  <el-slider v-model="form.contrast" :min="500" :max="1500" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.contrast"></el-slider>
                 </div>
               </div>
 
               <div class="slider-panel">
                 <span class="slider-label">饱和度&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <div class="slider">
-                  <el-slider v-model="form.saturation" :max="100" @change="processButtonClick" :format-tooltip="formatValue_100" :disabled="notAllowOp" :marks="marks.saturation"></el-slider>
+                  <el-slider v-model="form.saturation" :max="200" @change="processButtonClick" :format-tooltip="formatValue_100" :disabled="notAllowOp" :marks="marks.saturation"></el-slider>
                 </div>
               </div>
 
               <div class="slider-panel">
                 <span class="slider-label">色相&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <div class="slider">
-                  <el-slider v-model="form.hue" :max="100" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.hue"></el-slider>
-                </div>                
+                  <el-slider v-model="form.hue" :max="200" @change="processButtonClick" :format-tooltip="formatValue_1K_Negative" :disabled="notAllowOp" :marks="marks.hue"></el-slider>
+                </div>
               </div>
 
               <div class="slider-panel">
                 <span class="slider-label">运动模糊&nbsp;&nbsp;</span>
                 <div class="slider">
-                  <el-slider v-model="form.MBlur" :max="2" :min="0" @change="processButtonClick" :disabled="notAllowOp" :marks="marks.MBlur"></el-slider>
+                  <el-slider v-model="form.MBlur" :max="3" :min="0" @change="processButtonClick" :disabled="notAllowOp" :marks="marks.MBlur"></el-slider>
                 </div>                
               </div>
 
@@ -133,14 +133,14 @@
               <div class="slider-panel">
                 <span class="slider-label">随机遮挡&nbsp;&nbsp;</span>
                 <div class="slider">
-                  <el-slider v-model="form.randomCover" :max="500" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.randomCover"></el-slider>
+                  <el-slider v-model="form.randomCover" :max="100" @change="processButtonClick" :format-tooltip="formatValue_1K" :disabled="notAllowOp" :marks="marks.randomCover"></el-slider>
                 </div>                
               </div>
 
               <div class="slider-panel">
                 <span class="slider-label">Jpeg 压缩</span>
                 <div class="slider">
-                  <el-slider v-model="form.JpegZip" :max="5000" @change="processButtonClick" :format-tooltip="formatValue_100" :disabled="notAllowOp" :marks="marks.JpegZip"></el-slider>
+                  <el-slider v-model="form.JpegZip" :max="99" @change="processButtonClick" :disabled="notAllowOp" :marks="marks.JpegZip"></el-slider>
                 </div>                
               </div>
             </div>
@@ -168,29 +168,30 @@ export default {
       // 标记
       marks: {
         brightness: {
-          0: '0',
-          150: '0.15',
-          300: '0.3'
+          700: '0.7',
+          1000: '1.0',
+          1300: '1.3'
         },
         contrast: {
-          0: '0',
-          250: '0.25',
-          500: '0.5'
+          500: '0.5',
+          1000: '1.0',
+          1500: '1.5'
         },
         saturation: {
           0: '0',
-          50: '0.5',
-          100: '1'
+          100: '1',
+          200: '2'
         },
         hue: {
-          0: '0',
-          50: '0.05',
-          100: '0.1'
+          0: '-0.1',
+          100: '0',
+          200: '0.1'
         },
         MBlur: {
           0: '0',
           1: '1',
-          2: '2'
+          2: '2',
+          3: '3'
         },
         randomNoise: {
           0: '0',
@@ -199,35 +200,35 @@ export default {
         },
         randomCover: {
           0: '0',
-          250: '0.25',
-          500: '0.5'
+          50: '0.05',
+          100: '0.1'
         },
         JpegZip: {
           0: '0',
-          2500: '25',
-          5000: '50'
+          50: '50',
+          99: '99'
         }
       },
 
       form: {
-        // 亮度: 0-0.3
-        brightness: null,
-        // 对比度: 0-0.5
-        contrast: null,
-        // 饱和度: 0-1
-        saturation: null,
-        // 色相: 0-0.1
-        hue: null,
-        // 运动模糊: 0 (disabled), 1, 2
+        // 亮度: 0.5-1.5, default: 1
+        brightness: 1000,
+        // 对比度: 0.7-1.3, default: 1
+        contrast: 1000,
+        // 饱和度: 0-2, default: 1
+        saturation: 100,
+        // 色相: -0.1-0.1, default: 0
+        hue: 100,
+        // 运动模糊: 0 (disabled), 1, 2, 3, default: 0
         MBlur: 0,
-        // 随机噪声: 0-0.02
-        randomNoise: null,
-        // 灰度: true/false
-        grayscale: null,
-        // 随机遮挡: 0-0.5
-        randomCover: null,
-        // jpeg压缩: 0-50
-        JpegZip: null,
+        // 随机噪声: 0-0.02, default: 0
+        randomNoise: 0,
+        // 灰度: true/false, default: false
+        grayscale: false,
+        // 随机遮挡: 0-0.1, default: 0
+        randomCover: 0,
+        // jpeg压缩: 0-99, default: 0
+        JpegZip: 0,
 
         fileBase64: null
       }
@@ -267,13 +268,12 @@ export default {
         brightness: this.form.brightness / 1000,
         contrast: this.form.contrast / 1000,
         saturation: this.form.saturation / 100,
-        hue: this.form.hue / 1000,
+        hue: this.form.hue / 1000 - 0.1,
         MBlur: this.form.MBlur,
         randomNoise: this.form.randomNoise / 10000,
         grayscale: this.form.grayscale,
         randomCover: this.form.randomCover / 1000,
-        JpegZip: this.form.JpegZip / 100,
-        fileBase64: this.form.fileBase64
+        JpegZip: this.form.JpegZip
       };
       this.$http.psPic(params).then(res => {
         const data = res.data;
@@ -303,10 +303,10 @@ export default {
     },
     // 重置图像攻击参数
     resetPs() {
-      this.form.brightness = 0;
-      this.form.contrast = 0;
+      this.form.brightness = 1000;
+      this.form.contrast = 1000;
       this.form.saturation = 100;
-      this.form.hue = 0;
+      this.form.hue = 100;
       this.form.MBlur = 0;
       this.form.randomNoise = 0;
       this.form.grayscale = false;
@@ -326,6 +326,10 @@ export default {
     // 格式化处理 1000 系数
     formatValue_1K(val) {
       return (val / 1000);
+    },
+    // 格式化处理 1000 系数, 含负数
+    formatValue_1K_Negative(val) {
+      return ((val / 1000) - 0.1).toFixed(3); 
     },
     // 格式化处理 10,000 系数
     formatValue_10K(val) {

@@ -8,8 +8,9 @@ from torchvision.transforms import transforms
 import torchvision.transforms.functional as F
 
 from detection.Monitor_detection.deeplab import DeeplabV3
-from detection.Paper_detection import paper_detect, paper_det
+from detection.Paper_detection import paper_det
 from detection.Monitor_detection.predict import predict
+from detection.Paper_detection.utils import data_package
 from steganography.models.MPNet import MPEncoder, MPDecoder
 from tools.interface.bch import BCHHelper
 from tools.interface.utils import convert_img_type
@@ -71,33 +72,27 @@ def detect(img: np.ndarray,
            model: DeeplabV3,
            target: str = "screen",
            thresold_1=55,
+           num=1
            ):
     assert target in ["screen", "paper"], "暂时只支持检测 screen 或 paper 上的隐写图像"
     if target == "screen":
-        contour_img, point = predict(img, model, thresold_value=thresold_1)
-        point1 = point[0][0]
-        point2 = point[1][0]
-        point3 = point[2][0]
-        point4 = point[3][0]
-        res = [{'id': 1, 'x': point1[0], 'y': point1[1]},
-               {'id': 2, 'x': point2[0], 'y': point2[1]},
-               {'id': 3, 'x': point3[0], 'y': point3[1]},
-               {'id': 4, 'x': point4[0], 'y': point4[1]},
-               {'img': contour_img}
-               ]
-
-        return res
+        res = predict(img, model, thresold_value=thresold_1)
+        if type(res) != int:
+            return res
+        else:
+            return res
     else:
-        point1, point2, point3, point4, img = paper_det.find_point(img)
+        res = paper_det.find_point(img, num)
+        if type(res) != int:
+            # print(res)
+            res = data_package(res, num)
 
-        res = [{'id': 1, 'x': point1[0], 'y': point1[1]},
-               {'id': 2, 'x': point2[0], 'y': point2[1]},
-               {'id': 3, 'x': point3[0], 'y': point3[1]},
-               {'id': 4, 'x': point4[0], 'y': point4[1]},
-               {'img':  img}
-               ]
-
-        return res
+            return res
+        else:
+            return res
 
 
-
+# if __name__ == "__main__":
+#     img = cv2.imread('D:\Program data\pythonProject\Mark-Probe\\test\\test_img\\img_1.png')
+#     res = detect(img, None, 'paper', num=1)
+#     print(res)

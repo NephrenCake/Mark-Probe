@@ -1,4 +1,10 @@
-#  Mark-Probe 防泄漏暗水印系统
+#  Mark-Probe 防泄漏暗水印
+
+## 简介
+
+第十三届中国大学生服务外包创新创业大赛——A06云桌面的暗水印方案参赛作品
+
+4.17 初赛提交
 
 ##  快速使用
 
@@ -24,5 +30,9 @@
    python ./tools/decode.py --img_path out/encoded.jpg --model_path weight/latest-0.pth
    ```
 
-   
+5. 运行检测并解码
+
+   ```bash
+   python ./tools/detect.py 
+   ```
 
