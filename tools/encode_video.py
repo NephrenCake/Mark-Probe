@@ -22,8 +22,6 @@ def parse_args():
                         default="test/test_source/test.mp4")
     parser.add_argument('--decoder_model_path', help='path of the model file (.pth)',
                         default="weight/latest-0.pth")
-    parser.add_argument('--detector_model_path', help='path of the model file (.pth)',
-                        default="")
     parser.add_argument('--device', help='the model loaded in cpu(cpu) or gpu(cuda)',
                         default='cuda')
     parser.add_argument('--show_FPS', help='show FPS in the upper left corner',
@@ -35,9 +33,11 @@ def parse_args():
 
 # todo 注：该脚本暂时用于测试速度与优化探索！解码的视频脚本可以另开
 def main(args):
-    # check_dir(args.video_save_path)
+    check_dir(os.path.dirname(args.video_save_path))
     device = get_device(args.device)
-    encoder = model_import(args.decoder_model_path, model_name="Encoder", device=device)
+    encoder = model_import(args.decoder_model_path,
+                           model_name="Encoder",
+                           device=device)
     bch = BCHHelper()
 
     packet = torch.tensor(bch.encode_data(bch.convert_uid_to_data(114514)[0]),
@@ -48,10 +48,11 @@ def main(args):
     counter = 0  # 设置一个counter 来计算平均帧率
     cudnn.benchmark = True  # 加快在视频中恒定大小图像的推断
 
-    writer = cv2.VideoWriter(args.video_save_path,
-                             cv2.VideoWriter_fourcc(*'XVID'),
-                             cap.get(cv2.CAP_PROP_FPS),
-                             (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+    if args.video_save_path != "":
+        writer = cv2.VideoWriter(args.video_save_path,
+                                 cv2.VideoWriter_fourcc(*'XVID'),
+                                 cap.get(cv2.CAP_PROP_FPS),
+                                 (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
     timer = 0.
     ret, img = cap.read()
@@ -76,13 +77,13 @@ def main(args):
                         fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3)
         cv2.imshow('frame', encoded_img)
 
-        writer.write(encoded_img)
+        if args.video_save_path != "":
+            writer.write(encoded_img)
         ret, img = cap.read()
 
     if args.video_save_path != "":
         print("Save processed video to the path :" + args.video_save_path)
         writer.release()
-
     cap.release()
     cv2.destroyAllWindows()
 
