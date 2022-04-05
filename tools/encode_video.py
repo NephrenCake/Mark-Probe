@@ -35,7 +35,6 @@ def parse_args():
 
 # todo 注：该脚本暂时用于测试速度与优化探索！解码的视频脚本可以另开
 def main(args):
-    check_dir(os.path.dirname(args.video_save_path))
     device = get_device(args.device)
     encoder = model_import(args.decoder_model_path,
                            model_name="Encoder",
@@ -44,12 +43,14 @@ def main(args):
 
     packet = torch.tensor(bch.encode_data(bch.convert_uid_to_data(args.user_id)[0]),
                           dtype=torch.float32, device=device).unsqueeze(0)
+    save_video = args.video_save_path is not None and args.video_save_path != ""
 
     # ==============
     cap = cv2.VideoCapture(args.video_path)
     cudnn.benchmark = True  # 加快在视频中恒定大小图像的推断
 
-    if args.video_save_path != "":
+    if save_video:
+        check_dir(os.path.dirname(args.video_save_path))
         writer = cv2.VideoWriter(args.video_save_path,
                                  cv2.VideoWriter_fourcc(*'XVID'),
                                  cap.get(cv2.CAP_PROP_FPS),
@@ -79,11 +80,11 @@ def main(args):
                         fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3)
         cv2.imshow('frame', encoded_img)
 
-        if args.video_save_path != "":
+        if save_video:
             writer.write(encoded_img)
         ret, img = cap.read()
 
-    if args.video_save_path != "":
+    if save_video:
         print("Save processed video to the path :" + args.video_save_path)
         writer.release()
     cap.release()
