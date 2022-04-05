@@ -24,10 +24,12 @@ def parse_args():
                         default="weight/latest-0.pth")
     parser.add_argument('--device', help='the model loaded in cpu(cpu) or gpu(cuda)',
                         default='cuda')
-    parser.add_argument('--show_FPS', help='show FPS in the upper left corner',
+    parser.add_argument('--show_FPS', help='show FPS in the upper left corner', action='store_true',
                         default=False)
     parser.add_argument('--video_save_path', help='folder path of the video file',
                         default="out/encoded_video.mp4")
+    parser.add_argument('--user_id', help='the msg embedded in to the image',
+                        default=114514)
     return parser.parse_args()
 
 
@@ -40,12 +42,11 @@ def main(args):
                            device=device)
     bch = BCHHelper()
 
-    packet = torch.tensor(bch.encode_data(bch.convert_uid_to_data(114514)[0]),
+    packet = torch.tensor(bch.encode_data(bch.convert_uid_to_data(args.user_id)[0]),
                           dtype=torch.float32, device=device).unsqueeze(0)
 
     # ==============
     cap = cv2.VideoCapture(args.video_path)
-    counter = 0  # 设置一个counter 来计算平均帧率
     cudnn.benchmark = True  # 加快在视频中恒定大小图像的推断
 
     if args.video_save_path != "":
@@ -54,6 +55,7 @@ def main(args):
                                  cap.get(cv2.CAP_PROP_FPS),
                                  (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
+    counter = 0  # 设置一个counter 来计算平均帧率
     timer = 0.
     ret, img = cap.read()
     assert ret, "Can't receive any frame!"
