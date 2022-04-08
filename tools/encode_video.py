@@ -64,7 +64,7 @@ def main(args):
         # 调用 api
         t1 = time.time()
         img = convert_img_type(img).to(device)
-        encoded_img, _ = encode(img=img,
+        encoded_img, _ = encode(img0=img,
                                 uid=114514,
                                 model=encoder,
                                 bch=bch,
