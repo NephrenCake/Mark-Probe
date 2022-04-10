@@ -98,6 +98,26 @@ class Func {
       };
     });
   }
+
+  // 解决 window.onresize 执行多次的问题：
+  // 第一个是要 debounce 的函数，
+  // 第二个代表 debouce 的时间间隔，
+  // 第三个在时间段的开始还是结束执行函数。
+  debounce = function(func, threshold, execAsap) {
+    let timeout;
+    return function debounced() {
+      let obj = this, args = arguments;
+      function delayed() {
+        if (!execAsap)
+          func.apply(obj, args);
+        timeout = null;
+      }
+      if (timeout) clearTimeout(timeout);
+      else if (execAsap) func.apply(obj, args);
+
+      timeout = setTimeout(delayed, threshold || 100);
+    }
+  };
 }
 
 export default new Func();

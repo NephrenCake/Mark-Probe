@@ -8,7 +8,9 @@
       </el-header>
 
       <el-main class="main">
-        <router-view></router-view>
+        <div class="main-content">
+          <router-view></router-view>
+        </div>
       </el-main>
 
       <el-footer class="footer">
@@ -102,6 +104,13 @@ export default {
       } else {
         this.subNav_isOpen = !this.subNav_isOpen;
       }
+    },
+
+    // 动态调整高度
+    changeHeight() {
+      let mainContainerHeight = document.getElementsByClassName('el-main main')[0].clientHeight;
+      let mainContentHeight = document.getElementsByClassName('main-content')[0].clientHeight;
+      document.getElementsByClassName('el-main main')[0].style.paddingTop = ((mainContainerHeight - mainContentHeight) / 2) + "px";
     }
   },
   computed: {
@@ -119,17 +128,34 @@ export default {
       }
     }
   },
+  mounted() {
+    let that = this;
+    that.changeHeight();
+    // window.onresize = this.$func.debounce(function() { 
+    //   that.changeHeight();
+    // }, 1000, true);
+
+    window.onresize = () => {
+      return (() => {
+        that.changeHeight();
+      })();
+    };
+  },
   watch: {
     $route: {
       handler: function(to, from) {
         // 在 DOM 渲染完成后执行导航初始化
         this.$nextTick(() => {
           this.closeNav();
+          this.changeHeight();
         });
       },
       // 深度观察监听
       // deep: true
     }
+  },
+  destroyed() {
+    window.onresize = null;
   }
 };
 </script>
@@ -224,6 +250,10 @@ export default {
 <style scoped>
 body /deep/ .el-main {
   padding: 0px;
+}
+
+::-webkit-scrollbar {
+  width: 0px !important;
 }
 
 .navigation {

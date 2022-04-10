@@ -123,7 +123,6 @@ def upload():
     data = request.get_json()
     fileBase64 = data["fileBase64"]
     points = data["positions"]
-    print(points)
     auto = data["auto"]
     imgType = data["type"]
     
