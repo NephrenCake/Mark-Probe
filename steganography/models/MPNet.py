@@ -88,7 +88,7 @@ class MPEncoder(nn.Module):
         conv4 = self.conv4(conv3)  # conv4 56*56*128
         conv5 = self.conv5(conv4)  # conv5 28*28*256
 
-        up6 = self.up6(self.up_x2(conv5))  # up6 56*56*256->56*56*128
+        up6 = self.up6(self.up_x2(conv5))  # up6 28*28*256->56*56*128
         merge6 = torch.cat((conv4, up6), dim=1)  # merge6 56*56*256
         conv6 = self.conv6(merge6)  # conv6 56*56*128
         up7 = self.up7(self.up_x2(conv6))  # up7 112*112*128->112*112*64

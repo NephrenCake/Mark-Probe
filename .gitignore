@@ -504,3 +504,4 @@ encoded_img.jpg
 service/frontend/node_modules/
 /weight/
 /weight/
+/detection/Monitor_detection/logs/

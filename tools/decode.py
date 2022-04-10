@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--img_path', help='path of the image file (.png or .jpg)',
                         default="out/encoded.jpg")
     parser.add_argument('--model_path', help='path of the model file (.pth)',
-                        default="weight/latest-0.pth")
+                        default="weight/latest_4-8_seem_the_balanced.pth")
     parser.add_argument('--device', help='the model loaded in cpu(cpu) or gpu(cuda)',
                         default='cuda')
     return parser.parse_args()

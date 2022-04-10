@@ -24,7 +24,7 @@ SQLITE_LOCATION = os.path.join(BASE_DIR, SQLITE_FILE_NAME)
 DELTA = 60
 
 # 权重相对路径
-CODER_WEIGHT_PATH = "weight/latest-6.pth"
+CODER_WEIGHT_PATH = "weight/latest-30.pth"
 DETECT_WEIGHT_PATH = "weight/detection-ep048-loss0.065-val_loss0.095.pth"
 
 # CPU or GPU

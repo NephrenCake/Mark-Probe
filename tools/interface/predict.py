@@ -17,21 +17,24 @@ from tools.interface.utils import convert_img_type
 
 
 @torch.no_grad()
-def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
+def encode(img0: Union[np.ndarray, Image.Image, torch.Tensor],
            uid: Union[int, str],
            model: MPEncoder,
            bch: BCHHelper,
            device,
            img_size=(448, 448),
-           direct_msg: torch.Tensor = None) -> (torch.Tensor, torch.Tensor):
+           direct_msg: torch.Tensor = None,
+           keep_size=True) -> (torch.Tensor, torch.Tensor):
     """
     你可以输入一个 cv2、PIL、三维或四维Tensor
     返回原图像大小的编码图
 
     现在可以同时输入一个原生 msg 以提高速度，原生 msg 可以一直保存在后端（uid+登陆时间 为定值，不需要在推理中重复构造）
         但实际提升效果不是很明显（其实不太花时间）
+
+    keep_size: false 为输出 448*448
     """
-    img = convert_img_type(img).to(device)
+    img0 = convert_img_type(img0).to(device)
 
     if direct_msg is None:
         dat, _, _ = bch.convert_uid_to_data(uid)
@@ -39,12 +42,14 @@ def encode(img: Union[np.ndarray, Image.Image, torch.Tensor],
     else:
         packet = direct_msg
 
-    img_low = F.resize(img, img_size)
-    res_low = model({"img": img_low, "msg": packet})
-    res_high = F.resize(res_low, img.shape[-2:])
-    encoded_img = torch.clamp(res_high + img, 0., 1.)
+    img = F.resize(img0, img_size)
+    res = model({"img": img, "msg": packet})
+    if keep_size:
+        img = img0
+        res = F.resize(res, img0.shape[-2:])
+    encoded_img = torch.clamp(res + img, 0., 1.)
 
-    return encoded_img.squeeze(0), res_low.squeeze(0)
+    return encoded_img.squeeze(0), res.squeeze(0)
 
 
 @torch.no_grad()

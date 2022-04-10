@@ -278,11 +278,11 @@ export default {
       this.$http.psPic(params).then(res => {
         const data = res.data;
         if (data.code === 200) {
-          this.$message({
-            message: data.msg,
-            type: 'success',
-            showClose: true
-          });
+          // this.$message({
+          //   message: data.msg,
+          //   type: 'success',
+          //   showClose: true
+          // });
 
           this.fixedImgBase64 = data.fixedImg;
           this.fixedUrl = this.$func.createDownloadFileUrl("PSPic.jpg", data.fixedImg);

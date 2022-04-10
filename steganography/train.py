@@ -3,6 +3,8 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import warnings
+warnings.filterwarnings("ignore")
 
 from tensorboardX import SummaryWriter
 from torch.optim import lr_scheduler
@@ -49,55 +51,27 @@ def main():
                             decoder_type="conv").to(cfg.device)
         lpips_metric = LPIPS(net="alex").to(cfg.device)
     else:
-        # 多卡并行模型  why the gpu0 is gaining its size?
-        gpu0_bsz = 0
-        batch_chunk = 1  # gpu0_bsz==2 batch_chunk==2  4 devices the batch_size is 14 -> batch_distribution [1,9,9,9]
-        encoder_module = MPEncoder(msg_size=cfg.msg_size, img_size=cfg.img_size[0]).to(cfg.device)
-        decoder_module = MPDecoder(msg_size=cfg.msg_size, img_size=cfg.img_size[0], decoder_type="conv").to(cfg.device)
-        lpips_module = LPIPS(net="alex").to(cfg.device)
-        Encoder = BalancedDataParallel(gpu0_bsz // batch_chunk, encoder_module, dim=0).to(cfg.device)
-        Decoder = BalancedDataParallel(gpu0_bsz // batch_chunk, decoder_module, dim=0).to(cfg.device)
-        lpips_metric = BalancedDataParallel(gpu0_bsz // batch_chunk, lpips_module, dim=0).to(cfg.device)
-
-        # ==============================================
-
-        # Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
-        #                                      img_size=cfg.img_size[0])).to(cfg.device)
-        # Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
-        #                                      img_size=cfg.img_size[0],
-        #                                      decoder_type="conv")).to(cfg.device)
-        # lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
+        Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
+                                             img_size=cfg.img_size[0])).to(cfg.device)
+        Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
+                                             img_size=cfg.img_size[0],
+                                             decoder_type="conv")).to(cfg.device)
+        lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
-        {'params': Encoder.parameters(), 'weight_decay': 1e-5, "lr": cfg.lr_base*0.2},  # ,
+        {'params': Encoder.parameters(),"weight_decay":cfg.weight_decay, "lr": cfg.lr_base*0.1},  # ,
         {'params': Decoder.parameters()},
     ], lr=cfg.lr_base, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
     if cfg.use_warmup:
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=cfg.get_warmup_cos_lambda())
     else:
         # 动态调整学习率
-        # scheduler = lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
-        # lambda1 = lambda e: 0.5**(e//cfg.iter_per_epoch)
-        lambda1 = lambda e: 0.004
-
-        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda1, lambda x: 1])
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[cfg.lr_for_encoder, cfg.lr_for_decoder])
         # scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: 1)
 
     # 如果存在预训练权重则载入
     epoch = 0
-    # tensorboard 写入模型结构
-    # with torch.no_grad():
-    #     # 绘制 encoder
-    #     fake_data = next(iter(val_loader))
-    #     tb_writer.add_graph(Encoder,{"img":fake_data["img"].to(cfg.device),"msg":fake_data["msg"].to(cfg.device)})
-    #     # 绘制 decoder
-    #     # tb_writer.add_graph(Decoder,fake_data["img"].to(cfg.device))
-    #     del fake_data
-
-    # print(os.path.exists("/root/src/project3/steganography/train_log/CI-test_2022-02-12-20-20-05/latest-0.pth"))
-    # print(cfg.resume)
-    # print(os.path.exists(cfg.resume))
     if os.path.exists(cfg.resume) or os.path.exists(cfg.pretrained):
         if os.path.exists(cfg.resume):
             print("start_resume")
@@ -163,9 +137,6 @@ def main():
             pre_photo_msg_loss = val_result["photo_msg_loss"]
             pre_img_loss = val_result["img_loss"]
             save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, "best.pth")
-
-        # if val_result["loss"] < best_loss and epoch >= cfg.start_save_best:  # todo 不合理  1、修改了一下
-        #     save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, "best.pth")
         save_state(Encoder, Decoder, optimizer, scheduler, epoch + 1, cfg, f"latest-{epoch}.pth")
 
 

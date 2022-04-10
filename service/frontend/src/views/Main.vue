@@ -5,7 +5,7 @@
         <el-col :span="14" :offset="5">
           <el-card id="card">
             <div id="welcome">
-              <p>Mark-Probe&nbsp;防泄漏暗水印系统</p>
+              <p>Mark-Probe&nbsp;防泄漏暗水印</p>
               <p>演示程序 (Web 端)</p>
               <p class="team">团队编号: 2101421</p>
               <p class="team" style="margin-top: 10px;">团队名称: <span>永远不要抛弃僚机</span></p>
@@ -34,9 +34,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-#container {
-  margin-top: 50px;
-}
 #card {
   text-align: center;
 }

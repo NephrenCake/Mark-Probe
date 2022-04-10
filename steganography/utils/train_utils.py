@@ -1,6 +1,8 @@
 # -- coding: utf-8 --
 import time
+import warnings
 
+warnings.filterwarnings("ignore")
 import torch
 import torchvision
 import torch.nn.functional as nn_F
@@ -27,10 +29,10 @@ def process_forward(Encoder,
     # img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    limit = 0.5 - scales['clamp_limit']
-    # res = torch.clamp(Encoder({"img": img, "msg": msg}), -limit,
-    #                   limit)  # res_image (448,448)  the encoder_module start forward
+    # limit = 0.5 - scales['clamp_limit']
+    # res = torch.clamp(Encoder({"img": img, "msg": msg}), -limit, limit)  # res_image (448,448)  #the encoder_module start forward
     res = Encoder({"img": img, "msg": msg})
+    # res_clamp = torch.clamp(res, -limit, limit)
     # res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
     encoded_img = torch.clamp(img + res, 0., 1.)
     # del res_high
@@ -78,6 +80,7 @@ def process_forward(Encoder,
     bit_acc = (photo_bit_acc + crop_bit_acc) / 2
     str_acc = (photo_str_acc + crop_str_acc) / 2
     right_str_acc = (photo_right_str_acc + crop_right_str_acc) / 2
+
 
     vis_img = {"res_low": res.data, "encoded_img": encoded_img.data,
                "photo_img": photo_img.data, "crop_img": crop_img.data,
@@ -146,6 +149,8 @@ def train_one_epoch(Encoder,
             for item in results:
                 results[item] /= count
             cur_cost_time, pre_cost_time = compute_time(start, cur_iter, cfg.iter_per_epoch)
+            # 更新 loss
+            cfg.loss_ascending(results['right_str_acc'], 0.75, 0.5, 0.5, 0.5)
 
             logging.info(f"epoch:[{epoch}/{cfg.max_epoch - 1}] iter:[{cur_iter}/{cfg.iter_per_epoch - 1}] "
                          f"train:{cur_cost_time}<{pre_cost_time} - "
@@ -155,13 +160,24 @@ def train_one_epoch(Encoder,
                          f"msg_loss:{round(results['msg_loss'], 4)} "
                          f"bit_acc:{round(results['bit_acc'], 4)} "
                          f"str_acc:{round(results['str_acc'], 2)} "
-                         f"right_str_acc:{round(results['str_acc'], 2)}")
+                         f"right_str_acc:{round(results['right_str_acc'], 2)}")
 
             # 随时观察
+
             torchvision.utils.save_image(_["encoded_img"], 'encoded_img.jpg')
             torchvision.utils.save_image(_["stn_img"], 'stn_img.jpg')
+            # torchvision.utils.save_image(_["res_low"], 'res_img.jpg')
 
             # tensorboard
+            tb_writer.add_histogram("res_channel_0_histogram", _["res_low"][:, 0, ...],
+                                    global_step=epoch * cfg.iter_per_epoch + cur_iter)
+            tb_writer.add_histogram("res_channel_1_histogram", _["res_low"][:, 1, ...],
+                                    global_step=epoch * cfg.iter_per_epoch + cur_iter)
+            tb_writer.add_histogram("res_channel_2_histogram", _["res_low"][:, 2, ...],
+                                    global_step=epoch * cfg.iter_per_epoch + cur_iter)
+            # for name, param in Decoder.state_dict().items():
+            #     if "stn.localization" in name:
+            #         tb_writer.add_histogram(tag=name+'_grad', values=param, global_step=epoch * cfg.iter_per_epoch + cur_iter)
             for k, v in results.items():
                 tb_writer.add_scalars(f"data/{k}", {"train": v}, global_step=epoch * cfg.iter_per_epoch + cur_iter)
             for k, v in scales.items():
@@ -217,6 +233,10 @@ def evaluate_one_epoch(Encoder,
     for image_tag in vis_img.keys():
         image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
         tb_writer.add_image(image_tag, image, global_step=(epoch + 1) * cfg.iter_per_epoch)
+        # 添加res的histogram 添加 encoded_img 分布
+        # if image_tag in ["res_low"]:  # ,"photo_img",
+        #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
+
     return result
 
 
