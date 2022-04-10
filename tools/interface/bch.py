@@ -28,7 +28,9 @@ class BCHHelper:
         self.uid_limits = 2 ** uid_size
         self.bch = bchlib.BCH(polynomial, bits)
 
-    def convert_uid_to_data(self, uid: Union[int, str]) -> (bytearray, str, str):
+    def convert_uid_to_data(self,
+                            uid: Union[int, str],
+                            time_str=None) -> (bytearray, str, str):
         """
         给定十进制 uid，返回 msg 数据段的二进制流
         """
@@ -38,7 +40,10 @@ class BCHHelper:
 
         msg_uid = self.fill_bin(bin(uid)[2:], self.uid_size)
 
-        current_time = int(time.mktime(time.localtime()))  # 获取当前时间
+        if time_str:
+            current_time = int(time.mktime(time.strptime(time_str, self.format_spec)))  # 使用给定时间
+        else:
+            current_time = int(time.mktime(time.localtime()))  # 获取当前时间
         msg_time = int((current_time - self.start_time) / 60)  # 计算当前时间与设置的开始时间差
 
         msg = msg_uid + self.fill_bin(bin(msg_time)[2:], self.time_size)
