@@ -165,18 +165,22 @@ def pre_treat(img):
 
 def data_package(data_list, num):
     res_list = []
+    for i in range(len(data_list)):
 
-    for i in range(num):
-        point1 = data_list[i][0][0][0]
-        point2 = data_list[i][0][1][0]
-        point3 = data_list[i][0][2][0]
-        point4 = data_list[i][0][3][0]
-        point = [{'id': 1, 'x': point1[0], 'y': point1[1]},
-                 {'id': 2, 'x': point2[0], 'y': point2[1]},
-                 {'id': 3, 'x': point3[0], 'y': point3[1]},
-                 {'id': 4, 'x': point4[0], 'y': point4[1]},
-                 {'img': data_list[i][1]}
-                 ]
-        # data_list[i][1]
-        res_list.append(point)
+        if type(data_list[i][0]) != int:
+            point1 = data_list[i][0][0][0]
+            point2 = data_list[i][0][1][0]
+            point3 = data_list[i][0][2][0]
+            point4 = data_list[i][0][3][0]
+            point = [{'id': 1, 'x': point1[0], 'y': point1[1]},
+                     {'id': 2, 'x': point2[0], 'y': point2[1]},
+                     {'id': 3, 'x': point3[0], 'y': point3[1]},
+                     {'id': 4, 'x': point4[0], 'y': point4[1]},
+                     # {'img': data_list[i][1]}
+                     {'all_point': data_list[i][0]}
+                     ]
+            # data_list[i][1]
+            res_list.append(point)
+        else:
+            res_list.append([-1])
     return res_list
