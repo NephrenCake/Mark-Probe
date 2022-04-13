@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--img_path', help='path of the image file (.png or .jpg)',
                         default="test/test_source/lena.jpg")
     parser.add_argument('--model_path', help='path of the model file (.pth)',
-                        default="weight/latest_4-8_seem_the_balanced.pth")
+                        default="weight/infer.pth")
     parser.add_argument('--output_path', help='folder path of the encoded images',
                         default="out/")
     parser.add_argument('--user_id', help='the msg embedded in to the image',
