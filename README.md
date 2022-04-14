@@ -21,13 +21,13 @@
 3. 运行编码程序 
 
    ```bash
-   python ./tools/encode.py --img_path test/test_source/COCO_train2014_000000000009.jpg --model_path weight/latest-0.pth --output_path out/ --user_id 114514
+   python ./tools/encode.py --img_path test/test_source/COCO_train2014_000000000009.jpg --model_path weight/infer.pth --output_path out/ --user_id 114514
    ```
 
 4. 运行解码程序
 
    ```bash
-   python ./tools/decode.py --img_path out/encoded.jpg --model_path weight/latest-0.pth
+   python ./tools/decode.py --img_path out/encoded.jpg --model_path weight/infer.pth
    ```
 
 5. 运行检测并解码
