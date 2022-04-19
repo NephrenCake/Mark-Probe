@@ -17,7 +17,7 @@ def encoder(img: np.ndarray, info: str, model, bch, device) -> np.ndarray:
     
     img = convert_img_type(img).to(device)
 
-    encoded_img, res_img = encode(img=img, uid=info, model=model, bch=bch, device=device)
+    encoded_img, res_img = encode(img0=img, uid=info, model=model, bch=bch, device=device)
     
     encoded_img = tensor_2_cvImage(encoded_img)
     

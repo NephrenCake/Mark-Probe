@@ -16,6 +16,7 @@ def find_point(img, num=1):
     mask = paper_range(img)
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
+
     if num == 1:
         img_blank = np.zeros((height_img, width_img, 3), np.uint8)
         max_idx = utils.max_contour_idx(contours)
@@ -50,6 +51,12 @@ def find_point(img, num=1):
         point_list = []
         big_contour = utils.max_contour_order(contours, 2)
         for i in range(len(big_contour)):
+            area = cv2.contourArea(big_contour[i])
+            # if area < 400000:
+            #
+            #     point_list.append([-1])
+            #     continue
+
             mask_c = mask.copy()
             img_blank = np.zeros((height_img, width_img, 3), np.uint8)
             cv2.drawContours(img_blank, [big_contour[i]], -1, (255, 255, 255), -1)
@@ -57,7 +64,6 @@ def find_point(img, num=1):
             paper = cv2.add(img, 255 - img_blank)
 
             mask_merge = cv2.merge([mask_c, mask_c, mask_c])
-
 
             paper = cv2.add(paper, mask_merge)
             point = utils.img_find(paper)
@@ -72,7 +78,7 @@ def find_point(img, num=1):
 
                 point_list.append(point_with_img)
             else:
-                return -1
+                point_list.append([-1])
         return point_list
 
 # if __name__ == "__main__":

@@ -59,6 +59,9 @@ export default {
         extendInfo: null
       },
 
+      srcTimer: null,
+      dstTimer: null,
+
       rules: {
         id: [
           { required: true, message: '请填写 ID !', trigger: 'blur' }
@@ -99,6 +102,24 @@ export default {
         console.log(err);
       });
     },
+    // 设置跳帧计时器
+    initPlayerTimer(player) {
+      let timer = setInterval(() => {
+        if (player.buffered && player.buffered.length) {
+          // 获取当前 buffered 值
+          let end = player.buffered.end(0);
+          // 获取 buffered 与 currentTime 的差值
+          let diff = end - player.currentTime;
+          if (diff >= 1) { // 如果差值大于等于 1s，手动跳帧，这里可根据自身需求来定
+            // 单个视频用
+            player.currentTime = end;
+            player.currentTime = player.buffered.end(0);
+          }
+        }
+      }, 2000);
+
+      return timer;
+    },
     // 初始化播放器（务必有 return，否则因作用于问题无法赋值；下面的拉流和停止拉流同理）
     initPlayer(stream_url) {
       let player = this.$flv.createPlayer({
@@ -111,8 +132,9 @@ export default {
       },{
         enableStashBuffer: false,
         fixAudioTimestampGap: false,
+        autoCleanupSourceBuffer: true,
       });
-      
+
       return player;
     },
     // 拉流操作函数
@@ -140,6 +162,7 @@ export default {
       if (!this.srcOn) {
         try {
           this.playerO = this.startStreaming(this.playerO_url, 'srcV');
+          // this.srcTimer = this.initPlayerTimer(this.playerO);
           this.srcOn = true;
           this.$message({
             message: "源视频流拉取成功!",
@@ -157,6 +180,7 @@ export default {
       } else {
         try {
           this.playerO = this.stopStreaming(this.playerO);
+          // clearInterval(this.srcTimer);
           this.srcOn = false;
           this.$message({
             message: "源视频流停止成功!",
@@ -186,6 +210,7 @@ export default {
           });
 
           this.playerD = this.startStreaming(this.playerD_url, 'dstV');
+          this.dstTimer = this.initPlayerTimer(this.playerD, this.dstTimer);
           this.dstOn = true;
 
         } else if (data.code === 403) {
@@ -229,17 +254,18 @@ export default {
         });
 
         this.playerD = this.stopStreaming(this.playerD);
+        clearInterval(this.dstTimer);
         this.dstOn = false;
       }
     },
     // 拉流控制：二者
     streamControlAll() {
       if (!(this.srcOn && this.dstOn)) {
-        if (!this.srcOn) {
-          this.pullStreamSource();
-        }
         if (!this.dstOn) {
           this.pullStreamDst();
+        }
+        if (!this.srcOn) {
+          this.pullStreamSource();
         }
       } else {
         this.pullStreamSource();
@@ -268,6 +294,12 @@ export default {
     if (this.timer) {
       clearInterval(this.timer);
     }
+    if (this.srcTimer) {
+      clearInterval(this.srcTimer);
+    }
+    if (this.dstTimer) {
+      clearInterval(this.dstTimer);
+    }
   }
 };
 </script>
@@ -282,7 +314,7 @@ export default {
   margin-bottom: 10px;
 }
 .encoder-container {
-  height: 100%;
+  height: calc(100% - 73.9px);
 
   .video-card{
     text-align: center;

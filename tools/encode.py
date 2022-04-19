@@ -18,9 +18,9 @@ from tools.interface.predict import encode
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--img_path', help='path of the image file (.png or .jpg)',
-                        default="test/test_source/COCO_train2014_000000000009.jpg")
+                        default="test/test_source/lena.jpg")
     parser.add_argument('--model_path', help='path of the model file (.pth)',
-                        default="weight/latest-0.pth")
+                        default="weight/infer.pth")
     parser.add_argument('--output_path', help='folder path of the encoded images',
                         default="out/")
     parser.add_argument('--user_id', help='the msg embedded in to the image',
@@ -37,11 +37,12 @@ def main(args):
     bch = BCHHelper()
 
     # 调用 api
-    encoded_img, res_img = encode(img=img,
+    encoded_img, res_img = encode(img0=img,
                                   uid=args.user_id,
                                   model=encoder,
                                   bch=bch,
-                                  device=device)
+                                  device=device,
+                                  keep_size=False)
 
     check_dir(args.output_path)
     transforms.ToPILImage()(encoded_img).save(os.path.join(args.output_path, 'encoded.jpg'))

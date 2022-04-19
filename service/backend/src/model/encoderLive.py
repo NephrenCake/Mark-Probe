@@ -137,7 +137,7 @@ class Live(object):
                 #     frame = self.last_encoded_frame
                 
                 frame = convert_img_type(frame).to(self.device)
-                encoded_frame, res_frame = encode(img=frame, uid=self.uid, model=self.encoderModel, bch=self.bch, device=self.device)
+                encoded_frame, res_frame = encode(img0=frame, uid=self.uid, model=self.encoderModel, bch=self.bch, device=self.device)
                 encoded_frame = tensor_2_cvImage(encoded_frame)
                 
                 # 将 编码帧 放入队列
