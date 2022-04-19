@@ -13,6 +13,10 @@ from kornia.augmentation import RandomMixUp
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
 from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
+from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
+
+
+awl = AutomaticWeightedLoss(2)
 
 
 # 超分没必要了。md
@@ -69,10 +73,12 @@ def process_forward(Encoder,
     crop_msg_loss = nn_F.binary_cross_entropy(crop_msg_pred, msg)
     msg_loss = (photo_msg_loss + crop_msg_loss) / 2
 
-    if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
-        loss = msg_loss
-    else:
-        loss = img_loss + msg_loss
+    # if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
+    #     loss = msg_loss
+    # else:
+    #     # 使用不确定性加权loss
+    #     loss = img_loss+msg_loss
+    loss = awl(img_loss, msg_loss)
 
     # ------------------compute acc
     photo_bit_acc, photo_str_acc, photo_right_str_acc = get_msg_acc(msg, photo_msg_pred)
@@ -80,6 +86,7 @@ def process_forward(Encoder,
     bit_acc = (photo_bit_acc + crop_bit_acc) / 2
     str_acc = (photo_str_acc + crop_str_acc) / 2
     right_str_acc = (photo_right_str_acc + crop_right_str_acc) / 2
+
 
 
     vis_img = {"res_low": res.data, "encoded_img": encoded_img.data,
@@ -139,6 +146,7 @@ def train_one_epoch(Encoder,
         metric_result["loss"].backward()
         optimizer.step()
 
+
         # ------------------update
         for item in results:
             results[item] += metric_result[item].item()
@@ -150,7 +158,8 @@ def train_one_epoch(Encoder,
                 results[item] /= count
             cur_cost_time, pre_cost_time = compute_time(start, cur_iter, cfg.iter_per_epoch)
             # 更新 loss
-            cfg.loss_ascending(results['right_str_acc'], 0.75, 0.5, 0.5, 0.5)
+            if scales["loss_starter"] != 0:
+                cfg.loss_ascending(results['right_str_acc'], cfg.loss_limitation, 0.5, 0.5, 0.5)
 
             logging.info(f"epoch:[{epoch}/{cfg.max_epoch - 1}] iter:[{cur_iter}/{cfg.iter_per_epoch - 1}] "
                          f"train:{cur_cost_time}<{pre_cost_time} - "
@@ -161,6 +170,11 @@ def train_one_epoch(Encoder,
                          f"bit_acc:{round(results['bit_acc'], 4)} "
                          f"str_acc:{round(results['str_acc'], 2)} "
                          f"right_str_acc:{round(results['right_str_acc'], 2)}")
+            # if round(results["photo_right_str_acc"], 3) is 0.00:
+            #     print(round(results["photo_right_str_acc"], 3))
+            #     torchvision.utils.save_image(_["encoded_img"], 'alarm_encoded_img.jpg')
+            #     torchvision.utils.save_image(_["stn_img"], 'alarm_stn_img.jpg')
+            #     raise Exception("Photo_right_str_acc == 0 !!!")
 
             # 随时观察
 
@@ -175,14 +189,16 @@ def train_one_epoch(Encoder,
                                     global_step=epoch * cfg.iter_per_epoch + cur_iter)
             tb_writer.add_histogram("res_channel_2_histogram", _["res_low"][:, 2, ...],
                                     global_step=epoch * cfg.iter_per_epoch + cur_iter)
-            # for name, param in Decoder.state_dict().items():
-            #     if "stn.localization" in name:
-            #         tb_writer.add_histogram(tag=name+'_grad', values=param, global_step=epoch * cfg.iter_per_epoch + cur_iter)
+            for name, param in Decoder.state_dict().items():
+                if "stn" in name:
+                    tb_writer.add_histogram(tag=name, values=param, global_step=epoch * cfg.iter_per_epoch + cur_iter)
             for k, v in results.items():
                 tb_writer.add_scalars(f"data/{k}", {"train": v}, global_step=epoch * cfg.iter_per_epoch + cur_iter)
             for k, v in scales.items():
                 tb_writer.add_scalar(f"scale/{k}", v, global_step=epoch * cfg.iter_per_epoch + cur_iter)
-            tb_writer.add_scalar("learning_rate", optimizer.param_groups[0]["lr"],
+            tb_writer.add_scalar("encoder_learning_rate", optimizer.param_groups[0]["lr"],
+                                 global_step=epoch * cfg.iter_per_epoch + cur_iter)
+            tb_writer.add_scalar("decoder_learning_rate", optimizer.param_groups[1]["lr"],
                                  global_step=epoch * cfg.iter_per_epoch + cur_iter)
 
             count, results = make_null_metric_dict()

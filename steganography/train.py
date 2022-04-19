@@ -58,9 +58,12 @@ def main():
                                              decoder_type="conv")).to(cfg.device)
         lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
 
+
+
+
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
-        {'params': Encoder.parameters(),"weight_decay":cfg.weight_decay, "lr": cfg.lr_base*0.1},  # ,
+        {'params': Encoder.parameters(),"weight_decay": cfg.weight_decay, "lr": cfg.lr_base*0.1},  # ,
         {'params': Decoder.parameters()},
     ], lr=cfg.lr_base, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
     if cfg.use_warmup:
@@ -94,6 +97,13 @@ def main():
             eval(f"{model}.load_state_dict(net_state_dict)")
     else:
         logger.info("init weights.")
+
+
+    # 冻结stn层
+    # 在训练到后面的时候发现 stn会存在梯度爆炸 导致 六个参数都太大的情况
+    for na, pa in Decoder.named_parameters():
+        if "stn" in na:
+            pa.requires_grad = False
 
     best_loss = 2 ^ 16
     pre_photo_msg_loss = 2 ^ 16
