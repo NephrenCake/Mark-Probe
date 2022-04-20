@@ -9,19 +9,19 @@ import numpy as np
 import torch
 
 '''
-      HSV_RESUME: loss 基础权重不变 学习率 1e-4  不变  不启用学习率变换
-          loss 使用 自动调节？ 不使用自动调节
-          jpeg 30  不变
-          不启用erase  变
-          blur 上调 0.2 不变
-          原来就没用 clamp
-          bs 13
+  HSV_RESUME: loss 基础权重不变 学习率 1e-4  不变  不启用学习率变换
+      loss 使用 自动调节？ 不使用自动调节
+      jpeg 30  不变
+      不启用erase  变
+      blur 上调 0.2 不变
+      原来就没用 clamp
+      bs 13
 
-          比较 就取消了 hsv
-          寄！
-      BEST_PRETRAINED_FIND_TUNE:  “BEST_PRETRAINED_FIND_TUNE_2022-04-10-19-08-17”
-          这次先用pretrained 模型的stn参数 将stn冻结 试一试  perspective 上去之后照样爆炸
-      '''
+      比较 就取消了 hsv
+      寄！
+  BEST_PRETRAINED_FIND_TUNE:  “BEST_PRETRAINED_FIND_TUNE_2022-04-10-19-08-17”
+      这次先用pretrained 模型的stn参数 将stn冻结 试一试  perspective 上去之后照样爆炸
+'''
 
 
 class BaseConfig:
@@ -50,13 +50,12 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-
-
-        self.exp_name = "BEST_PRETRAINED_FIND_TUNE"  # 实验名
+        self.exp_name = "lyf"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
-        self.pretrained = r""  # 使用预训练权重  # "/root/src/project3/steganography/train_log/Remove_erase_Add_clamp_0.4max_Lpips_alex_No_hsv_2022-03-28-12-03-17/latest-2.pth"
-        self.resume = r"/root/src/project3/steganography/train_log/BEST_PRETRAINED_FIND_TUNE_2022-04-10-19-08-17/latest-7.pth"  # 继续中断的训练 /root/src/project3/steganography/train_log/Test_stn_Mix_Dataset_bs8_no_clamp_2022-04-01-10-06-33/latest-9.pth
+        self.pretrained = r""
+        # 使用预训练权重  # "/root/src/project3/steganography/train_log/Remove_erase_Add_clamp_0.4max_Lpips_alex_No_hsv_2022-03-28-12-03-17/latest-2.pth"
+        self.resume = r""  # 继续中断的训练 /root/src/project3/steganography/train_log/Test_stn_Mix_Dataset_bs8_no_clamp_2022-04-01-10-06-33/latest-9.pth
         self.load_models = ['Encoder', 'Decoder']
         self.img_set_list = {
             "/root/src/COCO2014/train2014": 0.25,
@@ -69,10 +68,10 @@ class TrainConfig(BaseConfig):
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
-        self.max_epoch = 40  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
+        self.max_epoch = 10  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 8  # 一个批次的图片数量 # batch_size 会有影响
+        self.batch_size = 4  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 8  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
@@ -100,57 +99,56 @@ class TrainConfig(BaseConfig):
         self.clamp_limit_max = 0
         self.clamp_limit_grow = (2, 5)
 
-        # (epochA, epochB) 代表 epochA -> epochB 的权重递增
         # transform scale
-        self.jpeg_trans_max = 25  # 这里表示压缩强度。而图像质量是   上调 <= 70
-        self.jpeg_trans_grow = (1, 1.5)
+        # (epochA, epochB) 代表 epochA -> epochB 的权重递增
+        self.perspective_trans_max = 0.1  # 透视变换
+        self.perspective_trans_grow = (1, 2)
+        self.angle_trans_max = 30  # 观察图片的视角，指与法线的夹角，入射角
+        self.angle_trans_grow = (1, 1.2)
+        self.cut_trans_max = 0.5  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
+        self.cut_trans_grow = (1, 1.2)
+
+        self.jpeg_trans_max = 75  # 这里表示压缩强度。而图像质量是   上调 <= 70
+        self.jpeg_trans_grow = None
         # self.motion_blur_max = 0  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
         # self.motion_blur_grow = (1.5, 2)
-        self.blur_trans_max = 0.2
-        self.blur_trans_grow = (1, 1.5)
-
-        self.perspective_trans_max = 0.1  # 透视变换
-        self.perspective_trans_grow = (4.5, 5)
-        self.angle_trans_max = 30  # 观察图片的视角，指与法线的夹角，入射角
-        self.angle_trans_grow = (2.4, 3)
-        self.cut_trans_max = 0.5  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
-        self.cut_trans_grow = (2.4, 3)
+        self.blur_trans_max = 0.4
+        self.blur_trans_grow = None
 
         self.reflection_trans_max = 0.00  # 反光的概率
-        self.reflection_trans_grow = (0.2, 0.3)
-        self.grayscale_trans_max = 0.05
-        self.grayscale_trans_grow = (0.2, 0.3)
-        self.erasing_trans_max = 0.0  # 随机遮挡
-        self.erasing_trans_grow = (0.2, 0.3)
-
+        self.reflection_trans_grow = (0.3, 0.4)
+        self.grayscale_trans_max = 0.1
+        self.grayscale_trans_grow = (0.3, 0.4)
+        self.erasing_trans_max = 0  # 随机遮挡
+        self.erasing_trans_grow = (0.3, 0.4)
         self.noise_trans_max = 0.1
-        self.noise_trans_grow = (0.2, 0.3)
+        self.noise_trans_grow = (0.3, 0.4)
 
         self.brightness_trans_max = 0.3  # 亮度变换
-        self.brightness_trans_grow = (0.1, 0.2)
+        self.brightness_trans_grow = (0.2, 0.3)
         self.contrast_trans_max = 0.5  # 对比度变换
-        self.contrast_trans_grow = (0.1, 0.2)
+        self.contrast_trans_grow = (0.2, 0.3)
         self.saturation_trans_max = 1  # 饱和度变换
-        self.saturation_trans_grow = (0.1, 0.2)
+        self.saturation_trans_grow = (0.2, 0.3)
         self.hue_trans_max = 0.3  # 色相变换
-        self.hue_trans_grow = (0.1, 0.2)
+        self.hue_trans_grow = (0.2, 0.3)
 
         # loss scale
         self.loss_limitation = 0.75
         self.loss_starter_max = 0
         self.loss_starter_grow = (2, 2)
         # loss weight 会常常更新
-        self.rgb_loss_max = 20
+        self.rgb_loss_max = 1
         self.rgb_loss_grow = None
         self.hsv_loss_max = 0
         self.hsv_loss_grow = None
-        self.yuv_loss_max = 20
+        self.yuv_loss_max = 1
         self.yuv_loss_grow = None
-        self.lpips_loss_max = 20
-        self.lpips_loss_grow = (0.5, 1)
+        self.lpips_loss_max = 1
+        self.lpips_loss_grow = None
         # other
         self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
-        self.stn_loss_grow = (4, 4)  # 不能施
+        self.stn_loss_grow = (0.8, 1)  # 不能施
 
         # ============== runtime
         self.iter_per_epoch = None

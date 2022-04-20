@@ -73,12 +73,11 @@ def process_forward(Encoder,
     crop_msg_loss = nn_F.binary_cross_entropy(crop_msg_pred, msg)
     msg_loss = (photo_msg_loss + crop_msg_loss) / 2
 
-    # if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
-    #     loss = msg_loss
-    # else:
-    #     # 使用不确定性加权loss
-    #     loss = img_loss+msg_loss
-    loss = awl(img_loss, msg_loss)
+    if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
+        loss = msg_loss
+    else:
+        # 使用不确定性加权loss
+        loss = awl(img_loss, msg_loss)
 
     # ------------------compute acc
     photo_bit_acc, photo_str_acc, photo_right_str_acc = get_msg_acc(msg, photo_msg_pred)
@@ -134,6 +133,18 @@ def train_one_epoch(Encoder,
     start = time.time()
     for cur_iter, data in enumerate(data_loader):
         scales = cfg.get_cur_scales(cur_iter=cur_iter, cur_epoch=epoch)
+        # ------------------freeze
+        # 每两次iter训练一次decoder，msg_loss依然会作用于encoder
+        if cur_iter % 2 != 0:
+            for p in Decoder.parameters():
+                p.requires_grad = False
+        else:
+            for p in Decoder.parameters():
+                p.requires_grad = True
+        # ------------------可能的手操stn卷积层权重，但不建议
+        # for i in Decoder.stn.localization.parameters():
+        #     i.data = torch.clamp(i, -0.25, 0.25)
+
         # ------------------forward & loss
         metric_result, _ = process_forward(Encoder,
                                            Decoder,
@@ -206,10 +217,6 @@ def train_one_epoch(Encoder,
         # ------------------更新lr
         optimizer.zero_grad()
         scheduler.step()
-
-        # ------------------可能的手操stn卷积层权重，但不建议
-        # for i in Decoder.stn.localization.parameters():
-        #     i.data = torch.clamp(i, -0.25, 0.25)
 
     return
 
