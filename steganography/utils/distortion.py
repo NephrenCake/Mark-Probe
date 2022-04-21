@@ -18,6 +18,7 @@ def jpeg_trans(img, p):
     return F.resize(DiffJPEG(height=img.shape[-2], width=img.shape[-1], differentiable=True,
                              quality=random.randint(100 - int(p), 99)).to(img.device).eval()(img), [h, w])
 
+
 def rand_blur(img, p):
     if p > random.uniform(0, 1):
         return img
@@ -85,10 +86,10 @@ def non_spatial_trans(img, scales):
         # fit the size of JPEG_trans asked
         # img = jpeg_trans(img, scales["jpeg_trans"])
         img = DiffJPEG(height=img.shape[-2], width=img.shape[-1], differentiable=True,
-                             quality=random.randint(100 - int(scales["jpeg_trans"]), 99)).to(img.device).eval()(img)
+                       quality=random.randint(100 - int(scales["jpeg_trans"]), 99)).to(img.device).eval()(img)
     # 灰度变换
     if scales["grayscale_trans"] != 0:
-        img = transforms.RandomGrayscale(p=scales["grayscale_trans"])(img) #.to(img.device)
+        img = transforms.RandomGrayscale(p=scales["grayscale_trans"])(img)
 
     return img
 
@@ -100,8 +101,6 @@ def rand_erase(img, _cover_rate, block_size=20):
     block_size: 遮挡块的大小 建议 0~20 pixel 规定遮挡块 是正方形
     首先将图片切分为 block_size 大小的单元格 随机填充单元格
     """
-    # 在这里需要对原图进行clone操作 为啥以前不用？ md 我不理解啊！！
-    # more than one element of the written-to tensor refers to a single memory location. Please clone() the tensor before performing the operation.
     _img = img.clone()
     cover_rate = random.uniform(0, _cover_rate)
     b, c, h, w = _img.shape

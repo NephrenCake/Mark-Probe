@@ -9,46 +9,40 @@ import torch.nn.functional as nn_F
 import torchvision.transforms.functional as transforms_F
 import logging
 import copy
-from kornia.augmentation import RandomMixUp
 from kornia.color import rgb_to_hsv, rgb_to_yuv
 from torchvision.utils import make_grid
 from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
-from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
+
+use_auto_matric = True
+if use_auto_matric:
+    from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
+
+    awl = AutomaticWeightedLoss(2)
 
 
-awl = AutomaticWeightedLoss(2)
-
-
-# 超分没必要了。md
 def process_forward(Encoder,
                     Decoder,
                     lpips,
                     data,
                     scales,
                     cfg):
-    img = data["img"].to(cfg.device)  # 传进来的是需要超分图  origin image
+    img = data["img"].to(cfg.device)
     msg = data["msg"].to(cfg.device)
     mask = data["mask"].to(cfg.device)
 
-    # img_low = transforms_F.resize(img, cfg.img_size)  # simulate the process of resize
     # ------------------forward
     # Encoder
-    # limit = 0.5 - scales['clamp_limit']
-    # res = torch.clamp(Encoder({"img": img, "msg": msg}), -limit, limit)  # res_image (448,448)  #the encoder_module start forward
     res = Encoder({"img": img, "msg": msg})
-    # res_clamp = torch.clamp(res, -limit, limit)
-    # res_high = transforms_F.resize(res_low, img.shape[-2:])  # res_low  -> resize to original size
+    # limit = 0.5 - scales['clamp_limit']
+    # res = torch.clamp(res, -limit, limit)
     encoded_img = torch.clamp(img + res, 0., 1.)
-    # del res_high
 
     # transform
-    # trans_img = transforms_F.resize(encoded_img, cfg.img_size)
     # ----------------------非空间变换
     trans_img = non_spatial_trans(encoded_img, scales)
-    # 一个分支实现整体识别的变换，一个分支实现局部识别的变换   the logic of distortion must be fixed especially jpeg_trans
+    # 一个分支实现整体识别的变换，一个分支实现局部识别的变换
     photo_img = make_trans_for_photo(trans_img, scales)
     crop_img = make_trans_for_crop(trans_img, scales)
-    # del trans_img
 
     # Decoder  for the BalanceDataParallel Decoder is safe
     photo_msg_pred, stn_img = Decoder(photo_img, use_stn=scales['stn_loss'] == 1)
@@ -77,7 +71,10 @@ def process_forward(Encoder,
         loss = msg_loss
     else:
         # 使用不确定性加权loss
-        loss = awl(img_loss, msg_loss)
+        if use_auto_matric:
+            loss = awl(img_loss, msg_loss)
+        else:
+            loss = img_loss + msg_loss
 
     # ------------------compute acc
     photo_bit_acc, photo_str_acc, photo_right_str_acc = get_msg_acc(msg, photo_msg_pred)
@@ -85,8 +82,6 @@ def process_forward(Encoder,
     bit_acc = (photo_bit_acc + crop_bit_acc) / 2
     str_acc = (photo_str_acc + crop_str_acc) / 2
     right_str_acc = (photo_right_str_acc + crop_right_str_acc) / 2
-
-
 
     vis_img = {"res_low": res.data, "encoded_img": encoded_img.data,
                "photo_img": photo_img.data, "crop_img": crop_img.data,
@@ -134,34 +129,44 @@ def train_one_epoch(Encoder,
     for cur_iter, data in enumerate(data_loader):
         scales = cfg.get_cur_scales(cur_iter=cur_iter, cur_epoch=epoch)
         # ------------------freeze
-        # 每两次iter训练一次decoder，msg_loss依然会作用于encoder
-        if cur_iter % 2 != 0:
-            for p in Decoder.parameters():
-                p.requires_grad = False
-        else:
-            for p in Decoder.parameters():
-                p.requires_grad = True
-        # ------------------可能的手操stn卷积层权重，但不建议
-        # for i in Decoder.stn.localization.parameters():
-        #     i.data = torch.clamp(i, -0.25, 0.25)
+        # 从第0个epoch结束之后，每2次iter训练一次decoder，msg_loss依然会作用于encoder
+        # 从第0个epoch结束之后，每3次iter训练一次stn，msg_loss依然会作用于encoder
+        if epoch != 0:
+            for p in Decoder.decoder.parameters():
+                p.requires_grad = False if cur_iter % 2 != 0 else True
+            # ------------------可能的手操stn卷积层权重，但不建议
+            for p in Decoder.stn.localization.parameters():
+                if cur_iter % 3 != 0:
+                    p.requires_grad = False
+                else:
+                    p.requires_grad = True
+                    p.data = torch.clamp(p, -0.25, 0.25)
 
         # ------------------forward & loss
-        metric_result, _ = process_forward(Encoder,
-                                           Decoder,
-                                           lpips,
-                                           data,
-                                           scales,
-                                           cfg)
+        metric_result, vis_img = process_forward(Encoder,
+                                                 Decoder,
+                                                 lpips,
+                                                 data,
+                                                 scales,
+                                                 cfg)
 
         # ------------------backward
         metric_result["loss"].backward()
         optimizer.step()
 
-
         # ------------------update
         for item in results:
             results[item] += metric_result[item].item()
         count += 1
+
+        # ------------------保存当前图像
+        if cur_iter % int(cfg.iter_per_epoch / 10) == 0:
+            for image_tag in vis_img.keys():
+                image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
+                tb_writer.add_image(image_tag, image, global_step=(epoch + 1) * cfg.iter_per_epoch)
+            # 添加res的histogram 添加 encoded_img 分布
+            # if image_tag in ["res_low"]:  # ,"photo_img",
+            #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
 
         # ------------------打印当前iter的loss
         if cur_iter % cfg.log_interval == 0 and cur_iter != 0 or cur_iter == cfg.iter_per_epoch - 1:
@@ -188,17 +193,16 @@ def train_one_epoch(Encoder,
             #     raise Exception("Photo_right_str_acc == 0 !!!")
 
             # 随时观察
-
-            torchvision.utils.save_image(_["encoded_img"], 'encoded_img.jpg')
-            torchvision.utils.save_image(_["stn_img"], 'stn_img.jpg')
-            # torchvision.utils.save_image(_["res_low"], 'res_img.jpg')
+            torchvision.utils.save_image(vis_img["encoded_img"], 'encoded_img.jpg')
+            torchvision.utils.save_image(vis_img["stn_img"], 'stn_img.jpg')
+            torchvision.utils.save_image(vis_img["res_low"], 'res_img.jpg')
 
             # tensorboard
-            tb_writer.add_histogram("res_channel_0_histogram", _["res_low"][:, 0, ...],
+            tb_writer.add_histogram("res_channel_0_histogram", vis_img["res_low"][:, 0, ...],
                                     global_step=epoch * cfg.iter_per_epoch + cur_iter)
-            tb_writer.add_histogram("res_channel_1_histogram", _["res_low"][:, 1, ...],
+            tb_writer.add_histogram("res_channel_1_histogram", vis_img["res_low"][:, 1, ...],
                                     global_step=epoch * cfg.iter_per_epoch + cur_iter)
-            tb_writer.add_histogram("res_channel_2_histogram", _["res_low"][:, 2, ...],
+            tb_writer.add_histogram("res_channel_2_histogram", vis_img["res_low"][:, 2, ...],
                                     global_step=epoch * cfg.iter_per_epoch + cur_iter)
             for name, param in Decoder.state_dict().items():
                 if "stn" in name:
@@ -233,7 +237,6 @@ def evaluate_one_epoch(Encoder,
     Decoder.eval()
 
     count, result = make_null_metric_dict()
-    vis_img = {}
     iters = len(data_loader)
     for cur_iter, data in enumerate(data_loader):
         scales = cfg.get_cur_scales(cur_iter=cfg.iter_per_epoch, cur_epoch=epoch)
@@ -251,14 +254,6 @@ def evaluate_one_epoch(Encoder,
 
     for item in result:
         result[item] /= iters
-
-    # tensorboard
-    for image_tag in vis_img.keys():
-        image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
-        tb_writer.add_image(image_tag, image, global_step=(epoch + 1) * cfg.iter_per_epoch)
-        # 添加res的histogram 添加 encoded_img 分布
-        # if image_tag in ["res_low"]:  # ,"photo_img",
-        #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
 
     return result
 

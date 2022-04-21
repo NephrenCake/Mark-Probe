@@ -8,25 +8,10 @@ import numpy as np
 
 import torch
 
-'''
-  HSV_RESUME: loss 基础权重不变 学习率 1e-4  不变  不启用学习率变换
-      loss 使用 自动调节？ 不使用自动调节
-      jpeg 30  不变
-      不启用erase  变
-      blur 上调 0.2 不变
-      原来就没用 clamp
-      bs 13
-
-      比较 就取消了 hsv
-      寄！
-  BEST_PRETRAINED_FIND_TUNE:  “BEST_PRETRAINED_FIND_TUNE_2022-04-10-19-08-17”
-      这次先用pretrained 模型的stn参数 将stn冻结 试一试  perspective 上去之后照样爆炸
-'''
-
 
 class BaseConfig:
     def __init__(self):
-        # basic config dasibuyongcpu
+        # basic config
         self.device = "cuda"
         self.seed = 2022
 
@@ -50,7 +35,7 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "lyf"  # 实验名
+        self.exp_name = "分轮次训练decoder，jpeg、lpips直接max"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = r""
@@ -71,7 +56,7 @@ class TrainConfig(BaseConfig):
         self.max_epoch = 10  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
         self.warm_up_epoch = 1  # 完成预热的轮次
         self.use_warmup = False
-        self.batch_size = 4  # 一个批次的图片数量 # batch_size 会有影响
+        self.batch_size = 8  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 8  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
@@ -121,7 +106,7 @@ class TrainConfig(BaseConfig):
         self.grayscale_trans_grow = (0.3, 0.4)
         self.erasing_trans_max = 0  # 随机遮挡
         self.erasing_trans_grow = (0.3, 0.4)
-        self.noise_trans_max = 0.1
+        self.noise_trans_max = 0.02
         self.noise_trans_grow = (0.3, 0.4)
 
         self.brightness_trans_max = 0.3  # 亮度变换

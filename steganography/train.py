@@ -126,7 +126,6 @@ def main():
                                         cfg=cfg)
 
         # tensorboard
-
         for k, v in val_result.items():
             tb_writer.add_scalars(f"data/{k}", {"val": v}, global_step=(epoch + 1) * cfg.iter_per_epoch)
         logger.info(f"validation: current epoch:[{epoch}/{cfg.max_epoch - 1}] - "
