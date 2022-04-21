@@ -1,19 +1,22 @@
 # -- coding: utf-8 --
 import time
-import warnings
-
-warnings.filterwarnings("ignore")
-import torch
-import torchvision
-import torch.nn.functional as nn_F
-import torchvision.transforms.functional as transforms_F
 import logging
 import copy
+import torch
+import torchvision
+
+import torch.nn.functional as nn_F
+import torchvision.transforms.functional as transforms_F
 from kornia.color import rgb_to_hsv, rgb_to_yuv
+
 from torchvision.utils import make_grid
 from steganography.utils.distortion import make_trans_for_photo, make_trans_for_crop, non_spatial_trans
 
-use_auto_matric = True
+import warnings
+
+warnings.filterwarnings("ignore")
+
+use_auto_matric = False
 if use_auto_matric:
     from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
 
@@ -132,10 +135,10 @@ def train_one_epoch(Encoder,
         if epoch != 0:
             for n, p in Decoder.named_parameters():
                 if "stn" in n:
-                    # 从第0个epoch结束之后，每3次iter训练一次stn，msg_loss依然会作用于encoder(也可以尝试只训练卷积层)
-                    p.requires_grad = False if cur_iter % 3 != 0 else True
+                    # 从第0个epoch结束之后，每4次iter训练一次stn，msg_loss依然会作用于encoder(也可以尝试只训练卷积层)
+                    p.requires_grad = False if cur_iter % 4 != 0 else True
                     if "localization" in n:
-                        # 可能的手操stn卷积层权重，但不建议
+                        # 手操stn卷积层权重，虽然并不建议
                         p.data = torch.clamp(p, -0.25, 0.25)
                 elif "decoder" in n:
                     # 从第0个epoch结束之后，每2次iter训练一次decoder，msg_loss依然会作用于encoder
@@ -162,7 +165,7 @@ def train_one_epoch(Encoder,
         if cur_iter % int(cfg.iter_per_epoch / 10) == 0:
             for image_tag in vis_img.keys():
                 image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
-                tb_writer.add_image(image_tag, image, global_step=(epoch + 1) * cfg.iter_per_epoch)
+                tb_writer.add_image(image_tag, image, global_step=cur_iter)
             # 添加res的histogram 添加 encoded_img 分布
             # if image_tag in ["res_low"]:  # ,"photo_img",
             #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
@@ -190,11 +193,6 @@ def train_one_epoch(Encoder,
             #     torchvision.utils.save_image(_["encoded_img"], 'alarm_encoded_img.jpg')
             #     torchvision.utils.save_image(_["stn_img"], 'alarm_stn_img.jpg')
             #     raise Exception("Photo_right_str_acc == 0 !!!")
-
-            # 随时观察
-            torchvision.utils.save_image(vis_img["encoded_img"], 'encoded_img.jpg')
-            torchvision.utils.save_image(vis_img["stn_img"], 'stn_img.jpg')
-            torchvision.utils.save_image(vis_img["res_low"], 'res_img.jpg')
 
             # tensorboard
             tb_writer.add_histogram("res_channel_0_histogram", vis_img["res_low"][:, 0, ...],
