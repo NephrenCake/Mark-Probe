@@ -65,6 +65,9 @@ def test_decoder_model():
     msg_loss.backward()
     print(sum(p.numel() for p in net.parameters()))
 
+    for n, p in net.named_parameters():
+        print(n)
+
 
 def test_lpips():
     img_path = "test_source/COCO_val2014_000000005037.jpg"

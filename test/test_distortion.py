@@ -13,7 +13,7 @@ from steganography.utils.distortion import rand_crop
 from kornia.enhance import normalize_min_max, AdjustGamma
 from kornia.filters import laplacian
 
-img_path = "D:\learning\pythonProjects\HiddenWatermark1\\test\\test_source\COCO_test2014_000000000001.jpg"
+img_path = "test_source\COCO_train2014_000000000009.jpg"
 img_size = (448, 448)
 msg_size = 96
 scale = {

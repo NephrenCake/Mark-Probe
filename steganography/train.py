@@ -96,12 +96,6 @@ def main():
     else:
         logger.info("init weights.")
 
-    # 冻结stn层
-    # 在训练到后面的时候发现 stn会存在梯度爆炸 导致 六个参数都太大的情况
-    for na, pa in Decoder.named_parameters():
-        if "stn" in na:
-            pa.requires_grad = False
-
     best_loss = 2 ^ 16
     pre_photo_msg_loss = 2 ^ 16
     pre_img_loss = 2 ^ 16

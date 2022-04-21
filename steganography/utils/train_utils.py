@@ -129,18 +129,17 @@ def train_one_epoch(Encoder,
     for cur_iter, data in enumerate(data_loader):
         scales = cfg.get_cur_scales(cur_iter=cur_iter, cur_epoch=epoch)
         # ------------------freeze
-        # 从第0个epoch结束之后，每2次iter训练一次decoder，msg_loss依然会作用于encoder
-        # 从第0个epoch结束之后，每3次iter训练一次stn，msg_loss依然会作用于encoder
         if epoch != 0:
-            for p in Decoder.decoder.parameters():
-                p.requires_grad = False if cur_iter % 2 != 0 else True
-            # ------------------可能的手操stn卷积层权重，但不建议
-            for p in Decoder.stn.localization.parameters():
-                if cur_iter % 3 != 0:
-                    p.requires_grad = False
-                else:
-                    p.requires_grad = True
-                    p.data = torch.clamp(p, -0.25, 0.25)
+            for n, p in Decoder.named_parameters():
+                if "stn" in n:
+                    # 从第0个epoch结束之后，每3次iter训练一次stn，msg_loss依然会作用于encoder(也可以尝试只训练卷积层)
+                    p.requires_grad = False if cur_iter % 3 != 0 else True
+                    if "localization" in n:
+                        # 可能的手操stn卷积层权重，但不建议
+                        p.data = torch.clamp(p, -0.25, 0.25)
+                elif "decoder" in n:
+                    # 从第0个epoch结束之后，每2次iter训练一次decoder，msg_loss依然会作用于encoder
+                    p.requires_grad = False if cur_iter % 2 != 0 else True
 
         # ------------------forward & loss
         metric_result, vis_img = process_forward(Encoder,
