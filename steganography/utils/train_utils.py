@@ -131,18 +131,22 @@ def train_one_epoch(Encoder,
     start = time.time()
     for cur_iter, data in enumerate(data_loader):
         scales = cfg.get_cur_scales(cur_iter=cur_iter, cur_epoch=epoch)
+        global_iter = cfg.get_global_iter(cur_epoch=epoch, cur_iter=cur_iter)
         # ------------------freeze
         if epoch != 0:
+            train_encoder = cur_iter % 2 != 0
             for n, p in Decoder.named_parameters():
                 if "stn" in n:
                     # 从第0个epoch结束之后，每4次iter训练一次stn，msg_loss依然会作用于encoder(也可以尝试只训练卷积层)
-                    p.requires_grad = False if cur_iter % 4 != 0 else True
+                    p.requires_grad = False if train_encoder else True
                     if "localization" in n:
                         # 手操stn卷积层权重，虽然并不建议
                         p.data = torch.clamp(p, -0.25, 0.25)
                 elif "decoder" in n:
                     # 从第0个epoch结束之后，每2次iter训练一次decoder，msg_loss依然会作用于encoder
-                    p.requires_grad = False if cur_iter % 2 != 0 else True
+                    p.requires_grad = False if train_encoder else True
+            for n, p in Encoder.named_parameters():
+                p.requires_grad = True if train_encoder else False
 
         # ------------------forward & loss
         metric_result, vis_img = process_forward(Encoder,
@@ -165,7 +169,7 @@ def train_one_epoch(Encoder,
         if cur_iter % int(cfg.iter_per_epoch / 10) == 0:
             for image_tag in vis_img.keys():
                 image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
-                tb_writer.add_image(image_tag, image, global_step=cur_iter)
+                tb_writer.add_image(image_tag, image, global_step=global_iter)
             # 添加res的histogram 添加 encoded_img 分布
             # if image_tag in ["res_low"]:  # ,"photo_img",
             #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
@@ -196,22 +200,22 @@ def train_one_epoch(Encoder,
 
             # tensorboard
             tb_writer.add_histogram("res_channel_0_histogram", vis_img["res_low"][:, 0, ...],
-                                    global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                                    global_step=global_iter)
             tb_writer.add_histogram("res_channel_1_histogram", vis_img["res_low"][:, 1, ...],
-                                    global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                                    global_step=global_iter)
             tb_writer.add_histogram("res_channel_2_histogram", vis_img["res_low"][:, 2, ...],
-                                    global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                                    global_step=global_iter)
             for name, param in Decoder.state_dict().items():
                 if "stn" in name:
-                    tb_writer.add_histogram(tag=name, values=param, global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                    tb_writer.add_histogram(tag=name, values=param, global_step=global_iter)
             for k, v in results.items():
-                tb_writer.add_scalars(f"data/{k}", {"train": v}, global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                tb_writer.add_scalars(f"data/{k}", {"train": v}, global_step=global_iter)
             for k, v in scales.items():
-                tb_writer.add_scalar(f"scale/{k}", v, global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                tb_writer.add_scalar(f"scale/{k}", v, global_step=global_iter)
             tb_writer.add_scalar("encoder_learning_rate", optimizer.param_groups[0]["lr"],
-                                 global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                                 global_step=global_iter)
             tb_writer.add_scalar("decoder_learning_rate", optimizer.param_groups[1]["lr"],
-                                 global_step=epoch * cfg.iter_per_epoch + cur_iter)
+                                 global_step=global_iter)
 
             count, results = make_null_metric_dict()
 

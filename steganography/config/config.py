@@ -35,7 +35,7 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "分轮次训练decoder，jpeg、lpips直接max"  # 实验名
+        self.exp_name = "cos学习率1e-6，encoderdecoder轮流训练，色彩抖动延长"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = r""
@@ -43,27 +43,23 @@ class TrainConfig(BaseConfig):
         self.resume = r""  # 继续中断的训练 /root/src/project3/steganography/train_log/Test_stn_Mix_Dataset_bs8_no_clamp_2022-04-01-10-06-33/latest-9.pth
         self.load_models = ['Encoder', 'Decoder']
         self.img_set_list = {
-            "/root/src/COCO2014/train2014": 0.25,
-            "/root/src/COCO2014/val2014": 0.25,
-            "/root/src/COCO2014/test2014": 0.25,
-            # 新数据集训练......
-            "/root/src/DataSet/publaynet/train": 0.125,
-            # "D:\learning\COCOTrain+Val\\val2014":0.001
+            "D:\服务外包大赛_project\COCo\\train2014\\train2014\\train2014": 1,
+            "D:\服务外包大赛_project\COCo\\val2014\\val2014\\val2014\\val2014": 1,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
 
         self.max_epoch = 10  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
-        self.warm_up_epoch = 1  # 完成预热的轮次
-        self.use_warmup = False
         self.batch_size = 8  # 一个批次的图片数量 # batch_size 会有影响
         self.num_workers = 8  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
         self.weight_decay = 0
-        self.lr_base = 0.0001  # 基础学习率
-        self.lr_max = 5  # 最高学习率倍率
-        self.lr_min = 1  # 最低学习率倍率
+        self.lr_base = 1e-5  # 基础学习率
+        self.lr_max = 1  # 最高学习率倍率
+        self.lr_min = 0.1  # 最低学习率倍率
+        self.warm_up_epoch = 0  # 完成预热的轮次
+        self.use_warmup = True
         self.lr_for_encoder = lambda e: 1 if e // self.iter_per_epoch >= 3 else 1
         self.lr_for_decoder = lambda e: 1 if e // self.iter_per_epoch >= 3 else 1
 
@@ -86,37 +82,37 @@ class TrainConfig(BaseConfig):
 
         # transform scale
         # (epochA, epochB) 代表 epochA -> epochB 的权重递增
-        self.perspective_trans_max = 0.1  # 透视变换
-        self.perspective_trans_grow = (1, 2)
+        self.perspective_trans_max = 0.05  # 透视变换
+        self.perspective_trans_grow = (2, 5)
         self.angle_trans_max = 30  # 观察图片的视角，指与法线的夹角，入射角
-        self.angle_trans_grow = (1, 1.2)
+        self.angle_trans_grow = (1, 1.8)
         self.cut_trans_max = 0.5  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
-        self.cut_trans_grow = (1, 1.2)
+        self.cut_trans_grow = (1, 1.8)
 
         self.jpeg_trans_max = 75  # 这里表示压缩强度。而图像质量是   上调 <= 70
-        self.jpeg_trans_grow = None
+        self.jpeg_trans_grow = (0, 0.1)
         # self.motion_blur_max = 0  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
         # self.motion_blur_grow = (1.5, 2)
         self.blur_trans_max = 0.4
-        self.blur_trans_grow = None
+        self.blur_trans_grow = (0, 0.1)
 
         self.reflection_trans_max = 0.00  # 反光的概率
-        self.reflection_trans_grow = (0.3, 0.4)
+        self.reflection_trans_grow = (0.6, 0.9)
         self.grayscale_trans_max = 0.1
-        self.grayscale_trans_grow = (0.3, 0.4)
-        self.erasing_trans_max = 0  # 随机遮挡
-        self.erasing_trans_grow = (0.3, 0.4)
+        self.grayscale_trans_grow = (0.6, 0.9)
+        self.erasing_trans_max = 0.1  # 随机遮挡
+        self.erasing_trans_grow = (0.6, 0.9)
         self.noise_trans_max = 0.02
-        self.noise_trans_grow = (0.3, 0.4)
+        self.noise_trans_grow = (0.6, 0.9)
 
-        self.brightness_trans_max = 0.3  # 亮度变换
-        self.brightness_trans_grow = (0.2, 0.3)
-        self.contrast_trans_max = 0.5  # 对比度变换
-        self.contrast_trans_grow = (0.2, 0.3)
-        self.saturation_trans_max = 1  # 饱和度变换
-        self.saturation_trans_grow = (0.2, 0.3)
-        self.hue_trans_max = 0.3  # 色相变换
-        self.hue_trans_grow = (0.2, 0.3)
+        self.brightness_trans_max = 0.2  # 0.3  # 亮度变换
+        self.brightness_trans_grow = (0.3, 0.9)
+        self.contrast_trans_max = 0.2  # 0.5  # 对比度变换
+        self.contrast_trans_grow = (0.3, 0.9)
+        self.saturation_trans_max = 0.5  # 1  # 饱和度变换
+        self.saturation_trans_grow = (0.3, 0.9)
+        self.hue_trans_max = 0.1  # 色相变换
+        self.hue_trans_grow = (0.3, 0.9)
 
         # loss scale
         self.loss_limitation = 0.75
@@ -130,10 +126,10 @@ class TrainConfig(BaseConfig):
         self.yuv_loss_max = 1
         self.yuv_loss_grow = None
         self.lpips_loss_max = 1
-        self.lpips_loss_grow = None
+        self.lpips_loss_grow = (0.1, 0.5)
         # other
         self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
-        self.stn_loss_grow = (0.8, 1)  # 不能施
+        self.stn_loss_grow = (1.8, 1.8)
 
         # ============== runtime
         self.iter_per_epoch = None
@@ -200,6 +196,9 @@ class TrainConfig(BaseConfig):
             self.rgb_loss_max += rgb_grow_step
             self.yuv_loss_max += yuv_grow_step
             self.lpips_loss_max += lpips_grow_step
+
+    def get_global_iter(self, cur_epoch, cur_iter):
+        return cur_epoch * self.iter_per_epoch + cur_iter
 
 
 def _check_dir(path: str):
