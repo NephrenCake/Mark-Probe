@@ -183,6 +183,9 @@ def make_trans_for_photo(img, scale):
     #     img = rand_erase(img, scale['erasing_trans'], block_size=random.randint(10, 30))
     # 透视变换
     if scale['perspective_trans'] != 0:
-        startpoints, endpoints = get_perspective_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])
+        # startpoints, endpoints = get_perspective_params(img.shape[-1], img.shape[-2], scale["perspective_trans"])
+        startpoints, endpoints = transforms.RandomPerspective.get_params(img.shape[-1],
+                                                                         img.shape[-2],
+                                                                         scale["perspective_trans"])
         img = F.perspective(img, startpoints, endpoints)
     return img

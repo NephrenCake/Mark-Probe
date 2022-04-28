@@ -1,12 +1,14 @@
 import os
 import sys
 
+from kornia.enhance import normalize_min_max, AdjustGamma
+from kornia.filters import laplacian
+
 sys.path.append(os.path.dirname(__file__) + os.sep + '../')
 
 import torch
 import torchvision
 import torch.nn.functional as F
-from lpips import LPIPS
 from torchvision.transforms import transforms
 from PIL import Image
 
@@ -70,7 +72,8 @@ def test_decoder_model():
 
 
 def test_lpips():
-    img_path = "test_source/COCO_val2014_000000005037.jpg"
+    from lpips import LPIPS
+    img_path = "test_source/lena.jpg"
     encoded_img_path = "../out/encoded.jpg"
     img = transforms.Compose([
         torchvision.transforms.Resize((448, 448)),
@@ -85,9 +88,36 @@ def test_lpips():
     lpips_loss = lpips_module(img, encoded_img).mean()
     print(lpips_loss)
 
+    from piq import PieAPP
+
+    msid_metric = PieAPP()
+    msid = msid_metric(encoded_img, img)
+    print(msid)
+
+    from piq import DISTS
+
+    msid_metric = DISTS()
+    msid = msid_metric(encoded_img, img)
+    print(msid)
+
+
+def test_mask():
+    img_path = "test_source/COCO_val2014_000000005037.jpg"
+    img = transforms.Compose([
+        torchvision.transforms.Resize((448, 448)),
+        torchvision.transforms.ToTensor()
+    ])(Image.open(img_path).convert("RGB")).to(device)
+    mask = laplacian(img.unsqueeze(0), 15)  # low weight in high frequency
+    mask = (normalize_min_max(mask)).squeeze(0)
+    mask_img = mask * img
+    show_result(img, None, True)
+    show_result(mask, None, True)
+    show_result(mask_img, None, True)
+
 
 if __name__ == '__main__':
-    test_encoder_model()
-    test_stn()
-    test_decoder_model()
+    # test_encoder_model()
+    # test_stn()
+    # test_decoder_model()
     test_lpips()
+    # test_mask()

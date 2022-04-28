@@ -16,16 +16,21 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-use_auto_matric = False
+# 额外的感知差异性损失部分
+from piq import LPIPS, PieAPP, DISTS
+lpips_metric = LPIPS()
+pieapp_metric = PieAPP()
+dists_metric = DISTS()
+
+# 额外的自适应损失权重部分
+use_auto_matric = True
 if use_auto_matric:
     from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
-
     awl = AutomaticWeightedLoss(2)
 
 
 def process_forward(Encoder,
                     Decoder,
-                    lpips,
                     data,
                     scales,
                     cfg):
@@ -63,8 +68,14 @@ def process_forward(Encoder,
         yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=mask)
         img_loss += yuv_loss * scales["yuv_loss"]
     if scales["lpips_loss"] != 0:
-        lpips_loss = lpips(img, encoded_img).mean()
+        lpips_loss = lpips_metric(encoded_img, img)
         img_loss += lpips_loss * scales["lpips_loss"]
+    if scales["pieapp_loss"] != 0:
+        pieapp_loss = pieapp_metric(encoded_img, img)
+        img_loss += pieapp_loss * scales["pieapp_loss"]
+    if scales["dists_loss"] != 0:
+        dists_loss = dists_metric(encoded_img, img)
+        img_loss += dists_loss * scales["dists_loss"]
 
     photo_msg_loss = nn_F.binary_cross_entropy(photo_msg_pred, msg)
     crop_msg_loss = nn_F.binary_cross_entropy(crop_msg_pred, msg)
@@ -116,7 +127,6 @@ def make_null_metric_dict():
 
 def train_one_epoch(Encoder,
                     Decoder,
-                    lpips,
                     optimizer,
                     scheduler,
                     data_loader,
@@ -133,25 +143,25 @@ def train_one_epoch(Encoder,
         scales = cfg.get_cur_scales(cur_iter=cur_iter, cur_epoch=epoch)
         global_iter = cfg.get_global_iter(cur_epoch=epoch, cur_iter=cur_iter)
         # ------------------freeze
-        if epoch != 0:
+        freeze = False
+        if epoch != 0 and freeze:
             train_encoder = cur_iter % 2 != 0
             for n, p in Decoder.named_parameters():
                 if "stn" in n:
                     # 从第0个epoch结束之后，每4次iter训练一次stn，msg_loss依然会作用于encoder(也可以尝试只训练卷积层)
                     p.requires_grad = False if train_encoder else True
-                    if "localization" in n:
-                        # 手操stn卷积层权重，虽然并不建议
-                        p.data = torch.clamp(p, -0.25, 0.25)
+                    # 手操stn卷积层权重，虽然并不建议
+                    # if "localization" in n:
+                    #     p.data = torch.clamp(p, -0.25, 0.25)
                 elif "decoder" in n:
                     # 从第0个epoch结束之后，每2次iter训练一次decoder，msg_loss依然会作用于encoder
                     p.requires_grad = False if train_encoder else True
-            for n, p in Encoder.named_parameters():
-                p.requires_grad = True if train_encoder else False
+            # for n, p in Encoder.named_parameters():
+            #     p.requires_grad = True if train_encoder else False
 
         # ------------------forward & loss
         metric_result, vis_img = process_forward(Encoder,
                                                  Decoder,
-                                                 lpips,
                                                  data,
                                                  scales,
                                                  cfg)
@@ -166,13 +176,17 @@ def train_one_epoch(Encoder,
         count += 1
 
         # ------------------保存当前图像
-        if cur_iter % int(cfg.iter_per_epoch / 10) == 0:
+        if cur_iter % cfg.img_interval == 0 and cur_iter != 0:
             for image_tag in vis_img.keys():
                 image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
                 tb_writer.add_image(image_tag, image, global_step=global_iter)
             # 添加res的histogram 添加 encoded_img 分布
             # if image_tag in ["res_low"]:  # ,"photo_img",
             #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
+
+            # 随时观察
+            torchvision.utils.save_image(vis_img["encoded_img"], 'encoded_img.jpg')
+            # torchvision.utils.save_image(vis_img["stn_img"], 'stn_img.jpg')
 
         # ------------------打印当前iter的loss
         if cur_iter % cfg.log_interval == 0 and cur_iter != 0 or cur_iter == cfg.iter_per_epoch - 1:
@@ -192,11 +206,12 @@ def train_one_epoch(Encoder,
                          f"bit_acc:{round(results['bit_acc'], 4)} "
                          f"str_acc:{round(results['str_acc'], 2)} "
                          f"right_str_acc:{round(results['right_str_acc'], 2)}")
-            # if round(results["photo_right_str_acc"], 3) is 0.00:
-            #     print(round(results["photo_right_str_acc"], 3))
-            #     torchvision.utils.save_image(_["encoded_img"], 'alarm_encoded_img.jpg')
-            #     torchvision.utils.save_image(_["stn_img"], 'alarm_stn_img.jpg')
-            #     raise Exception("Photo_right_str_acc == 0 !!!")
+
+            if round(results["photo_right_str_acc"], 3) is 0.00:
+                print(round(results["photo_right_str_acc"], 3))
+                torchvision.utils.save_image(vis_img["encoded_img"], 'alarm_encoded_img.jpg')
+                torchvision.utils.save_image(vis_img["stn_img"], 'alarm_stn_img.jpg')
+                raise Exception("Photo_right_str_acc == 0 !!!")
 
             # tensorboard
             tb_writer.add_histogram("res_channel_0_histogram", vis_img["res_low"][:, 0, ...],
@@ -229,10 +244,8 @@ def train_one_epoch(Encoder,
 @torch.no_grad()
 def evaluate_one_epoch(Encoder,
                        Decoder,
-                       lpips,
                        data_loader,
                        epoch,
-                       tb_writer,
                        cfg):
     Encoder.eval()
     Decoder.eval()
@@ -244,7 +257,6 @@ def evaluate_one_epoch(Encoder,
         # ------------------forward & loss
         metric_result, vis_img = process_forward(Encoder,
                                                  Decoder,
-                                                 lpips,
                                                  data,
                                                  scales,
                                                  cfg)

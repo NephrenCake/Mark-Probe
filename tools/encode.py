@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--img_path', help='path of the image file (.png or .jpg)',
                         default="test/test_source/lena.jpg")
     parser.add_argument('--model_path', help='path of the model file (.pth)',
-                        default="steganography/train_log/分轮次训练decoder，jpeg、lpips直接max_2022-04-21-16-31-35/latest-7.pth")
+                        default="steganography/train_log/cos学习率1e-6，encoderdecoder轮流训练，色彩抖动延长_2022-04-23-09-50-37/latest-9.pth")
     parser.add_argument('--output_path', help='folder path of the encoded images',
                         default="out/")
     parser.add_argument('--user_id', help='the msg embedded in to the image',

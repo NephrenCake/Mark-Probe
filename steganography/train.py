@@ -50,14 +50,12 @@ def main():
         Decoder = MPDecoder(msg_size=cfg.msg_size,
                             img_size=cfg.img_size[0],
                             decoder_type="conv").to(cfg.device)
-        lpips_metric = LPIPS(net="alex").to(cfg.device)
     else:
         Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
                                              img_size=cfg.img_size[0])).to(cfg.device)
         Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
                                              img_size=cfg.img_size[0],
                                              decoder_type="conv")).to(cfg.device)
-        lpips_metric = tnn.DataParallel(LPIPS(net="alex")).to(cfg.device)
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
@@ -105,7 +103,6 @@ def main():
                         Decoder=Decoder,
                         optimizer=optimizer,
                         scheduler=scheduler,
-                        lpips=lpips_metric,
                         data_loader=train_loader,
                         epoch=epoch,
                         tb_writer=tb_writer,
@@ -113,10 +110,8 @@ def main():
         # validate
         val_result = evaluate_one_epoch(Encoder=Encoder,
                                         Decoder=Decoder,
-                                        lpips=lpips_metric,
                                         data_loader=val_loader,
                                         epoch=epoch,
-                                        tb_writer=tb_writer,
                                         cfg=cfg)
 
         # tensorboard

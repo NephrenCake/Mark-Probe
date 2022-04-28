@@ -35,7 +35,7 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "cos学习率1e-6，encoderdecoder轮流训练，色彩抖动延长"  # 实验名
+        self.exp_name = "新的感知差异损失"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = r""
@@ -48,6 +48,7 @@ class TrainConfig(BaseConfig):
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
+        self.img_interval = 1000  # 保存图像间隔 iterations
 
         self.max_epoch = 10  # 训练的总轮数  todo 可以在效果不错的时候提前结束，也许是10？
         self.batch_size = 8  # 一个批次的图片数量 # batch_size 会有影响
@@ -73,7 +74,7 @@ class TrainConfig(BaseConfig):
             "grayscale_trans", "motion_blur", "clamp_limit", "loss_starter",
             "perspective_trans", "angle_trans", "cut_trans", "erasing_trans", "jpeg_trans", "noise_trans",
             "brightness_trans", "contrast_trans", "saturation_trans", "hue_trans", "blur_trans", "reflection_trans",
-            "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", 'stn_loss',
+            "rgb_loss", "hsv_loss", "yuv_loss", "lpips_loss", 'stn_loss', "pieapp_loss", "dists_loss"
         ]
 
         # res clamp limit
@@ -89,7 +90,7 @@ class TrainConfig(BaseConfig):
         self.cut_trans_max = 0.5  # 舍弃的图片区域 todo 1. 先提高这个到 0.4 0.5 0.6 能这么高估计也顶天了
         self.cut_trans_grow = (1, 1.8)
 
-        self.jpeg_trans_max = 75  # 这里表示压缩强度。而图像质量是   上调 <= 70
+        self.jpeg_trans_max = 40  # 这里表示压缩强度。而图像质量是   上调 <= 70
         self.jpeg_trans_grow = (0, 0.1)
         # self.motion_blur_max = 0  # 给出的motion——blur的 核的最大值 （按照 2*k+1方式）  这个最大值是 实际中运动模糊实际的随机取值的最大值。
         # self.motion_blur_grow = (1.5, 2)
@@ -106,13 +107,13 @@ class TrainConfig(BaseConfig):
         self.noise_trans_grow = (0.6, 0.9)
 
         self.brightness_trans_max = 0.2  # 0.3  # 亮度变换
-        self.brightness_trans_grow = (0.3, 0.9)
+        self.brightness_trans_grow = (0.3, 1.5)
         self.contrast_trans_max = 0.2  # 0.5  # 对比度变换
-        self.contrast_trans_grow = (0.3, 0.9)
+        self.contrast_trans_grow = (0.3, 1.5)
         self.saturation_trans_max = 0.5  # 1  # 饱和度变换
-        self.saturation_trans_grow = (0.3, 0.9)
+        self.saturation_trans_grow = (0.3, 1.5)
         self.hue_trans_max = 0.1  # 色相变换
-        self.hue_trans_grow = (0.3, 0.9)
+        self.hue_trans_grow = (0.3, 1.5)
 
         # loss scale
         self.loss_limitation = 0.75
@@ -127,6 +128,10 @@ class TrainConfig(BaseConfig):
         self.yuv_loss_grow = None
         self.lpips_loss_max = 1
         self.lpips_loss_grow = (0.1, 0.5)
+        self.pieapp_loss_max = 1
+        self.pieapp_loss_grow = (0.1, 1)
+        self.dists_loss_max = 1
+        self.dists_loss_grow = (0.1, 1)
         # other
         self.stn_loss_max = 1  # 换成1时可以开启，0则不对stn进行训练
         self.stn_loss_grow = (1.8, 1.8)
