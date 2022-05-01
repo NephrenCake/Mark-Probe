@@ -17,9 +17,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # 额外的感知差异性损失部分
-from piq import LPIPS, PieAPP, DISTS
+from piq import LPIPS, DISTS
 lpips_metric = LPIPS()
-pieapp_metric = PieAPP()
 dists_metric = DISTS()
 
 # 额外的自适应损失权重部分
@@ -70,9 +69,6 @@ def process_forward(Encoder,
     if scales["lpips_loss"] != 0:
         lpips_loss = lpips_metric(encoded_img, img)
         img_loss += lpips_loss * scales["lpips_loss"]
-    if scales["pieapp_loss"] != 0:
-        pieapp_loss = pieapp_metric(encoded_img, img)
-        img_loss += pieapp_loss * scales["pieapp_loss"]
     if scales["dists_loss"] != 0:
         dists_loss = dists_metric(encoded_img, img)
         img_loss += dists_loss * scales["dists_loss"]
@@ -81,7 +77,8 @@ def process_forward(Encoder,
     crop_msg_loss = nn_F.binary_cross_entropy(crop_msg_pred, msg)
     msg_loss = (photo_msg_loss + crop_msg_loss) / 2
 
-    if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):  # 前期如果decoder能力跟不上encoder，则encoder等待
+    if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.02):
+        # 前期如果decoder能力跟不上encoder，则encoder等待 todo 这是基于旧版loss，现在阈值暂未更新
         loss = msg_loss
     else:
         # 使用不确定性加权loss
@@ -107,6 +104,7 @@ def process_forward(Encoder,
         "photo_bit_acc": photo_bit_acc, "photo_str_acc": photo_str_acc, "photo_right_str_acc": photo_right_str_acc,
         "crop_bit_acc": crop_bit_acc, "crop_str_acc": crop_str_acc, "crop_right_str_acc": crop_right_str_acc,
         "lpips_loss": torch.tensor(0) if scales["lpips_loss"] == 0 else lpips_loss,
+        "dists_loss": torch.tensor(0) if scales["dists_loss"] == 0 else dists_loss,
         "rgb_loss": torch.tensor(0) if scales["rgb_loss"] == 0 else rgb_loss,
         "hsv_loss": torch.tensor(0) if scales["hsv_loss"] == 0 else hsv_loss,
         "yuv_loss": torch.tensor(0) if scales["yuv_loss"] == 0 else yuv_loss,
@@ -118,7 +116,8 @@ METRIC_LIST = ["loss", "img_loss", "msg_loss", "bit_acc", "str_acc", "right_str_
                "photo_msg_loss", "crop_msg_loss",
                "photo_bit_acc", "photo_str_acc", "photo_right_str_acc",
                "crop_bit_acc", "crop_str_acc", "crop_right_str_acc",
-               "lpips_loss", "rgb_loss", "hsv_loss", "yuv_loss"]
+               "lpips_loss", "dists_loss",
+               "rgb_loss", "hsv_loss", "yuv_loss"]
 
 
 def make_null_metric_dict():
@@ -142,6 +141,7 @@ def train_one_epoch(Encoder,
     for cur_iter, data in enumerate(data_loader):
         scales = cfg.get_cur_scales(cur_iter=cur_iter, cur_epoch=epoch)
         global_iter = cfg.get_global_iter(cur_epoch=epoch, cur_iter=cur_iter)
+
         # ------------------freeze
         freeze = False
         if epoch != 0 and freeze:
@@ -186,16 +186,14 @@ def train_one_epoch(Encoder,
 
             # 随时观察
             torchvision.utils.save_image(vis_img["encoded_img"], 'encoded_img.jpg')
-            # torchvision.utils.save_image(vis_img["stn_img"], 'stn_img.jpg')
+            torchvision.utils.save_image(vis_img["res_low"] + 0.5, 'res_low.jpg')
+            torchvision.utils.save_image(vis_img["stn_img"], 'stn_img.jpg')
 
         # ------------------打印当前iter的loss
         if cur_iter % cfg.log_interval == 0 and cur_iter != 0 or cur_iter == cfg.iter_per_epoch - 1:
             for item in results:
                 results[item] /= count
             cur_cost_time, pre_cost_time = compute_time(start, cur_iter, cfg.iter_per_epoch)
-            # 更新 loss
-            if scales["loss_starter"] != 0:
-                cfg.loss_ascending(results['right_str_acc'], cfg.loss_limitation, 0.5, 0.5, 0.5)
 
             logging.info(f"epoch:[{epoch}/{cfg.max_epoch - 1}] iter:[{cur_iter}/{cfg.iter_per_epoch - 1}] "
                          f"train:{cur_cost_time}<{pre_cost_time} - "

@@ -119,5 +119,10 @@ if __name__ == '__main__':
     # test_encoder_model()
     # test_stn()
     # test_decoder_model()
-    test_lpips()
+    # test_lpips()
     # test_mask()
+    from piq import LPIPS, PieAPP, DISTS
+
+    lpips_metric = LPIPS()
+    pieapp_metric = PieAPP()
+    dists_metric = DISTS()
