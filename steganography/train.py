@@ -17,8 +17,6 @@ from steganography.utils.dataset import get_dataloader
 from steganography.utils.log_utils import get_logger
 from steganography.utils.train_utils import train_one_epoch, evaluate_one_epoch
 from steganography.config.config import TrainConfig
-from steganography.utils.data_parallel import BalancedDataParallel
-from lpips import LPIPS
 
 
 def main():
@@ -44,18 +42,14 @@ def main():
     logger.info(f'{cfg.iter_per_epoch} iterations per epoch.')
 
     # 实例化模型
-    if cfg.single:
-        Encoder = MPEncoder(msg_size=cfg.msg_size,
-                            img_size=cfg.img_size[0]).to(cfg.device)
-        Decoder = MPDecoder(msg_size=cfg.msg_size,
-                            img_size=cfg.img_size[0],
-                            decoder_type="conv").to(cfg.device)
-    else:
-        Encoder = tnn.DataParallel(MPEncoder(msg_size=cfg.msg_size,
-                                             img_size=cfg.img_size[0])).to(cfg.device)
-        Decoder = tnn.DataParallel(MPDecoder(msg_size=cfg.msg_size,
-                                             img_size=cfg.img_size[0],
-                                             decoder_type="conv")).to(cfg.device)
+    Encoder = MPEncoder(msg_size=cfg.msg_size,
+                        img_size=cfg.img_size[0]).to(cfg.device)
+    Decoder = MPDecoder(msg_size=cfg.msg_size,
+                        img_size=cfg.img_size[0],
+                        decoder_type="conv").to(cfg.device)
+    if not cfg.single:
+        Encoder = tnn.DataParallel(Encoder).to(cfg.device)
+        Decoder = tnn.DataParallel(Decoder).to(cfg.device)
 
     # 定义优化器和学习率策略
     optimizer = torch.optim.Adam(params=[
@@ -65,9 +59,7 @@ def main():
     if cfg.use_warmup:
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=cfg.get_warmup_cos_lambda())
     else:
-        # 动态调整学习率
-        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[cfg.lr_for_encoder, cfg.lr_for_decoder])
-        # scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: 1)
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda x: 1)
 
     # 如果存在预训练权重则载入
     epoch = 0

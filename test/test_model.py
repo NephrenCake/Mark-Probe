@@ -88,18 +88,6 @@ def test_lpips():
     lpips_loss = lpips_module(img, encoded_img).mean()
     print(lpips_loss)
 
-    from piq import PieAPP
-
-    msid_metric = PieAPP()
-    msid = msid_metric(encoded_img, img)
-    print(msid)
-
-    from piq import DISTS
-
-    msid_metric = DISTS()
-    msid = msid_metric(encoded_img, img)
-    print(msid)
-
 
 def test_mask():
     img_path = "test_source/COCO_val2014_000000005037.jpg"
@@ -108,7 +96,7 @@ def test_mask():
         torchvision.transforms.ToTensor()
     ])(Image.open(img_path).convert("RGB")).to(device)
     mask = laplacian(img.unsqueeze(0), 15)  # low weight in high frequency
-    mask = (normalize_min_max(mask)).squeeze(0)
+    mask = (1 - normalize_min_max(mask)).squeeze(0)
     mask_img = mask * img
     show_result(img, None, True)
     show_result(mask, None, True)
@@ -119,5 +107,5 @@ if __name__ == '__main__':
     # test_encoder_model()
     # test_stn()
     # test_decoder_model()
-    test_lpips()
-    # test_mask()
+    # test_lpips()
+    test_mask()
