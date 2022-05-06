@@ -64,9 +64,9 @@ def non_spatial_trans(img, scales):
     """
     此处主要实现大多数情况下共同包含的变换，多为非空间变换
     """
-    # 反光 不使用
-    if scales["reflection_trans"] != 0:
-        img = RandomMixUp(p=scales["reflection_trans"], lambda_val=(0., 0.05))(img)[0]
+    # 反光
+    # if scales["reflection_trans"] != 0:
+    #     img = RandomMixUp(p=scales["reflection_trans"], lambda_val=(0., 0.05))(img)[0]
     # 色彩
     if scales["brightness_trans"] + scales["contrast_trans"] + scales["saturation_trans"] + scales["hue_trans"] != 0:
         img = transforms.ColorJitter(brightness=scales["brightness_trans"], contrast=scales["contrast_trans"],

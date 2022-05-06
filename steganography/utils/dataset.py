@@ -48,11 +48,12 @@ def get_dataloader(img_set_list: dict,
 
     # 定义训练以及预测时的预处理方法
     data_transform = {
-        "train": transforms.Compose([transforms.RandomResizedCrop(img_size, scale=(0.5, 1)),
+        "train": transforms.Compose([transforms.Resize(img_size),
+                                     # transforms.RandomResizedCrop(img_size, scale=(0.5, 1)),
                                      transforms.RandomHorizontalFlip(),
                                      transforms.RandomVerticalFlip(),
-                                     transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
-                                     transforms.RandomGrayscale(p=0.05),
+                                     # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
+                                     # transforms.RandomGrayscale(p=0.05),
                                      transforms.ToTensor(),
                                      ]),
         "val": transforms.Compose([transforms.Resize(img_size),
@@ -89,7 +90,7 @@ class StegaDataset(Dataset):
         self.img_list = img_list
         self.msg_size = msg_size
         self.transform = transform
-        self.adjustGamma = AdjustGamma(10., 1.)
+        self.adjustGamma = AdjustGamma(40., 1.)
 
     def __len__(self):
         return len(self.img_list)
@@ -110,6 +111,7 @@ class StegaDataset(Dataset):
         # 现在 mask 是一个范围 [0., 1.] 边缘区域像素值低 平滑区域像素值高
         mask = 1 - torch.abs(laplacian(img.unsqueeze(0), 3))  # low weight in high frequency
         mask = self.adjustGamma(normalize_min_max(mask)).squeeze(0)
+        mask = torch.round(mask)
 
         return {
             "img": img,

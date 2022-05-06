@@ -1,6 +1,4 @@
 import torch
-from kornia.enhance import AdjustGamma, normalize_min_max
-from kornia.filters import laplacian
 from torch import nn
 import torch.nn.functional as F
 
@@ -79,14 +77,11 @@ class MPEncoder(nn.Module):
     def forward(self, inputs):
         image, msg = inputs["img"], inputs["msg"]
 
-        mask = normalize_min_max(laplacian(image, 15))  # high valve in high frequency
-
         msg = self.msg_dense(msg)  # msg 96 => 9408
         msg = msg.view(image.size()[0], 3, self.msg_dense_size, self.msg_dense_size)  # msg 56*56*3
-        msg = self.up_x8(msg)
 
-        inputs = torch.cat((msg, image), dim=1)  # inputs 448*448*(3+3)
-        conv1 = self.conv1(inputs)  # conv1 448*448*32
+        origin = torch.cat((self.up_x8(msg), image), dim=1)  # inputs 448*448*(3+3)
+        conv1 = self.conv1(origin)  # conv1 448*448*32
         conv2 = self.conv2(conv1)  # conv2 224*224*32
         conv3 = self.conv3(conv2)  # conv3 112*112*64
         conv4 = self.conv4(conv3)  # conv4 56*56*128
@@ -102,7 +97,7 @@ class MPEncoder(nn.Module):
         merge8 = torch.cat((conv2, up8), dim=1)  # merge8 224*224*64
         conv8 = self.conv8(merge8)  # conv8 224*224*32
         up9 = self.up9(self.up_x2(conv8))  # up9 448*448*32->448*448*32
-        merge9 = torch.cat((conv1, up9, mask, msg), dim=1)  # merge9 448*448*(32+32+3+3)
+        merge9 = torch.cat((conv1, up9, origin), dim=1)  # merge9 448*448*(32+32+6)
         conv9 = self.conv9(merge9)  # conv9 448*448*32
 
         return self.residual(conv9)  # residual 448*448*3

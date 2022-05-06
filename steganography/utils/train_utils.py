@@ -1,4 +1,5 @@
 # -- coding: utf-8 --
+import os
 import time
 import logging
 import copy
@@ -22,7 +23,7 @@ lpips_metric = LPIPS()
 dists_metric = DISTS()
 
 # 额外的自适应损失权重部分
-use_auto_matric = True
+use_auto_matric = False
 if use_auto_matric:
     from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
     awl = AutomaticWeightedLoss(2)
@@ -77,15 +78,19 @@ def process_forward(Encoder,
     crop_msg_loss = nn_F.binary_cross_entropy(crop_msg_pred, msg)
     msg_loss = (photo_msg_loss + crop_msg_loss) / 2
 
-    if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.1):
-        # 前期如果decoder能力跟不上encoder，则encoder等待 todo 这是基于旧版loss，现在阈值暂未更新
+    if scales["img_loss"] == 0:
+        # 如果还没有开启img_loss
         loss = msg_loss
     else:
-        # 使用不确定性加权loss
-        if use_auto_matric:
-            loss = awl(img_loss, msg_loss)
+        if torch.ge(msg_loss, 0.1) and torch.le(img_loss, 0.1):
+            # 如果decoder能力跟不上encoder，则encoder等待 todo 需要根据不同loss更新阈值
+            loss = msg_loss
         else:
-            loss = img_loss + msg_loss
+            # 使用不确定性加权loss
+            if use_auto_matric:
+                loss = awl(img_loss, msg_loss)
+            else:
+                loss = img_loss + msg_loss
 
     # ------------------compute acc
     photo_bit_acc, photo_str_acc, photo_right_str_acc = get_msg_acc(msg, photo_msg_pred)
@@ -176,6 +181,7 @@ def train_one_epoch(Encoder,
         count += 1
 
         # ------------------保存当前图像
+        # if cur_iter % (cfg.iter_per_epoch / 10) == 0 and cur_iter != 0 or cur_iter == cfg.iter_per_epoch - 1:
         if cur_iter % cfg.img_interval == 0 and cur_iter != 0:
             for image_tag in vis_img.keys():
                 image = make_grid(vis_img[image_tag], normalize=True, scale_each=True, nrow=4)
@@ -184,10 +190,12 @@ def train_one_epoch(Encoder,
             # if image_tag in ["res_low"]:  # ,"photo_img",
             #     tb_writer.add_histogram(image_tag + "_histogram", image, global_step=(epoch + 1) * cfg.iter_per_epoch)
 
-            # 随时观察
-            torchvision.utils.save_image(vis_img["encoded_img"], 'encoded_img.jpg')
-            torchvision.utils.save_image(vis_img["res_low"] + 0.5, 'res_low.jpg')
-            torchvision.utils.save_image(vis_img["stn_img"], 'stn_img.jpg')
+            # 随时观察 保存全程
+            if not os.path.exists("save_img"):
+                os.makedirs("save_img")
+            torchvision.utils.save_image(vis_img["encoded_img"], f'save_img/encoded_img_{epoch}-{cur_iter}.jpg')
+            torchvision.utils.save_image(vis_img["res_low"] + 0.5, f'save_img/res_low_{epoch}-{cur_iter}.jpg')
+            torchvision.utils.save_image(vis_img["stn_img"], f'save_img/stn_img.jpg')
 
         # ------------------打印当前iter的loss
         if cur_iter % cfg.log_interval == 0 and cur_iter != 0 or cur_iter == cfg.iter_per_epoch - 1:
