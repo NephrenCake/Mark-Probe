@@ -96,10 +96,11 @@ def test_mask():
         torchvision.transforms.ToTensor()
     ])(Image.open(img_path).convert("RGB")).to(device)
     mask = 1 - torch.abs(laplacian(img.unsqueeze(0), 3))  # low weight in high frequency
-    mask = (AdjustGamma(40., 1.)(normalize_min_max(mask))).squeeze(0)
+    mask = (AdjustGamma(50., 1.)(normalize_min_max(mask))).squeeze(0)
     mask = torch.round(mask)
     # show_result(img, None, True)
-    show_result(mask, None, True)
+    show_result(mask * img, None, True)
+    show_result(img, None, True)
 
 
 if __name__ == '__main__':

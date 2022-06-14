@@ -28,6 +28,11 @@ if use_auto_matric:
     from steganography.utils.AutomaticWeightedLoss.AutomaticWeightedLoss import AutomaticWeightedLoss
     awl = AutomaticWeightedLoss(2)
 
+# yuv权重
+yuv_mask = torch.stack([torch.ones(1, 1, 448, 448),
+                        torch.ones(1, 1, 448, 448) * 50,
+                        torch.ones(1, 1, 448, 448) * 50], -3).to("cuda")
+
 
 def process_forward(Encoder,
                     Decoder,
@@ -65,13 +70,13 @@ def process_forward(Encoder,
         hsv_loss = mse_loss(rgb_to_hsv(encoded_img), rgb_to_hsv(img), mask=mask)
         img_loss += hsv_loss * scales["hsv_loss"]
     if scales["yuv_loss"] != 0:
-        yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=mask)
+        yuv_loss = mse_loss(rgb_to_yuv(encoded_img), rgb_to_yuv(img), mask=mask * yuv_mask)
         img_loss += yuv_loss * scales["yuv_loss"]
     if scales["lpips_loss"] != 0:
-        lpips_loss = lpips_metric(encoded_img, img)
+        lpips_loss = lpips_metric(encoded_img * mask, img * mask)
         img_loss += lpips_loss * scales["lpips_loss"]
     if scales["dists_loss"] != 0:
-        dists_loss = dists_metric(encoded_img, img)
+        dists_loss = dists_metric(encoded_img * mask, img * mask)
         img_loss += dists_loss * scales["dists_loss"]
 
     photo_msg_loss = nn_F.binary_cross_entropy(photo_msg_pred, msg)

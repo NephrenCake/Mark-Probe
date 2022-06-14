@@ -90,7 +90,7 @@ class StegaDataset(Dataset):
         self.img_list = img_list
         self.msg_size = msg_size
         self.transform = transform
-        self.adjustGamma = AdjustGamma(40., 1.)
+        self.adjustGamma = AdjustGamma(50., 1.)
 
     def __len__(self):
         return len(self.img_list)

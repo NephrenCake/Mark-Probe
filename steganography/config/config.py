@@ -35,7 +35,7 @@ class TrainConfig(BaseConfig):
     def __init__(self):
         super().__init__()
 
-        self.exp_name = "逆转任务次序"  # 实验名
+        self.exp_name = "yuv、lpips、dist都使用mask"  # 实验名
         self.save_dir = "train_log"
         self.tensorboard_dir = "tensorboard_log"
         self.pretrained = r""
@@ -44,13 +44,15 @@ class TrainConfig(BaseConfig):
         self.img_set_list = {
             r"D:\服务外包大赛_project\COCo\train2014\train2014\train2014": 1,
             r"D:\服务外包大赛_project\COCo\val2014\val2014\val2014\val2014": 1,
+            # r"D:\服务外包大赛_project\COCo\train2014\train2014\train2014": 0.001,
+            # r"D:\服务外包大赛_project\COCo\val2014\val2014\val2014\val2014": 0.001,
         }
         self.val_rate: float = 0.05  # 用于验证的比例
         self.log_interval = 200  # 打印日志间隔 iterations
         self.img_interval = 1000  # 保存图像间隔 iterations
 
         self.max_epoch = 5  # 训练的总轮数
-        self.batch_size = 4  # 一个批次的图片数量
+        self.batch_size = 6  # 一个批次的图片数量
         self.num_workers = 8  # 进程数
         self.single = True  # 是否多卡训练  False：使用多卡
 
@@ -121,8 +123,8 @@ class TrainConfig(BaseConfig):
         self.yuv_loss_grow = (0.5, 2)
         self.lpips_loss_max = 1
         self.lpips_loss_grow = (1, 3)
-        self.dists_loss_max = 0
-        self.dists_loss_grow = (0, 0.3)
+        self.dists_loss_max = 1
+        self.dists_loss_grow = (1, 3)
         self.img_loss_max = 1  # 换成1时可以开启，0则不进行图像生成任务的优化
         self.img_loss_grow = (0.5, 0.5)
         # other
